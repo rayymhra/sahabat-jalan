@@ -1,6 +1,9 @@
 <?php
-
 include "../connection.php";
+require "../vendor/autoload.php"; // PHPMailer
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 $success = $error = "";
 
@@ -12,8 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $avatar = "default.png"; 
     $phone = null;
     $bio = null;
+    $login_provider = "manual";
+    $is_verified = 0;
 
-    // auto-generate username (name + random number)
+    // auto-generate username
     $baseUsername = strtolower(preg_replace('/\s+/', '', $name)); 
     $username = $baseUsername . rand(100, 999);
 
@@ -31,17 +36,70 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } while (true);
     $checkUser->close();
 
-    // insert user
-    $stmt = $conn->prepare("INSERT INTO users (name, username, email, password, role, avatar, phone_number, bio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssss", $name, $username, $email, $password, $role, $avatar, $phone, $bio);
-
-    if ($stmt->execute()) {
-        $success = "🎉 Registration successful! Your username is <strong>$username</strong>. You can now <a href='login.php'>login</a>.";
+    // check if email already exists
+    $checkEmail = $conn->prepare("SELECT id FROM users WHERE email = ?");
+    $checkEmail->bind_param("s", $email);
+    $checkEmail->execute();
+    $checkEmail->store_result();
+    if ($checkEmail->num_rows > 0) {
+        $error = "⚠️ Email already registered. Please login instead.";
+        $checkEmail->close();
     } else {
-        $error = "Error: " . $stmt->error;
+        $checkEmail->close();
+
+        // create email verification token
+        $token = bin2hex(random_bytes(32));
+        $expires_at = date("Y-m-d H:i:s", strtotime("+1 day"));
+
+        // insert user
+        $stmt = $conn->prepare("INSERT INTO users 
+            (name, username, email, password, role, avatar, phone_number, bio, login_provider, is_verified, verify_token, token_expires) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssssssss", 
+            $name, $username, $email, $password, $role, $avatar, $phone, $bio, 
+            $login_provider, $is_verified, $token, $expires_at
+        );
+
+        if ($stmt->execute()) {
+            // verification link
+            $verifyLink = "http://localhost/other/sahabat-jalan/auth/verify.php?token=" . $token;
+
+            // try sending email
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.mailtrap.io'; // ✅ safer for demo
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'your_mailtrap_username'; 
+                $mail->Password   = 'your_mailtrap_password'; 
+                $mail->SMTPSecure = 'tls';
+                $mail->Port       = 587;
+
+                $mail->setFrom('noreply@sahabatjalan.com', 'Sahabat Jalan');
+                $mail->addAddress($email, $name);
+                $mail->isHTML(true);
+                $mail->Subject = "Verify your email";
+                $mail->Body    = "Hi $name,<br><br>
+                                  Thanks for registering! Please verify your email by clicking the link below:<br>
+                                  <a href='$verifyLink'>$verifyLink</a><br><br>
+                                  This link expires in 24 hours.";
+
+                $mail->send();
+                $success = "🎉 Registration successful! Please check your email (<strong>$email</strong>) to verify your account.";
+            } catch (Exception $e) {
+                // fallback: show the link directly
+                $success = "🎉 Registration successful! (Demo Mode)<br>
+                            Since email couldn't be sent, please verify directly:<br>
+                            <a href='$verifyLink'>$verifyLink</a>";
+            }
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
+        $stmt->close();
     }
-    $stmt->close();
 }
+?>
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -83,6 +141,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <button type="submit" class="btn btn-success w-100">Register</button>
       </form>
+
+      <div class="text-center my-3">— or —</div>
+      <a href="google_login.php" class="btn btn-outline-danger w-100">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" class="me-2">
+        Continue with Google
+      </a>
 
       <p class="text-center mt-3">Already have an account? <a href="login.php">Login</a></p>
     </div>
