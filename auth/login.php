@@ -84,6 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <label class="form-label">Password</label>
     <input type="password" name="password" class="form-control" placeholder="********" required>
     </div>
+    <a href="forgot_password.php">Forgot password</a>
+
     
     <button type="submit" class="btn btn-primary w-100">Login</button>
     </form>
@@ -95,6 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" class="me-2">
     Continue with Google
     </a>
+
     
     <p class="text-center mt-3">Don’t have an account? <a href="register.php">Register</a></p>
     </div>
