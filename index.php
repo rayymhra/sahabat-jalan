@@ -1,5 +1,7 @@
 <?php
 session_start();
+include_once 'connection.php'; // Your database connection file
+
 $userLoggedIn = isset($_SESSION['user_id']);
 $userData = $userLoggedIn ? [
     'id' => $_SESSION['user_id'],
@@ -8,6 +10,81 @@ $userData = $userLoggedIn ? [
     'role' => $_SESSION['role'],
     'avatar' => $_SESSION['avatar']
 ] : null;
+
+// Load routes from database
+$routes = [];
+$reports = [];
+
+if ($conn) {
+    // ================================
+    // Fetch routes + their reports
+    // ================================
+    $routeQuery = "
+        SELECT r.*, u.name AS creator_name 
+        FROM routes r 
+        LEFT JOIN users u ON r.created_by = u.id 
+        ORDER BY r.created_at DESC
+    ";
+    $routeResult = $conn->query($routeQuery);
+
+    if ($routeResult) {
+        while ($route = $routeResult->fetch_assoc()) {
+            $routeId = $route['id'];
+
+            // Fetch reports for this route
+            $reportQuery = "
+                SELECT rep.*, u.name AS user_name 
+                FROM reports rep 
+                LEFT JOIN users u ON rep.user_id = u.id 
+                WHERE rep.route_id = $routeId 
+                ORDER BY rep.created_at DESC
+            ";
+            $reportResult = $conn->query($reportQuery);
+
+            $routeReports = [];
+            if ($reportResult) {
+                while ($report = $reportResult->fetch_assoc()) {
+                    $routeReports[] = $report;
+                }
+            } else {
+                error_log("Report query error: " . $conn->error);
+            }
+
+            $route['reports'] = $routeReports;
+            $routes[] = $route;
+        }
+    } else {
+        error_log("Route query error: " . $conn->error);
+    }
+
+    // ================================
+    // Fetch all reports (latest 20)
+    // ================================
+    $allReportsQuery = "
+        SELECT rep.*, 
+               CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
+               u.name AS user_name 
+        FROM reports rep 
+        LEFT JOIN routes r ON rep.route_id = r.id 
+        LEFT JOIN users u ON rep.user_id = u.id 
+        ORDER BY rep.created_at DESC 
+        LIMIT 20
+    ";
+    $allReportsResult = $conn->query($allReportsQuery);
+
+    if ($allReportsResult) {
+        while ($report = $allReportsResult->fetch_assoc()) {
+            $reports[] = $report;
+        }
+    } else {
+        error_log("All reports query error: " . $conn->error);
+    }
+}
+
+
+// Convert PHP data to JSON for JavaScript
+$routesJson = json_encode($routes);
+$reportsJson = json_encode($reports);
 ?>
 
 <!DOCTYPE html>
@@ -323,6 +400,7 @@ $userData = $userLoggedIn ? [
             width: 100%;
             margin-top: 10px;
             transition: background-color 0.3s;
+            display: <?php echo $userLoggedIn ? 'block' : 'none'; ?>;
         }
         
         .add-to-route-btn:hover {
@@ -470,6 +548,101 @@ $userData = $userLoggedIn ? [
             display: none;
         }
         
+        /* Route creation controls */
+        .route-creation-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+        }
+        
+        .route-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .route-step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .route-step.active .route-step-icon {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .route-step.completed .route-step-icon {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .route-control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .route-control-btn {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .select-point-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .select-point-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .create-route-btn {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .create-route-btn:hover {
+            background-color: #25a589;
+        }
+        
+        .create-route-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .cancel-route-btn {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .cancel-route-btn:hover {
+            background-color: #c0392b;
+        }
+        
         /* Responsive styles */
         @media (max-width: 992px) {
             .main-container {
@@ -491,6 +664,13 @@ $userData = $userLoggedIn ? [
                 top: 10px;
                 left: 10px;
                 right: 10px;
+                max-width: none;
+            }
+            
+            .route-creation-controls {
+                top: 10px;
+                right: 10px;
+                left: 10px;
                 max-width: none;
             }
         }
@@ -532,6 +712,7 @@ $userData = $userLoggedIn ? [
             font-size: 3rem;
             margin-bottom: 1rem;
             color: #ddd;
+            display: block;
         }
         
         .route-stats {
@@ -569,6 +750,15 @@ $userData = $userLoggedIn ? [
             border-radius: 4px;
             margin-top: 10px;
             color: #856404;
+            display: <?php echo $userLoggedIn ? 'none' : 'block'; ?>;
+        }
+        
+        .creating-route-mode .add-route-btn {
+            display: none;
+        }
+        
+        .creating-route-mode .mode-indicator {
+            display: block;
         }
     </style>
 </head>
@@ -578,13 +768,13 @@ $userData = $userLoggedIn ? [
             <i class="fas fa-map-marked-alt"></i>
             <h1>Peta Jalan Aman</h1>
         </div>
-        <div id="authButtons">
+        <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
             <a href="auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
             <a href="auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
         </div>
-        <div class="user-info" id="userInfo" style="display: none;">
-            <div class="user-avatar" id="userAvatar"></div>
-            <span id="userName"></span>
+        <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
+            <div class="user-avatar" id="userAvatar"><?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?></div>
+            <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
             <a href="auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
         </div>
     </header>
@@ -594,6 +784,41 @@ $userData = $userLoggedIn ? [
             <div id="map"></div>
             
             <div class="mode-indicator" id="modeIndicator"></div>
+            
+            <!-- Route Creation Controls -->
+            <div class="route-creation-controls" id="routeCreationControls">
+                <h5 class="mb-2">Buat Rute Baru</h5>
+                
+                <div class="route-step" id="step1">
+                    <div class="route-step-icon">1</div>
+                    <span>Pilih Titik Awal</span>
+                </div>
+                
+                <div class="route-step" id="step2">
+                    <div class="route-step-icon">2</div>
+                    <span>Pilih Titik Akhir</span>
+                </div>
+                
+                <div class="route-step" id="step3">
+                    <div class="route-step-icon">3</div>
+                    <span>Buat Rute</span>
+                </div>
+                
+                <div class="route-control-buttons">
+                    <button class="route-control-btn select-point-btn" id="selectStartBtn">
+                        <i class="fas fa-map-marker-alt"></i> Pilih Titik Awal
+                    </button>
+                    <button class="route-control-btn select-point-btn" id="selectEndBtn" disabled>
+                        <i class="fas fa-map-marker-alt"></i> Pilih Titik Akhir
+                    </button>
+                    <button class="route-control-btn create-route-btn" id="createRouteBtn" disabled>
+                        <i class="fas fa-route"></i> Buat Rute
+                    </button>
+                    <button class="route-control-btn cancel-route-btn" id="cancelRouteBtn">
+                        <i class="fas fa-times"></i> Batalkan
+                    </button>
+                </div>
+            </div>
             
             <div class="route-info-panel" id="routeInfoPanel">
                 <div class="panel-header">
@@ -627,7 +852,7 @@ $userData = $userLoggedIn ? [
                 <button class="add-to-route-btn" id="addToRouteBtn">
                     <i class="fas fa-plus me-1"></i> Tambahkan Laporan
                 </button>
-                <div class="login-prompt" id="routeLoginPrompt" style="display: none;">
+                <div class="login-prompt" id="routeLoginPrompt">
                     <i class="fas fa-info-circle"></i> Silakan masuk untuk menambahkan laporan
                 </div>
             </div>
@@ -677,7 +902,7 @@ $userData = $userLoggedIn ? [
                 <h4 class="mb-0">Tambah Laporan Baru</h4>
                 <button class="close-btn">&times;</button>
             </div>
-            <form id="reportForm">
+            <form id="reportForm" action="save_report.php" method="POST">
                 <input type="hidden" id="reportRouteId" name="route_id">
                 <div class="form-group">
                     <label for="reportType">Jenis Laporan</label>
@@ -705,78 +930,31 @@ $userData = $userLoggedIn ? [
                 <h4 class="mb-0">Buat Rute Baru</h4>
                 <button class="close-btn" data-dismiss="route">&times;</button>
             </div>
-            <form id="routeForm">
+            <form id="routeForm" action="save_route.php" method="POST">
                 <div class="form-group">
                     <label for="routeName">Nama Rute (Opsional)</label>
                     <input type="text" id="routeName" name="name" placeholder="Masukkan nama rute...">
                 </div>
                 <div class="form-group">
                     <label>Pilih titik awal dan akhir pada peta</label>
-                    <div class="alert alert-info">
+                    <div class="alert alert-warning">
                         <small>
-                            <i class="fas fa-info-circle"></i> 
-                            Klik pada peta untuk memilih titik awal, kemudian klik lagi untuk memilih titik akhir.
-                            Setelah membuat rute, Anda harus menambahkan laporan atau rute akan dihapus.
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <strong>Penting:</strong> Setelah membuat rute, Anda harus menambahkan laporan atau rute akan dihapus.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
+                    <input type="hidden" id="startLat" name="start_lat">
+                    <input type="hidden" id="startLng" name="start_lng">
                     <label>Titik Awal: <span id="startPointInfo">Belum dipilih</span></label>
                 </div>
                 <div class="form-group">
+                    <input type="hidden" id="endLat" name="end_lat">
+                    <input type="hidden" id="endLng" name="end_lng">
                     <label>Titik Akhir: <span id="endPointInfo">Belum dipilih</span></label>
                 </div>
-                <button type="button" id="confirmRouteBtn" class="submit-btn" disabled>Buat Rute</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Login Modal -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="mb-0">Masuk ke Akun</h4>
-                <button class="close-btn">&times;</button>
-            </div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" name="password" required>
-                </div>
-                <button type="submit" class="submit-btn">Masuk</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="mb-0">Daftar Akun Baru</h4>
-                <button class="close-btn">&times;</button>
-            </div>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="registerName">Nama Lengkap</label>
-                    <input type="text" id="registerName" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerPassword">Password</label>
-                    <input type="password" id="registerPassword" name="password" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerConfirmPassword">Konfirmasi Password</label>
-                    <input type="password" id="registerConfirmPassword" name="confirmPassword" required>
-                </div>
-                <button type="submit" class="submit-btn">Daftar</button>
+                <button type="submit" class="submit-btn" id="confirmRouteBtn" disabled>Buat Rute</button>
             </form>
         </div>
     </div>
@@ -784,10 +962,12 @@ $userData = $userLoggedIn ? [
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-// Pass PHP data to JavaScript
-const userLoggedIn = <?php echo $userLoggedIn ? 'true' : 'false'; ?>;
-const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
-</script>
+        // Pass PHP data to JavaScript
+        const userLoggedIn = <?php echo $userLoggedIn ? 'true' : 'false'; ?>;
+        const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
+        const phpRoutes = <?php echo $routesJson ?: '[]'; ?>;
+        const phpReports = <?php echo $reportsJson ?: '[]'; ?>;
+    </script>
     <script>
         // Initialize map
         const map = L.map('map').setView([-6.2088, 106.8456], 13); // Default to Jakarta
@@ -799,37 +979,23 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
         
         // Global variables
         let currentMode = 'view'; // 'view', 'addRouteStart', 'addRouteEnd'
-        let routes = [];
+        let routes = phpRoutes;
         let routeLines = [];
         let selectedRoute = null;
-        let currentUser = null; // Will be set after login
+        let currentUser = userData;
         let routeStartPoint = null;
         let routeEndPoint = null;
         let routeStartMarker = null;
         let routeEndMarker = null;
-        
-        // API endpoints (replace with your actual backend endpoints)
-        const API_BASE = 'https://your-api-domain.com/api';
-        const ENDPOINTS = {
-            LOGIN: `${API_BASE}/auth/login`,
-            REGISTER: `${API_BASE}/auth/register`,
-            LOGOUT: `${API_BASE}/auth/logout`,
-            ROUTES: `${API_BASE}/routes`,
-            REPORTS: `${API_BASE}/reports`,
-            USERS: `${API_BASE}/users`
-        };
+        let routeTempLine = null;
         
         // DOM Elements
         const addRouteBtn = document.getElementById('addRouteBtn');
         const reportModal = document.getElementById('reportModal');
         const routeModal = document.getElementById('routeModal');
-        const loginModal = document.getElementById('loginModal');
-        const registerModal = document.getElementById('registerModal');
         const closeBtns = document.querySelectorAll('.close-btn');
         const reportForm = document.getElementById('reportForm');
         const routeForm = document.getElementById('routeForm');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
         const filterButtons = document.querySelectorAll('.filter-options button');
         const reportsList = document.getElementById('reportsList');
         const searchInput = document.getElementById('search');
@@ -848,255 +1014,355 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
         const accidentCount = document.getElementById('accidentCount');
         const safeCount = document.getElementById('safeCount');
         const closeRoutePanel = document.getElementById('closeRoutePanel');
-        const authButtons = document.getElementById('authButtons');
-        const userInfo = document.getElementById('userInfo');
-        const userName = document.getElementById('userName');
-        const userAvatar = document.getElementById('userAvatar');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
         const routeLoginPrompt = document.getElementById('routeLoginPrompt');
-        const reportSubmitBtn = document.getElementById('reportSubmitBtn');
+        
+        // New elements for route creation
+        const routeCreationControls = document.getElementById('routeCreationControls');
+        const selectStartBtn = document.getElementById('selectStartBtn');
+        const selectEndBtn = document.getElementById('selectEndBtn');
+        const createRouteBtn = document.getElementById('createRouteBtn');
+        const cancelRouteBtn = document.getElementById('cancelRouteBtn');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
         
         // Initialize the application
         function init() {
-            checkAuthStatus();
             setupEventListeners();
+            loadRoutes();
+            loadReports();
             tryGeolocation();
         }
         
-        // Check if user is authenticated
-        function checkAuthStatus() {
-    // Check if we have PHP session data
-    if (userLoggedIn && userData) {
-        currentUser = userData;
-        updateUIForAuthenticatedUser();
-        return;
-    }
-    
-    // Fallback to localStorage check
-    const token = localStorage.getItem('authToken');
-    const storedUserData = localStorage.getItem('userData');
-    
-    if (token && storedUserData) {
-        try {
-            currentUser = JSON.parse(storedUserData);
-            updateUIForAuthenticatedUser();
-        } catch (e) {
-            console.error('Error parsing user data:', e);
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-        }
-    }
-    
-    loadRoutes();
-}
-        
-        // Update UI for authenticated user
-        function updateUIForAuthenticatedUser() {
-            authButtons.style.display = 'none';
-            userInfo.style.display = 'flex';
-            userName.textContent = currentUser.name;
-            userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
-        }
-        
-        // Update UI for logged out user
-        function updateUIForLoggedOutUser() {
-            authButtons.style.display = 'block';
-            userInfo.style.display = 'none';
-            currentUser = null;
-        }
-        
-        // API call function
-        async function apiCall(url, options = {}) {
-            try {
-                const token = localStorage.getItem('authToken');
-                const headers = {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                };
-                
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                
-                const response = await fetch(url, {
-                    ...options,
-                    headers
+        // Setup event listeners
+        function setupEventListeners() {
+            // Add route button
+            if (addRouteBtn) {
+                addRouteBtn.addEventListener('click', () => {
+                    if (!userLoggedIn) {
+                        alert('Silakan masuk terlebih dahulu untuk menambahkan rute.');
+                        return;
+                    }
+                    startRouteCreation();
                 });
-                
-                if (response.status === 401) {
-                    // Token expired or invalid
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userData');
-                    updateUIForLoggedOutUser();
-                    throw new Error('Authentication failed');
-                }
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.message || 'API request failed');
-                }
-                
-                return data;
-            } catch (error) {
-                console.error('API call error:', error);
-                throw error;
             }
-        }
-        
-        // Get route geometry from OSRM (Open Source Routing Machine)
-        async function getRouteGeometry(startLat, startLng, endLat, endLng) {
-            try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.code === 'Ok' && data.routes.length > 0) {
-                    return data.routes[0].geometry;
-                }
-                throw new Error('No route found');
-            } catch (error) {
-                console.error('Error fetching route:', error);
-                // Fallback to straight line if routing service fails
-                return {
-                    type: 'LineString',
-                    coordinates: [
-                        [startLng, startLat],
-                        [endLng, endLat]
-                    ]
-                };
+            
+            // Route creation controls
+            if (selectStartBtn) {
+                selectStartBtn.addEventListener('click', () => {
+                    setMode('addRouteStart');
+                    updateStepIndicator(1);
+                });
             }
-        }
-        
-        // Load routes from backend
-        async function loadRoutes() {
-            try {
-                // In a real app, fetch from your backend API
-                const data = await apiCall(ENDPOINTS.ROUTES);
-                routes = data.routes || [];
-                
-                // For demo purposes, if API fails, use sample data
-                if (routes.length === 0) {
-                    routes = [
-                        {
-                            id: 1,
-                            name: "Rute Utama",
-                            start_lat: -6.2088,
-                            start_lng: 106.8456,
-                            end_lat: -6.2000,
-                            end_lng: 106.8500,
-                            creator: { id: 1, name: "John Doe" },
-                            created_at: '2023-10-15T14:30:00',
-                            reports: [
-                                {
-                                    id: 1,
-                                    type: 'crime',
-                                    description: 'Banyak pencopet berkeliaran di sekitar halte bus ini, terutama pada jam pulang kerja.',
-                                    createdAt: '2023-10-15T14:30:00',
-                                    likes: 12,
-                                    dislikes: 2,
-                                    user: { id: 2, name: "Jane Smith" }
-                                },
-                                {
-                                    id: 2,
-                                    type: 'hazard',
-                                    description: 'Lubang besar di jalan yang belum diperbaiki selama berminggu-minggu.',
-                                    createdAt: '2023-10-13T16:45:00',
-                                    likes: 15,
-                                    dislikes: 0,
-                                    user: { id: 3, name: "Bob Johnson" }
-                                }
-                            ]
-                        },
-                        {
-                            id: 2,
-                            name: "Rute Alternatif",
-                            start_lat: -6.1950,
-                            start_lng: 106.8400,
-                            end_lat: -6.2100,
-                            end_lng: 106.8350,
-                            creator: { id: 2, name: "Jane Smith" },
-                            created_at: '2023-10-14T09:15:00',
-                            reports: [
-                                {
-                                    id: 3,
-                                    type: 'accident',
-                                    description: 'Tikungan tajam ini sudah menyebabkan beberapa kecelakaan, terutama saat hujan.',
-                                    createdAt: '2023-10-14T09:15:00',
-                                    likes: 8,
-                                    dislikes: 1,
-                                    user: { id: 1, name: "John Doe" }
-                                },
-                                {
-                                    id: 4,
-                                    type: 'safe_spot',
-                                    description: 'Pos polisi yang selalu aktif 24 jam, tempat aman untuk meminta bantuan.',
-                                    createdAt: '2023-10-12T11:20:00',
-                                    likes: 20,
-                                    dislikes: 1,
-                                    user: { id: 4, name: "Alice Brown" }
-                                }
-                            ]
+            
+            if (selectEndBtn) {
+                selectEndBtn.addEventListener('click', () => {
+                    setMode('addRouteEnd');
+                    updateStepIndicator(2);
+                });
+            }
+            
+            if (createRouteBtn) {
+                createRouteBtn.addEventListener('click', () => {
+                    showRouteModal();
+                });
+            }
+            
+            if (cancelRouteBtn) {
+                cancelRouteBtn.addEventListener('click', () => {
+                    cancelRouteCreation();
+                });
+            }
+            
+            // Close modals
+            if (closeBtns) {
+                closeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const modal = this.getAttribute('data-dismiss') === 'route' ? 
+                            routeModal : reportModal;
+                        if (modal) modal.style.display = 'none';
+                        setMode('view');
+                        
+                        // Clean up route creation markers if needed
+                        if (routeStartMarker) {
+                            map.removeLayer(routeStartMarker);
+                            routeStartMarker = null;
                         }
+                        if (routeEndMarker) {
+                            map.removeLayer(routeEndMarker);
+                            routeEndMarker = null;
+                        }
+                        if (routeTempLine) {
+                            map.removeLayer(routeTempLine);
+                            routeTempLine = null;
+                        }
+                        routeStartPoint = null;
+                        routeEndPoint = null;
+                    });
+                });
+            }
+            
+            // Close route info panel
+            if (closeRoutePanel) {
+                closeRoutePanel.addEventListener('click', () => {
+                    if (routeInfoPanel) routeInfoPanel.style.display = 'none';
+                    selectedRoute = null;
+                });
+            }
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === reportModal && reportModal) {
+                    reportModal.style.display = 'none';
+                    setMode('view');
+                }
+                if (e.target === routeModal && routeModal) {
+                    routeModal.style.display = 'none';
+                    setMode('view');
+                    
+                    // Clean up route creation markers
+                    if (routeStartMarker) {
+                        map.removeLayer(routeStartMarker);
+                        routeStartMarker = null;
+                    }
+                    if (routeEndMarker) {
+                        map.removeLayer(routeEndMarker);
+                        routeEndMarker = null;
+                    }
+                    if (routeTempLine) {
+                        map.removeLayer(routeTempLine);
+                        routeTempLine = null;
+                    }
+                    routeStartPoint = null;
+                    routeEndPoint = null;
+                }
+            });
+            
+            // Handle map clicks for route creation
+            map.on('click', (e) => {
+                if (currentMode === 'addRouteStart') {
+                    setStartPoint(e.latlng);
+                } else if (currentMode === 'addRouteEnd') {
+                    setEndPoint(e.latlng);
+                }
+            });
+            
+            // Filter reports
+            if (filterButtons) {
+                filterButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Remove active class from all buttons
+                        filterButtons.forEach(btn => btn.classList.remove('active'));
+                        
+                        // Add active class to clicked button
+                        button.classList.add('active');
+                        
+                        const filterType = button.getAttribute('data-type');
+                        filterReports(filterType);
+                    });
+                });
+            }
+            
+            // Handle form submission
+            if (reportForm) {
+                reportForm.addEventListener('submit', (e) => {
+                    // Let the form submit normally (PHP will handle it)
+                });
+            }
+            
+            if (routeForm) {
+                routeForm.addEventListener('submit', (e) => {
+                    // Let the form submit normally (PHP will handle it)
+                });
+            }
+            
+            // Search functionality
+            if (searchBtn) {
+                searchBtn.addEventListener('click', searchLocation);
+            }
+            
+            if (searchInput) {
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        searchLocation();
+                    }
+                });
+            }
+            
+            // Add report to route
+            if (addToRouteBtn) {
+                addToRouteBtn.addEventListener('click', () => {
+                    if (!userLoggedIn) {
+                        alert('Silakan masuk terlebih dahulu untuk menambahkan laporan.');
+                        return;
+                    }
+                    
+                    if (selectedRoute) {
+                        if (document.getElementById('reportRouteId')) {
+                            document.getElementById('reportRouteId').value = selectedRoute.id;
+                        }
+                        if (reportModal) reportModal.style.display = 'flex';
+                    } else {
+                        alert('Silakan pilih rute terlebih dahulu dengan mengklik pada garis rute di peta.');
+                    }
+                });
+            }
+        }
+        
+        // Load routes from PHP data
+        // Load routes from PHP data with actual road paths
+function loadRoutes() {
+    try {
+        // Clear existing route lines
+        routeLines.forEach(line => map.removeLayer(line));
+        routeLines = [];
+        
+        // Draw routes on map
+        for (const route of routes) {
+            try {
+                let latLngs = [];
+                
+                // Check if we have a polyline stored in the database
+                if (route.polyline) {
+                    try {
+                        // Parse the polyline from database
+                        const polylineData = JSON.parse(route.polyline);
+                        if (polylineData && polylineData.coordinates) {
+                            // Convert GeoJSON format [lng, lat] to Leaflet format [lat, lng]
+                            latLngs = polylineData.coordinates.map(coord => [coord[1], coord[0]]);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing polyline:', e);
+                        // Fallback to straight line
+                        latLngs = [
+                            [route.start_lat, route.start_lng],
+                            [route.end_lat, route.end_lng]
+                        ];
+                    }
+                } else {
+                    // Fallback to straight line if no polyline
+                    latLngs = [
+                        [route.start_lat, route.start_lng],
+                        [route.end_lat, route.end_lng]
                     ];
                 }
                 
-                // Clear existing route lines
-                routeLines.forEach(line => map.removeLayer(line));
-                routeLines = [];
+                // Create the polyline
+                const line = L.polyline(latLngs, {
+                    color: getColorForReportType(route.reports && route.reports[0] ? route.reports[0].type : 'hazard'),
+                    weight: 6,
+                    opacity: 0.7,
+                    className: 'route-line'
+                }).addTo(map);
                 
-                // Draw routes on map
-                for (const route of routes) {
-                    try {
-                        // Get the route geometry from OSRM
-                        const geometry = await getRouteGeometry(
-                            route.start_lat, 
-                            route.start_lng, 
-                            route.end_lat, 
-                            route.end_lng
-                        );
-                        
-                        // Convert GeoJSON coordinates to LatLng pairs
-                        const latLngs = geometry.coordinates.map(coord => L.latLng(coord[1], coord[0]));
-                        
-                        // Create the polyline with the actual route path
-                        const line = L.polyline(latLngs, {
-                            color: getColorForReportType(route.reports[0]?.type || 'hazard'),
-                            weight: 6,
-                            opacity: 0.7,
-                            className: 'route-line'
-                        }).addTo(map);
-                        
-                        // Store reference to the line and route
-                        line.routeId = route.id;
-                        routeLines.push(line);
-                        
-                        // Add click event to show route reports
-                        line.on('click', function(e) {
-                            showRouteReports(route.id);
-                        });
-                        
-                        // Add markers for start and end points
-                        L.marker([route.start_lat, route.start_lng]).addTo(map)
-                            .bindPopup('Titik Awal: ' + (route.name || 'Rute #' + route.id));
-                        
-                        L.marker([route.end_lat, route.end_lng]).addTo(map)
-                            .bindPopup('Titik Akhir: ' + (route.name || 'Rute #' + route.id));
-                            
-                    } catch (error) {
-                        console.error('Error creating route:', error);
-                    }
-                }
+                // Store reference to the line and route
+                line.routeId = route.id;
+                routeLines.push(line);
                 
-                // Load all reports
-                loadReports();
+                // Add click event to show route reports
+                line.on('click', function(e) {
+                    showRouteReports(route.id);
+                });
+                
+                // Add markers for start and end points
+                L.marker([route.start_lat, route.start_lng]).addTo(map)
+                    .bindPopup('Titik Awal: ' + (route.name || 'Rute #' + route.id));
+                
+                L.marker([route.end_lat, route.end_lng]).addTo(map)
+                    .bindPopup('Titik Akhir: ' + (route.name || 'Rute #' + route.id));
+                    
             } catch (error) {
-                console.error('Error loading routes:', error);
-                alert('Gagal memuat data rute. Silakan coba lagi nanti.');
+                console.error('Error creating route:', error);
             }
         }
+        
+    } catch (error) {
+        console.error('Error loading routes:', error);
+    }
+}
+
+// After the route is successfully saved, automatically open the report modal
+function saveRoute() {
+    const formData = new FormData(routeForm);
+    
+    fetch('save_route.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Rute berhasil dibuat! Silakan tambahkan laporan untuk rute ini.');
+            routeModal.style.display = 'none';
+            
+            // Set the route ID for the report
+            document.getElementById('reportRouteId').value = data.route_id;
+            
+            // Automatically open the report modal
+            reportModal.style.display = 'flex';
+            
+            // Reset and reload routes
+            cancelRouteCreation();
+            // Reload routes from server after a short delay
+            setTimeout(() => {
+                fetchRoutesFromServer();
+            }, 1000);
+        } else {
+            alert('Gagal membuat rute: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan rute');
+    });
+}
+
+// Fetch routes from server
+function fetchRoutesFromServer() {
+    fetch('get_routes.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                routes = data.routes;
+                loadRoutes();
+            } else {
+                console.error('Failed to fetch routes:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching routes:', error);
+        });
+}
+
+// Save report via AJAX
+function saveReport() {
+    const formData = new FormData(reportForm);
+    
+    fetch('save_report.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Laporan berhasil ditambahkan!');
+            reportModal.style.display = 'none';
+            
+            // Reset the form
+            reportForm.reset();
+            
+            // Reload routes to show the new report
+            fetchRoutesFromServer();
+            loadReports();
+        } else {
+            alert('Gagal menambahkan laporan: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan laporan');
+    });
+}
         
         // Get color for report type
         function getColorForReportType(type) {
@@ -1111,7 +1377,7 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
         
         // Show reports for a specific route
         function showRouteReports(routeId) {
-            const route = routes.find(r => r.id === routeId);
+            const route = routes.find(r => r.id == routeId);
             if (!route) return;
             
             selectedRoute = route;
@@ -1119,18 +1385,12 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             // Update route info panel
             routeReportsList.innerHTML = '';
             routeNameTitle.textContent = route.name || 'Rute #' + route.id;
-            routeCreatorInfo.innerHTML = `Dibuat oleh: <span class="user-link" data-user-id="${route.creator.id}">${route.creator.name}</span>`;
-            
-            // Add event listener to creator name
-            document.querySelector('.user-link').addEventListener('click', function() {
-                const userId = this.getAttribute('data-user-id');
-                showUserProfile(userId);
-            });
+            routeCreatorInfo.innerHTML = `Dibuat oleh: <span class="user-link">${route.creator_name || 'Unknown'}</span>`;
             
             // Update statistics
             updateRouteStats(route);
             
-            if (route.reports.length === 0) {
+            if (!route.reports || route.reports.length === 0) {
                 routeReportsList.innerHTML = '<div class="text-center py-3 text-muted">Belum ada laporan untuk rute ini</div>';
             } else {
                 route.reports.forEach(report => {
@@ -1139,26 +1399,15 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
                     reportItem.innerHTML = `
                         <div class="report-header">
                             <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
-                            <span class="report-date">${formatDate(report.createdAt)}</span>
+                            <span class="report-date">${formatDate(report.created_at)}</span>
                         </div>
                         <p class="report-description">${report.description}</p>
                         <div class="report-footer">
-                            <div class="report-user" data-user-id="${report.user.id}">
-                                <small>Oleh: ${report.user.name}</small>
-                            </div>
-                            <div class="report-likes">
-                                <i class="fas fa-heart"></i>
-                                <span>${report.likes}</span>
+                            <div class="report-user">
+                                <small>Oleh: ${report.user_name || 'Unknown'}</small>
                             </div>
                         </div>
                     `;
-                    
-                    // Add event listener to user name
-                    reportItem.querySelector('.report-user').addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const userId = this.getAttribute('data-user-id');
-                        showUserProfile(userId);
-                    });
                     
                     routeReportsList.appendChild(reportItem);
                 });
@@ -1167,30 +1416,15 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             // Show the panel
             routeInfoPanel.style.display = 'block';
             
-            // Show/hide add report button based on auth status
-            if (currentUser) {
-                addToRouteBtn.style.display = 'block';
-                routeLoginPrompt.style.display = 'none';
-            } else {
-                addToRouteBtn.style.display = 'none';
-                routeLoginPrompt.style.display = 'block';
-            }
-            
             // Position the panel near the route
-            const midLat = (route.start_lat + route.end_lat) / 2;
-            const midLng = (route.start_lng + route.end_lng) / 2;
+            const midLat = (parseFloat(route.start_lat) + parseFloat(route.end_lat)) / 2;
+            const midLng = (parseFloat(route.start_lng) + parseFloat(route.end_lng)) / 2;
             map.setView([midLat, midLng], 13);
-        }
-        
-        // Show user profile (placeholder function)
-        function showUserProfile(userId) {
-            alert(`Ini akan menampilkan profil pengguna dengan ID: ${userId}. Implementasi lengkap akan tergantung pada backend Anda.`);
-            // In a real app, you would fetch user details and show a profile modal
         }
         
         // Update route statistics
         function updateRouteStats(route) {
-            const reports = route.reports;
+            const reports = route.reports || [];
             totalReports.textContent = reports.length;
             
             // Count reports by type
@@ -1204,240 +1438,44 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             safeCount.textContent = safeReports + hazardReports; // Combining safe and hazard for simplicity
         }
         
-        // Setup event listeners
-        function setupEventListeners() {
-            // Add route button
-            addRouteBtn.addEventListener('click', () => {
-                if (!currentUser) {
-                    alert('Silakan masuk terlebih dahulu untuk menambahkan rute.');
-                    loginModal.style.display = 'flex';
-                    return;
-                }
-                startRouteCreation();
-            });
-            
-            // Close modals
-            closeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const modal = this.getAttribute('data-dismiss') === 'route' ? 
-                        routeModal : reportModal;
-                    modal.style.display = 'none';
-                    setMode('view');
-                    
-                    // Clean up route creation markers if needed
-                    if (routeStartMarker) {
-                        map.removeLayer(routeStartMarker);
-                        routeStartMarker = null;
-                    }
-                    if (routeEndMarker) {
-                        map.removeLayer(routeEndMarker);
-                        routeEndMarker = null;
-                    }
-                    routeStartPoint = null;
-                    routeEndPoint = null;
-                });
-            });
-            
-            // Close route info panel
-            closeRoutePanel.addEventListener('click', () => {
-                routeInfoPanel.style.display = 'none';
-                selectedRoute = null;
-            });
-            
-            // Close modal when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === reportModal) {
-                    reportModal.style.display = 'none';
-                    setMode('view');
-                }
-                if (e.target === routeModal) {
-                    routeModal.style.display = 'none';
-                    setMode('view');
-                    
-                    // Clean up route creation markers
-                    if (routeStartMarker) {
-                        map.removeLayer(routeStartMarker);
-                        routeStartMarker = null;
-                    }
-                    if (routeEndMarker) {
-                        map.removeLayer(routeEndMarker);
-                        routeEndMarker = null;
-                    }
-                    routeStartPoint = null;
-                    routeEndPoint = null;
-                }
-                if (e.target === loginModal) {
-                    loginModal.style.display = 'none';
-                }
-                if (e.target === registerModal) {
-                    registerModal.style.display = 'none';
-                }
-            });
-            
-            // Handle map clicks for route creation
-            map.on('click', (e) => {
-                if (currentMode === 'addRouteStart') {
-                    setStartPoint(e.latlng);
-                } else if (currentMode === 'addRouteEnd') {
-                    setEndPoint(e.latlng);
-                }
-            });
-            
-            // Filter reports
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Remove active class from all buttons
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    
-                    // Add active class to clicked button
-                    button.classList.add('active');
-                    
-                    const filterType = button.getAttribute('data-type');
-                    filterReports(filterType);
-                });
-            });
-            
-            // Handle form submission
-            reportForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                saveReport();
-            });
-            
-            // Login form submission
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await handleLogin();
-            });
-            
-            // Register form submission
-            registerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await handleRegister();
-            });
-            
-            // Search functionality
-            searchBtn.addEventListener('click', searchLocation);
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    searchLocation();
-                }
-            });
-            
-            // Add report to route
-            addToRouteBtn.addEventListener('click', () => {
-                if (!currentUser) {
-                    alert('Silakan masuk terlebih dahulu untuk menambahkan laporan.');
-                    loginModal.style.display = 'flex';
-                    return;
-                }
-                
-                if (selectedRoute) {
-                    document.getElementById('reportRouteId').value = selectedRoute.id;
-                    reportModal.style.display = 'flex';
-                } else {
-                    alert('Silakan pilih rute terlebih dahulu dengan mengklik pada garis rute di peta.');
-                }
-            });
-            
-            // Confirm route creation
-            confirmRouteBtn.addEventListener('click', createNewRoute);
-            
-            // Auth buttons
-            loginBtn.addEventListener('click', () => {
-                loginModal.style.display = 'flex';
-            });
-            
-            registerBtn.addEventListener('click', () => {
-                registerModal.style.display = 'flex';
-            });
-            
-            // Logout button
-            logoutBtn.addEventListener('click', () => {
-                handleLogout();
-            });
-        }
-        
-        // Handle login
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            try {
-                const data = await apiCall(ENDPOINTS.LOGIN, {
-                    method: 'POST',
-                    body: JSON.stringify({ email, password })
-                });
-                
-                // Save token and user data
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('userData', JSON.stringify(data.user));
-                currentUser = data.user;
-                
-                // Update UI
-                updateUIForAuthenticatedUser();
-                
-                // Close modal
-                loginModal.style.display = 'none';
-                loginForm.reset();
-                
-                alert('Login berhasil!');
-            } catch (error) {
-                alert('Login gagal: ' + error.message);
-            }
-        }
-        
-        // Handle register
-        async function handleRegister() {
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                alert('Password dan konfirmasi password tidak cocok.');
-                return;
-            }
-            
-            try {
-                const data = await apiCall(ENDPOINTS.REGISTER, {
-                    method: 'POST',
-                    body: JSON.stringify({ name, email, password })
-                });
-                
-                // Save token and user data
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('userData', JSON.stringify(data.user));
-                currentUser = data.user;
-                
-                // Update UI
-                updateUIForAuthenticatedUser();
-                
-                // Close modal
-                registerModal.style.display = 'none';
-                registerForm.reset();
-                
-                alert('Pendaftaran berhasil!');
-            } catch (error) {
-                alert('Pendaftaran gagal: ' + error.message);
-            }
-        }
-        
-        // Handle logout
-        function handleLogout() {
-            // In a real app, you might want to call your logout API endpoint
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            updateUIForLoggedOutUser();
-            alert('Anda telah keluar.');
-        }
-        
         // Start the route creation process
         function startRouteCreation() {
-            routeModal.style.display = 'flex';
-            setMode('addRouteStart');
-            startPointInfo.textContent = 'Belum dipilih';
-            endPointInfo.textContent = 'Belum dipilih';
-            confirmRouteBtn.disabled = true;
+            routeCreationControls.style.display = 'flex';
+            setMode('view');
+            updateStepIndicator(0);
+            
+            // Reset button states
+            selectStartBtn.disabled = false;
+            selectEndBtn.disabled = true;
+            createRouteBtn.disabled = true;
+            
+            // Hide the add route button
+            addRouteBtn.style.display = 'none';
+        }
+        
+        // Update step indicator
+        function updateStepIndicator(step) {
+            // Reset all steps
+            step1.classList.remove('active', 'completed');
+            step2.classList.remove('active', 'completed');
+            step3.classList.remove('active', 'completed');
+            
+            // Update based on current step
+            if (step >= 1) {
+                step1.classList.add('completed');
+            }
+            
+            if (step >= 2) {
+                step2.classList.add('completed');
+            }
+            
+            if (step === 1) {
+                step1.classList.add('active');
+            } else if (step === 2) {
+                step2.classList.add('active');
+            } else if (step === 3) {
+                step3.classList.add('active');
+            }
         }
         
         // Set the start point for route creation
@@ -1447,6 +1485,7 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             // Remove existing start marker
             if (routeStartMarker) {
                 map.removeLayer(routeStartMarker);
+                routeStartMarker = null;
             }
             
             // Add new start marker
@@ -1458,10 +1497,16 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
                 })
             }).addTo(map).bindPopup('Titik Awal').openPopup();
             
-            startPointInfo.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+            // Enable next step
+            selectEndBtn.disabled = false;
+            updateStepIndicator(1);
+            setMode('view');
             
-            // Move to selecting end point
-            setMode('addRouteEnd');
+            // If we already have an end point, draw the line
+            if (routeEndPoint) {
+                drawTempRouteLine();
+                createRouteBtn.disabled = false;
+            }
         }
         
         // Set the end point for route creation
@@ -1471,6 +1516,7 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             // Remove existing end marker
             if (routeEndMarker) {
                 map.removeLayer(routeEndMarker);
+                routeEndMarker = null;
             }
             
             // Add new end marker
@@ -1482,103 +1528,136 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
                 })
             }).addTo(map).bindPopup('Titik Akhir').openPopup();
             
-            endPointInfo.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+            // Draw the temporary route line
+            drawTempRouteLine();
             
-            // Enable confirm button
-            confirmRouteBtn.disabled = false;
+            // Enable create route button
+            createRouteBtn.disabled = false;
+            updateStepIndicator(2);
+            setMode('view');
         }
         
-        // Create a new route
-        async function createNewRoute() {
+        // Draw temporary route line
+        function drawTempRouteLine() {
+            if (routeStartPoint && routeEndPoint) {
+                // Remove existing temp line
+                if (routeTempLine) {
+                    map.removeLayer(routeTempLine);
+                    routeTempLine = null;
+                }
+                
+                // Get route from OSRM (Open Source Routing Machine)
+                const startLng = routeStartPoint.lng;
+                const startLat = routeStartPoint.lat;
+                const endLng = routeEndPoint.lng;
+                const endLat = routeEndPoint.lat;
+                
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
+                
+                fetch(osrmUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 'Ok' && data.routes.length > 0) {
+                            const geometry = data.routes[0].geometry;
+                            const coordinates = geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                            
+                            routeTempLine = L.polyline(coordinates, {
+                                color: '#3498db',
+                                weight: 4,
+                                opacity: 0.7,
+                                dashArray: '10, 10'
+                            }).addTo(map);
+                        } else {
+                            // Fallback to straight line if OSRM fails
+                            drawStraightLine();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching OSRM route:', error);
+                        // Fallback to straight line
+                        drawStraightLine();
+                    });
+            }
+        }
+        
+        // Fallback: Draw straight line
+        function drawStraightLine() {
+            const latLngs = [
+                [routeStartPoint.lat, routeStartPoint.lng],
+                [routeEndPoint.lat, routeEndPoint.lng]
+            ];
+            
+            routeTempLine = L.polyline(latLngs, {
+                color: '#3498db',
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 10'
+            }).addTo(map);
+        }
+        
+        // Show route modal for final confirmation
+        function showRouteModal() {
             if (!routeStartPoint || !routeEndPoint) {
-                alert('Silakan pilih titik awal dan akhir terlebih dahulu.');
+                alert('Silakan pilih titik awal dan titik akhir terlebih dahulu.');
                 return;
             }
             
-            try {
-                // Create the new route object
-                const newRoute = {
-                    name: document.getElementById('routeName').value || '',
-                    start_lat: routeStartPoint.lat,
-                    start_lng: routeStartPoint.lng,
-                    end_lat: routeEndPoint.lat,
-                    end_lng: routeEndPoint.lng
-                };
-                
-                // Save to backend
-                const data = await apiCall(ENDPOINTS.ROUTES, {
-                    method: 'POST',
-                    body: JSON.stringify(newRoute)
-                });
-                
-                // Add to local routes array
-                routes.push(data.route);
-                
-                // Get the route geometry from OSRM
-                const geometry = await getRouteGeometry(
-                    data.route.start_lat, 
-                    data.route.start_lng, 
-                    data.route.end_lat, 
-                    data.route.end_lng
-                );
-                
-                // Convert GeoJSON coordinates to LatLng pairs
-                const latLngs = geometry.coordinates.map(coord => L.latLng(coord[1], coord[0]));
-                
-                // Create the polyline with the actual route path
-                const line = L.polyline(latLngs, {
-                    color: '#3498db', // Default color for routes without reports
-                    weight: 6,
-                    opacity: 0.7,
-                    className: 'route-line'
-                }).addTo(map);
-                
-                // Store reference to the line and route
-                line.routeId = data.route.id;
-                routeLines.push(line);
-                
-                // Add click event to show route reports
-                line.on('click', function(e) {
-                    showRouteReports(data.route.id);
-                });
-                
-                // Add markers for start and end points
-                L.marker([data.route.start_lat, data.route.start_lng]).addTo(map)
-                    .bindPopup('Titik Awal: ' + (data.route.name || 'Rute #' + data.route.id));
-                
-                L.marker([data.route.end_lat, data.route.end_lng]).addTo(map)
-                    .bindPopup('Titik Akhir: ' + (data.route.name || 'Rute #' + data.route.id));
-                
-                // Close the modal
-                routeModal.style.display = 'none';
-                
-                // Show warning about required report
-                alert('Rute berhasil dibuat! Ingat: Anda harus menambahkan laporan untuk rute ini atau akan dihapus dalam 24 jam.');
-                
-                // Prompt to add a report
-                selectedRoute = data.route;
-                document.getElementById('reportRouteId').value = data.route.id;
-                reportModal.style.display = 'flex';
-                
-                // Reset mode
-                setMode('view');
-                
-                // Clean up markers
-                if (routeStartMarker) {
-                    map.removeLayer(routeStartMarker);
-                    routeStartMarker = null;
-                }
-                if (routeEndMarker) {
-                    map.removeLayer(routeEndMarker);
-                    routeEndMarker = null;
-                }
-                routeStartPoint = null;
-                routeEndPoint = null;
-                
-            } catch (error) {
-                console.error('Error creating route:', error);
-                alert('Terjadi kesalahan saat membuat rute. Silakan coba lagi.');
+            // Update modal with coordinates
+            startPointInfo.textContent = `${routeStartPoint.lat.toFixed(6)}, ${routeStartPoint.lng.toFixed(6)}`;
+            endPointInfo.textContent = `${routeEndPoint.lat.toFixed(6)}, ${routeEndPoint.lng.toFixed(6)}`;
+            
+            // Set hidden form values
+            document.getElementById('startLat').value = routeStartPoint.lat;
+            document.getElementById('startLng').value = routeStartPoint.lng;
+            document.getElementById('endLat').value = routeEndPoint.lat;
+            document.getElementById('endLng').value = routeEndPoint.lng;
+            
+            // Enable confirm button
+            confirmRouteBtn.disabled = false;
+            
+            // Show modal
+            routeModal.style.display = 'flex';
+            updateStepIndicator(3);
+        }
+        
+        // Cancel route creation
+        function cancelRouteCreation() {
+            // Clean up markers
+            if (routeStartMarker) {
+                map.removeLayer(routeStartMarker);
+                routeStartMarker = null;
             }
+            if (routeEndMarker) {
+                map.removeLayer(routeEndMarker);
+                routeEndMarker = null;
+            }
+            if (routeTempLine) {
+                map.removeLayer(routeTempLine);
+                routeTempLine = null;
+            }
+            
+            // Reset variables
+            routeStartPoint = null;
+            routeEndPoint = null;
+            
+            // Reset button states
+            selectStartBtn.disabled = false;
+            selectEndBtn.disabled = true;
+            createRouteBtn.disabled = true;
+            
+            // Hide controls
+            routeCreationControls.style.display = 'none';
+            
+            // Show add route button
+            addRouteBtn.style.display = 'flex';
+            
+            // Reset mode
+            setMode('view');
+            
+            // Reset step indicators
+            step1.classList.remove('active', 'completed');
+            step2.classList.remove('active', 'completed');
+            step3.classList.remove('active', 'completed');
         }
         
         // Set the current mode
@@ -1588,17 +1667,20 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             // Update mode indicator
             switch(mode) {
                 case 'addRouteStart':
-                    modeIndicator.textContent = 'Mode: Buat Rute - Pilih titik awal';
+                    modeIndicator.textContent = 'Mode: Pilih Titik Awal - Klik pada peta';
                     modeIndicator.style.display = 'block';
                     modeIndicator.style.backgroundColor = '#2ecc71';
+                    document.body.classList.add('creating-route-mode');
                     break;
                 case 'addRouteEnd':
-                    modeIndicator.textContent = 'Mode: Buat Rute - Pilih titik akhir';
+                    modeIndicator.textContent = 'Mode: Pilih Titik Akhir - Klik pada peta';
                     modeIndicator.style.display = 'block';
                     modeIndicator.style.backgroundColor = '#2ecc71';
+                    document.body.classList.add('creating-route-mode');
                     break;
                 default:
                     modeIndicator.style.display = 'none';
+                    document.body.classList.remove('creating-route-mode');
             }
         }
         
@@ -1617,42 +1699,23 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
         
         // Filter reports
         function filterReports(type) {
-            // In a real app, you would fetch filtered reports from the backend
-            // For demo, we'll just show all reports with a visual indication
-            loadReports();
+            loadReports(type);
         }
         
         // Load reports (from all routes)
-        function loadReports() {
+        function loadReports(filterType = 'all') {
             // Clear current list
             reportsList.innerHTML = '';
             
-            // Get active filter
-            const activeFilter = document.querySelector('.filter-options button.active');
-            const filterType = activeFilter ? activeFilter.getAttribute('data-type') : 'all';
-            
-            // Collect all reports from all routes
-            let allReports = [];
-            routes.forEach(route => {
-                route.reports.forEach(report => {
-                    allReports.push({
-                        ...report,
-                        routeId: route.id,
-                        routeName: route.name || 'Rute #' + route.id
-                    });
-                });
-            });
+            let filteredReports = phpReports;
             
             // Apply filter
             if (filterType !== 'all') {
-                allReports = allReports.filter(report => report.type === filterType);
+                filteredReports = filteredReports.filter(report => report.type === filterType);
             }
             
-            // Sort by date (newest first)
-            allReports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
             // Display reports
-            if (allReports.length === 0) {
+            if (filteredReports.length === 0) {
                 reportsList.innerHTML = `
                     <div class="no-reports">
                         <i class="fas fa-inbox"></i>
@@ -1660,7 +1723,7 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
                     </div>
                 `;
             } else {
-                allReports.forEach(report => {
+                filteredReports.forEach(report => {
                     addReportToDOM(report);
                 });
             }
@@ -1673,30 +1736,19 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
             reportCard.innerHTML = `
                 <div class="report-header">
                     <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
-                    <span class="report-date">${formatDate(report.createdAt)}</span>
+                    <span class="report-date">${formatDate(report.created_at)}</span>
                 </div>
                 <p class="report-description">${report.description}</p>
                 <div class="report-footer">
-                    <div class="report-user" data-user-id="${report.user.id}">
-                        <small>Oleh: ${report.user.name} • ${report.routeName}</small>
-                    </div>
-                    <div class="report-likes">
-                        <i class="fas fa-heart"></i>
-                        <span>${report.likes}</span>
+                    <div class="report-user">
+                        <small>Oleh: ${report.user_name || 'Unknown'} • ${report.route_name || 'Rute #' + report.route_id}</small>
                     </div>
                 </div>
             `;
             
             // Add click event to focus on the route
             reportCard.addEventListener('click', () => {
-                showRouteReports(report.routeId);
-            });
-            
-            // Add event listener to user name
-            reportCard.querySelector('.report-user').addEventListener('click', function(e) {
-                e.stopPropagation();
-                const userId = this.getAttribute('data-user-id');
-                showUserProfile(userId);
+                showRouteReports(report.route_id);
             });
             
             reportsList.appendChild(reportCard);
@@ -1715,66 +1767,14 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
         
         // Format date
         function formatDate(dateString) {
+            if (!dateString) return 'Tanggal tidak tersedia';
+            
             const date = new Date(dateString);
             return date.toLocaleDateString('id-ID', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric'
             });
-        }
-        
-        // Save report
-        async function saveReport() {
-            const type = document.getElementById('reportType').value;
-            const description = document.getElementById('reportDescription').value;
-            const routeId = document.getElementById('reportRouteId').value;
-            
-            if (!type || !description) {
-                alert("Harap isi semua field!");
-                return;
-            }
-            
-            try {
-                // Save to backend
-                const data = await apiCall(ENDPOINTS.REPORTS, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        route_id: routeId,
-                        type,
-                        description
-                    })
-                });
-                
-                // Add to existing route locally
-                const route = routes.find(r => r.id == routeId);
-                if (route) {
-                    route.reports.push(data.report);
-                    
-                    // Update the route line color based on the new report
-                    const line = routeLines.find(l => l.routeId == routeId);
-                    if (line) {
-                        line.setStyle({
-                            color: getColorForReportType(type)
-                        });
-                    }
-                    
-                    // Refresh the route info panel if it's currently showing this route
-                    if (selectedRoute && selectedRoute.id == routeId) {
-                        showRouteReports(routeId);
-                    }
-                }
-                
-                // Close modal and reset form
-                reportModal.style.display = 'none';
-                reportForm.reset();
-                
-                // Reload reports
-                loadReports();
-                
-                alert('Laporan berhasil ditambahkan!');
-            } catch (error) {
-                alert('Gagal menambahkan laporan: ' + error.message);
-            }
         }
         
         // Try to get user's location
@@ -1807,6 +1807,23 @@ const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
                 );
             }
         }
+
+
+
+        // Update the form submission handlers
+if (reportForm) {
+    reportForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveReport();
+    });
+}
+
+if (routeForm) {
+    routeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveRoute();
+    });
+}
         
         // Initialize the app
         init();
