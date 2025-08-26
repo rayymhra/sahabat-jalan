@@ -361,24 +361,21 @@ $reportsJson = json_encode($reports);
         }
         
         .add-route-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    order: 1; /* Ensure it appears below the location button */
+}
         
         .add-route-btn:hover {
             transform: scale(1.05);
@@ -525,26 +522,42 @@ $reportsJson = json_encode($reports);
             cursor: not-allowed;
         }
         
-        .route-line {
-            stroke-width: 5;
-            stroke-opacity: 0.7;
-        }
-        
-        .route-line.crime {
-            stroke: #ff7675;
-        }
-        
-        .route-line.accident {
-            stroke: #fdcb6e;
-        }
-        
-        .route-line.hazard {
-            stroke: #e17055;
-        }
-        
-        .route-line.safe_spot {
-            stroke: #00b894;
-        }
+        /* Enhanced route line styles with better visibility */
+.route-line {
+    stroke-width: 6;
+    stroke-opacity: 0.9;
+    filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.7));
+}
+
+.route-line.crime {
+    stroke: #ff5252; /* Brighter red */
+    stroke-dasharray: none;
+}
+
+.route-line.accident {
+    stroke: #ffeb3b; /* Brighter yellow */
+    stroke-dasharray: 5, 3; /* Dashed pattern for better visibility */
+}
+
+.route-line.hazard {
+    stroke: #ff9800; /* Orange instead of dark orange */
+    stroke-dasharray: 7, 2;
+}
+
+.route-line.safe_spot {
+    stroke: #4caf50; /* Brighter green */
+    stroke-dasharray: none;
+}
+
+/* Add a white outline to all route lines for better contrast */
+.route-line::before {
+    content: "";
+    position: absolute;
+    stroke: white;
+    stroke-width: 8;
+    stroke-opacity: 0.5;
+    z-index: -1;
+}
         
         .user-marker {
             border: 2px solid white;
@@ -855,33 +868,88 @@ $reportsJson = json_encode($reports);
             border-radius: 50%;
             object-fit: cover;
         }
+
+        .map-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column-reverse; /* Reverse order so location button is on top */
+            gap: 15px;
+            align-items: flex-end;
+}
         
         /* Location button */
         .location-btn {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            z-index: 1000;
-            background-color: white;
-            color: var(--secondary-color);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    background-color: white;
+    color: var(--secondary-color);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    order: 2; /* Ensure it appears above the add route button */
+}
         
         .location-btn:hover {
             background-color: var(--primary-color);
             color: white;
             transform: scale(1.05);
         }
+
+        @media (max-width: 992px) {
+    .map-controls {
+        bottom: 10px;
+        right: 10px;
+    }
+}
+
+/* For very small screens, make buttons a bit smaller */
+@media (max-width: 400px) {
+    .map-controls {
+        bottom: 8px;
+        right: 8px;
+    }
+    
+    .location-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .add-route-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+}
+
+        /* Responsive adjustments */
+@media (max-width: 576px) {
+    .map-controls {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .location-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .add-route-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+}
         
         /* User location marker */
         .user-location-marker {
@@ -906,33 +974,73 @@ $reportsJson = json_encode($reports);
                 opacity: 1;
             }
         }
+
+        .user-avatar-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.user-avatar-link:hover .user-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
         
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">
-            <i class="fas fa-map-marked-alt"></i>
-            <h1>Peta Jalan Aman</h1>
-        </div>
-        <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
-            <a href="auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
-            <a href="auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
-        </div>
-        <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
-            <div class="user-avatar" id="userAvatar"><?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?></div>
-            <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
-            <a href="auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
-        </div>
-    </header>
+    <div class="logo">
+        <i class="fas fa-map-marked-alt"></i>
+        <h1>Peta Jalan Aman</h1>
+    </div>
+    <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
+        <a href="auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
+        <a href="auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
+    </div>
+    <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
+        <a href="profile/index.php" class="user-avatar-link">
+            <div class="user-avatar" id="userAvatar">
+                <?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
+            </div>
+        </a>
+        <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
+        <a href="auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
+    </div>
+</header>
     
     <div class="main-container">
         <div class="map-container">
             <div id="map"></div>
+
+            <div class="map-controls">
+        <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
+            <i class="fas fa-location-arrow"></i>
+        </button>
+        
+        <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
+            <i class="fas fa-route"></i>
+        </button>
+    </div>
             
-            <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
+            <!-- <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
                 <i class="fas fa-location-arrow"></i>
-            </button>
+            </button> -->
             
             <div class="mode-indicator" id="modeIndicator"></div>
             
@@ -1214,6 +1322,7 @@ $reportsJson = json_encode($reports);
         function init() {
             setupEventListeners();
             setupLocationButton();
+            setupAvatarClick();
             loadRoutes();
             loadReports();
             tryGeolocation();
@@ -1558,14 +1667,28 @@ $reportsJson = json_encode($reports);
         
         // Get color for report type
         function getColorForReportType(type) {
-            switch(type) {
-                case 'crime': return '#ff7675';
-                case 'accident': return '#fdcb6e';
-                case 'hazard': return '#e17055';
-                case 'safe_spot': return '#00b894';
-                default: return '#3498db';
-            }
-        }
+    switch(type) {
+        case 'crime': return '#ff5252';
+        case 'accident': return '#ffeb3b';
+        case 'hazard': return '#ff9800';
+        case 'safe_spot': return '#4caf50';
+        default: return '#3498db';
+    }
+}
+
+// Update the route creation function to include the enhanced styling
+function createRoutePolyline(latLngs, type) {
+    const isAccident = type === 'accident';
+    const isHazard = type === 'hazard';
+    
+    return L.polyline(latLngs, {
+        color: getColorForReportType(type),
+        weight: 6,
+        opacity: 0.9,
+        className: 'route-line ' + type,
+        dashArray: isAccident ? '5, 3' : isHazard ? '7, 2' : null
+    });
+}
         
         // Show reports for a specific route
         function showRouteReports(routeId) {
@@ -1673,16 +1796,16 @@ $reportsJson = json_encode($reports);
         // Start the route creation process
         function startRouteCreation() {
             routeCreationControls.style.display = 'flex';
-            setMode('view');
-            updateStepIndicator(0);
-            
-            // Reset button states
-            selectStartBtn.disabled = false;
-            selectEndBtn.disabled = true;
-            createRouteBtn.disabled = true;
-            
-            // Hide the add route button
-            addRouteBtn.style.display = 'none';
+    setMode('view');
+    updateStepIndicator(0);
+    
+    // Reset button states
+    selectStartBtn.disabled = false;
+    selectEndBtn.disabled = true;
+    createRouteBtn.disabled = true;
+    
+    // Hide the map controls container
+    document.querySelector('.map-controls').style.display = 'none';
         }
         
         // Update step indicator
@@ -1883,13 +2006,16 @@ $reportsJson = json_encode($reports);
             // Show add route button
             addRouteBtn.style.display = 'flex';
             
-            // Reset mode
-            setMode('view');
-            
-            // Reset step indicators
-            step1.classList.remove('active', 'completed');
-            step2.classList.remove('active', 'completed');
-            step3.classList.remove('active', 'completed');
+            // Show the map controls container
+    document.querySelector('.map-controls').style.display = 'flex';
+    
+    // Reset mode
+    setMode('view');
+    
+    // Reset step indicators
+    step1.classList.remove('active', 'completed');
+    step2.classList.remove('active', 'completed');
+    step3.classList.remove('active', 'completed');
         }
         
         // Set the current mode
@@ -2140,9 +2266,6 @@ function centerMapOnUser(position) {
     userLocationMarker = L.marker([userLat, userLng], {
         icon: L.divIcon({
             className: 'user-location-marker',
-            html: '<i class="fas fa-user" style="color: white; font-size: 16px;"></i>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
         })
     }).addTo(map).bindPopup('Lokasi Anda Saat Ini').openPopup();
     
@@ -2278,6 +2401,45 @@ window.addEventListener('beforeunload', () => {
 window.addEventListener('pagehide', () => {
     stopWatchingPosition();
 });
+
+
+// Make user avatar clickable
+function setupAvatarClick() {
+    const userAvatar = document.getElementById('userAvatar');
+    const userAvatarLink = document.querySelector('.user-avatar-link');
+    
+    if (userAvatar && userLoggedIn) {
+        // Add click event to the avatar
+        userAvatar.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'profile/index.php';
+        });
+        
+        // Also make the username clickable
+        const userName = document.getElementById('userName');
+        if (userName) {
+            userName.style.cursor = 'pointer';
+            userName.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'profile/index.php';
+            });
+            
+            // Add hover effect to username
+            userName.addEventListener('mouseenter', () => {
+                userName.style.color = 'var(--primary-color)';
+                userName.style.textDecoration = 'underline';
+            });
+            
+            userName.addEventListener('mouseleave', () => {
+                userName.style.color = 'white';
+                userName.style.textDecoration = 'none';
+            });
+        }
+    }
+}
+
+
+
         
         
         
