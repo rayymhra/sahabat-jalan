@@ -1057,107 +1057,68 @@ $reportsJson = json_encode($reports);
                     <div class="route-step-icon">2</div>
                     <span>Pilih Titik Akhir</span>
                 </div>
-
-                <div class="nav-toggle" id="nav-toggle">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
+                
+                <div class="route-step" id="step3">
+                    <div class="route-step-icon">3</div>
+                    <span>Buat Rute</span>
+                </div>
+                
+                <div class="route-control-buttons">
+                    <button class="route-control-btn select-point-btn" id="selectStartBtn">
+                        <i class="fas fa-map-marker-alt"></i> Pilih Titik Awal
+                    </button>
+                    <button class="route-control-btn select-point-btn" id="selectEndBtn" disabled>
+                        <i class="fas fa-map-marker-alt"></i> Pilih Titik Akhir
+                    </button>
+                    <button class="route-control-btn create-route-btn" id="createRouteBtn" disabled>
+                        <i class="fas fa-route"></i> Buat Rute
+                    </button>
+                    <button class="route-control-btn cancel-route-btn" id="cancelRouteBtn">
+                        <i class="fas fa-times"></i> Batalkan
+                    </button>
                 </div>
             </div>
-        </div>
-    </nav>
-
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-content">
-            <div class="sidebar-header">
-                <span>Menu</span>
-                <button class="close-btn" id="close-btn">
-                    <i class="bi bi-x-lg"></i>
+            
+            <div class="route-info-panel" id="routeInfoPanel">
+                <div class="panel-header">
+                    <h5 id="routeNameTitle">Informasi Rute</h5>
+                    <button class="panel-close" id="closeRoutePanel">&times;</button>
+                </div>
+                <div id="routeCreatorInfo" class="route-creator"></div>
+                
+                <div class="route-stats" id="routeStats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalReports">0</span>
+                        <span class="stat-label">Laporan</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="crimeCount">0</span>
+                        <span class="stat-label">Kejahatan</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="accidentCount">0</span>
+                        <span class="stat-label">Kecelakaan</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="safeCount">0</span>
+                        <span class="stat-label">Aman</span>
+                    </div>
+                </div>
+                
+                <div class="route-reports-list" id="routeReportsList">
+                    <!-- Route reports will be added here -->
+                </div>
+                <button class="add-to-route-btn" id="addToRouteBtn">
+                    <i class="fas fa-plus me-1"></i> Tambahkan Laporan
                 </button>
+                <div class="login-prompt" id="routeLoginPrompt">
+                    <i class="fas fa-info-circle"></i> Silakan masuk untuk menambahkan laporan
+                </div>
             </div>
-            <div class="sidebar-menu">
-                <a href="#beranda" class="sidebar-link active" data-section="beranda">
-                    <i class="bi bi-house"></i>
-                    <span>Beranda</span>
-                </a>
-                <a href="#Tentang-Kami" class="sidebar-link" data-section="tentang-kami">
-                    <i class="bi bi-info-circle"></i>
-                    <span>Tentang Kami</span>
-                </a>
-                <a href="#fitur" class="sidebar-link" data-section="fitur">
-                    <i class="bi bi-star"></i>
-                    <span>Fitur</span>
-                </a>
-                <a href="#cara-kerja" class="sidebar-link" data-section="cara-kerja">
-                    <i class="bi bi-gear"></i>
-                    <span>Cara Kerja</span>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="overlay" id="overlay"></div>
-
-<section id="beranda" class="hero-section">
-    <div class="hero-container">
-        <div class="hero-content">
-            <div class="hero-text">
-                <div class="hero-subtitle">Perkenalkan</div>
-                <h1 class="hero-title">GO SAFE!</h1>
-                <p class="hero-slogan">Laporkan Dan Temukan Rute Aman Dikotamu.</p>
-                <div class="hero-line"></div>
-                <p class="hero-description">
-                    GO SAFE adalah platform komunitas untuk menandai rute aman dan area berbahaya
-                    membantu orang lain memilih jalur terbaik dan lebih aman.
-                </p>
-                <button class="hero-btn">
-                    <span>Lihat Peta!</span>
-                    <i class="bi bi-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-        
-        <div class="hero-image">
-           <img src="assets/img/ilustrasi1.png" alt="">
-        </div>
-    </div>
-    
-    <div class="background-accents">
-        <div class="accent-line accent-1"></div>
-        <div class="accent-line accent-2"></div>
-        <div class="accent-line accent-3"></div>
-        <div class="accent-line accent-4"></div>
-        <div class="accent-line accent-5"></div>
-        <div class="accent-grid"></div>
-    </div>
-</section>
-
-<section class="tentang-kami" id="tentang-kami">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Tentang Kami</h2>
-      <div class="underline"></div>
-    </div>
-    
-    <div class="content-wrapper">
-      <div class="text-content">
-        <h3 class="tagline">Go Safe!</h3>
-        <p class="description">GO SAFE adalah platform berbasis komunitas yang hadir untuk membantu masyarakat melaporkan kondisi jalan, menandai area berbahaya, serta membagikan rute perjalanan yang lebih aman.</p>
-        <p class="description">Kami percaya bahwa keamanan di jalan bukan hanya tanggung jawab individu, melainkan hasil dari kolaborasi seluruh warga kota.</p>
-        <div class="features">
-          <div class="feature-card">
-            <h4 class="feature-title">Membangun Mobilitas Yang Berkelanjutan</h4>
-            <p class="feature-desc">Dengan memudahkan warga menemukan rute yang lebih aman, GO SAFE tidak hanya menjaga keselamatan, tetapi juga mendorong orang untuk berjalan kaki, bersepeda, atau menggunakan transportasi umum. Hal ini turut berkontribusi pada terciptanya lingkungan perkotaan yang lebih sehat dan ramah lingkungan.</p>
-          </div>
-          
-          <div class="feature-card">
-            <h4 class="feature-title">Komunitas Peduli Keselamatan</h4>
-            <p class="feature-desc">GO SAFE dibangun dari semangat kolaborasi. Setiap laporan yang masuk berasal dari pengguna di lapangan yang benar-benar melihat kondisi jalan. Dengan begitu, data yang ditampilkan selalu relevan, akurat, dan lahir dari kepedulian bersama terhadap keselamatan di kota.</p>
-        </div>
-        
-        <div class="expertise">
-          <div class="expertise-number">#1</div>
-          <div class="expertise-text">Pertama Di Indonesia</div>
+            
+            <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
+                <i class="fas fa-route"></i>
+            </button>
         </div>
         
         <div class="sidebar">
@@ -2486,9 +2447,4 @@ function setupAvatarClick() {
         init();
     </script>
 </body>
-<footer class="site-footer">
-  <p>
-    &copy; 2025 | <span class="footer-brand">Go Safe!</span>
-  </p>
-</footer>
 </html>
