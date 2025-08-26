@@ -1213,6 +1213,7 @@ $reportsJson = json_encode($reports);
         // Initialize the application
         function init() {
             setupEventListeners();
+            setupLocationButton();
             loadRoutes();
             loadReports();
             tryGeolocation();
@@ -1221,15 +1222,22 @@ $reportsJson = json_encode($reports);
         // Setup event listeners
         function setupEventListeners() {
             // Add route button
-            if (addRouteBtn) {
-                addRouteBtn.addEventListener('click', () => {
-                    if (!userLoggedIn) {
-                        alert('Silakan masuk terlebih dahulu untuk menambahkan rute.');
-                        return;
-                    }
-                    startRouteCreation();
-                });
+           if (addRouteBtn) {
+        addRouteBtn.addEventListener('click', () => {
+            if (!userLoggedIn) {
+                alert('Silakan masuk terlebih dahulu untuk menambahkan rute.');
+                return;
             }
+            startRouteCreation();
+        });
+    }
+
+    // Location button
+    if (document.getElementById('locationBtn')) {
+        document.getElementById('locationBtn').addEventListener('click', () => {
+            tryGeolocation();
+        });
+    }
             
             // Route creation controls
             if (selectStartBtn) {
@@ -2009,34 +2017,186 @@ $reportsJson = json_encode($reports);
         // Try to get user's location
         function tryGeolocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    
-                    // Set map view to user's location
-                    map.setView([userLat, userLng], 14);
-                    
-                    // Add user marker
-                    L.marker([userLat, userLng], {
-                        className: 'user-marker'
-                    })
-                    .addTo(map)
-                    .bindPopup('Lokasi Anda Saat Ini')
-                    .openPopup();
-                },
-                (error) => {
-                    console.log('Geolocation error:', error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                }
-                );
+        // First try to get current position quickly
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                centerMapOnUser(position);
+            },
+            (error) => {
+                console.log('Geolocation error:', error);
+                // If quick location fails, try with high accuracy
+                tryHighAccuracyGeolocation();
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 300000 // 5 minutes
             }
+        );
+    } else {
+        alert('Geolocation tidak didukung oleh browser Anda.');
+    }
         }
+
+        function tryHighAccuracyGeolocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                centerMapOnUser(position);
+            },
+            (error) => {
+                console.log('High accuracy geolocation error:', error);
+                showGeolocationError(error);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+}
+
+// Show geolocation error message
+function showGeolocationError(error) {
+    let errorMessage;
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            errorMessage = "Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorMessage = "Informasi lokasi tidak tersedia.";
+            break;
+        case error.TIMEOUT:
+            errorMessage = "Permintaan lokasi waktu habis. Silakan coba lagi.";
+            break;
+        default:
+            errorMessage = "Terjadi kesalahan tidak diketahui saat mengambil lokasi.";
+    }
+    
+    // Show error as a temporary notification
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #ff6b6b;
+        color: white;
+        padding: 1rem;
+        border-radius: 4px;
+        z-index: 2000;
+        max-width: 80%;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    `;
+    errorDiv.textContent = errorMessage;
+    document.body.appendChild(errorDiv);
+    
+    // Remove error message after 5 seconds
+    setTimeout(() => {
+        if (document.body.contains(errorDiv)) {
+            document.body.removeChild(errorDiv);
+        }
+    }, 5000);
+}
+
+// Add event listener for the location button
+function setupLocationButton() {
+    const locationBtn = document.getElementById('locationBtn');
+    if (locationBtn) {
+        locationBtn.addEventListener('click', () => {
+            tryGeolocation();
+        });
+    }
+}
+
         
+
+// Center map on user's location
+function centerMapOnUser(position) {
+    const userLat = position.coords.latitude;
+    const userLng = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
+    
+    // Remove existing user marker if any
+    if (userLocationMarker) {
+        map.removeLayer(userLocationMarker);
+    }
+    if (userLocationCircle) {
+        map.removeLayer(userLocationCircle);
+    }
+    
+    // Add accuracy circle
+    userLocationCircle = L.circle([userLat, userLng], {
+        radius: accuracy,
+        color: '#4285F4',
+        fillColor: '#4285F4',
+        fillOpacity: 0.2,
+        weight: 1
+    }).addTo(map);
+    
+    // Add user marker
+    userLocationMarker = L.marker([userLat, userLng], {
+        icon: L.divIcon({
+            className: 'user-location-marker',
+            html: '<i class="fas fa-user" style="color: white; font-size: 16px;"></i>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        })
+    }).addTo(map).bindPopup('Lokasi Anda Saat Ini').openPopup();
+    
+    // Set map view to user's location
+    map.setView([userLat, userLng], 16);
+    
+    // Start watching position if not already watching
+    if (!watchId) {
+        startWatchingPosition();
+    }
+}
+
+
+// Start watching user's position
+function startWatchingPosition() {
+    if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                
+                // Update user marker position
+                if (userLocationMarker) {
+                    userLocationMarker.setLatLng([userLat, userLng]);
+                }
+                
+                // Update accuracy circle
+                if (userLocationCircle) {
+                    userLocationCircle.setLatLng([userLat, userLng]);
+                    userLocationCircle.setRadius(accuracy);
+                }
+            },
+            (error) => {
+                console.log('Watch position error:', error);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+}
+
+// Stop watching position
+function stopWatchingPosition() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+    }
+}
+
+
         
         // Update the user avatar in the navbar
         function updateUserAvatar() {
@@ -2107,6 +2267,17 @@ $reportsJson = json_encode($reports);
         document.querySelector('[data-dismiss="profile"]').addEventListener('click', () => {
             document.getElementById('userProfileModal').style.display = 'none';
         });
+
+
+        // Clean up geolocation when page is unloaded
+window.addEventListener('beforeunload', () => {
+    stopWatchingPosition();
+});
+
+// Also clean up when user navigates away
+window.addEventListener('pagehide', () => {
+    stopWatchingPosition();
+});
         
         
         
