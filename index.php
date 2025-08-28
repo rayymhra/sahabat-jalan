@@ -9,49 +9,49 @@ $userData = $userLoggedIn ? [
 'username' => $_SESSION['username'],
 'role' => $_SESSION['role'],
 'avatar' => $_SESSION['avatar']
-] : null;
-
-// Function to get like counts for reports
-// Function to get like counts for reports
-function getReportLikes($conn, $report_id, $user_id = null) {
-    // Use prepared statements to prevent SQL injection
-    $query = "
+    ] : null;
+    
+    // Function to get like counts for reports
+    // Function to get like counts for reports
+    function getReportLikes($conn, $report_id, $user_id = null) {
+        // Use prepared statements to prevent SQL injection
+        $query = "
     SELECT 
     SUM(CASE WHEN value = 1 THEN 1 ELSE 0 END) as likes,
     SUM(CASE WHEN value = -1 THEN 1 ELSE 0 END) as dislikes";
-    
-    if ($user_id) {
-        $query .= ", (SELECT value FROM likes WHERE user_id = ? AND report_id = ?) as user_vote";
+        
+        if ($user_id) {
+            $query .= ", (SELECT value FROM likes WHERE user_id = ? AND report_id = ?) as user_vote";
+        }
+        
+        $query .= " FROM likes WHERE report_id = ?";
+        
+        $stmt = $conn->prepare($query);
+        
+        if ($user_id) {
+            $stmt->bind_param("iii", $user_id, $report_id, $report_id);
+        } else {
+            $stmt->bind_param("i", $report_id);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $data = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $data ?: ['likes' => 0, 'dislikes' => 0, 'user_vote' => 0];
     }
     
-    $query .= " FROM likes WHERE report_id = ?";
+    // Load routes from database
+    $routes = [];
+    $reports = [];
     
-    $stmt = $conn->prepare($query);
-    
-    if ($user_id) {
-        $stmt->bind_param("iii", $user_id, $report_id, $report_id);
-    } else {
-        $stmt->bind_param("i", $report_id);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $data = $result->fetch_assoc();
-    $stmt->close();
-    
-    return $data ?: ['likes' => 0, 'dislikes' => 0, 'user_vote' => 0];
-}
-
-// Load routes from database
-$routes = [];
-$reports = [];
-
-if ($conn) {
-    // ================================
-    // Fetch routes + their reports
-    // ================================
-    $routeQuery = "
+    if ($conn) {
+        // ================================
+        // Fetch routes + their reports
+        // ================================
+        $routeQuery = "
     SELECT r.*, 
     r.start_latitude as start_lat, 
     r.start_longitude as start_lng,
@@ -63,56 +63,57 @@ if ($conn) {
     LEFT JOIN users u ON r.created_by = u.id 
     ORDER BY r.created_at DESC
     ";
-    $routeResult = $conn->query($routeQuery);
-    
-    if ($routeResult) {
-        while ($route = $routeResult->fetch_assoc()) {
-            $routeId = $route['id'];
-            
-            // Fetch reports for this route
-            $reportQuery = "
+        $routeResult = $conn->query($routeQuery);
+        
+        if ($routeResult) {
+            while ($route = $routeResult->fetch_assoc()) {
+                $routeId = $route['id'];
+                
+                // Fetch reports for this route
+                $reportQuery = "
             SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
             FROM reports rep 
             LEFT JOIN users u ON rep.user_id = u.id 
             WHERE rep.route_id = $routeId 
             ORDER BY rep.created_at DESC
             ";
-            $reportResult = $conn->query($reportQuery);
-            
-            $routeReports = [];
-            if ($reportResult) {
-                while ($report = $reportResult->fetch_assoc()) {
-                    // Add like information to each report
-                    $likes_data = getReportLikes($conn, $report['id'], $userLoggedIn ? $userData['id'] : null);
-                    $report['likes'] = $likes_data['likes'] ?? 0;
-                    $report['dislikes'] = $likes_data['dislikes'] ?? 0;
-                    $report['user_vote'] = $likes_data['user_vote'] ?? 0;
-                    
-                    $routeReports[] = $report;
+                $reportResult = $conn->query($reportQuery);
+                
+                $routeReports = [];
+                if ($reportResult) {
+                    while ($report = $reportResult->fetch_assoc()) {
+                        // Add like information to each report
+                        $likes_data = getReportLikes($conn, $report['id'], $userLoggedIn ? $userData['id'] : null);
+                        $report['likes'] = $likes_data['likes'] ?? 0;
+                        $report['dislikes'] = $likes_data['dislikes'] ?? 0;
+                        $report['user_vote'] = $likes_data['user_vote'] ?? 0;
+                        
+                        $routeReports[] = $report;
+                    }
+                } else {
+                    error_log("Report query error: " . $conn->error);
                 }
-            } else {
-                error_log("Report query error: " . $conn->error);
+                
+                $route['reports'] = $routeReports;
+                $routes[] = $route;
             }
-            
-            $route['reports'] = $routeReports;
-            $routes[] = $route;
         }
-    }
-    
-    // ================================
-    // Fetch all reports (latest 20)
-    // ================================
-    // Modify your allReportsQuery to include like counts
-    $allReportsQuery = "
+        
+        // ================================
+        // Fetch all reports (latest 20)
+        // ================================
+        // Modify your allReportsQuery to include like counts
+        $allReportsQuery = "
     SELECT rep.*, 
     CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
     u.name AS user_name, 
     u.avatar AS user_avatar,
     COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
     COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
+    (SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
     " . ($userLoggedIn ? 
-    "(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
-    : "0 as user_vote") . "
+        "(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
+        : "0 as user_vote") . "
     FROM reports rep 
     LEFT JOIN routes r ON rep.route_id = r.id 
     LEFT JOIN users u ON rep.user_id = u.id 
@@ -121,20 +122,20 @@ if ($conn) {
     ORDER BY rep.created_at DESC 
     LIMIT 20
     ";
-    $allReportsResult = $conn->query($allReportsQuery);
-    
-    if ($allReportsResult) {
-        while ($report = $allReportsResult->fetch_assoc()) {
-            $reports[] = $report;
+        $allReportsResult = $conn->query($allReportsQuery);
+        
+        if ($allReportsResult) {
+            while ($report = $allReportsResult->fetch_assoc()) {
+                $reports[] = $report;
+            }
+        } else {
+            error_log("All reports query error: " . $conn->error);
         }
-    } else {
-        error_log("All reports query error: " . $conn->error);
     }
-}
-
-
-// In the route query, add avatar for creator
-$routeQuery = "
+    
+    
+    // In the route query, add avatar for creator
+    $routeQuery = "
 SELECT r.*, 
 r.start_latitude as start_lat, 
 r.start_longitude as start_lng,
@@ -146,27 +147,28 @@ FROM routes r
 LEFT JOIN users u ON r.created_by = u.id 
 ORDER BY r.created_at DESC
 ";
-
-// In the report queries, add avatar for users
-$reportQuery = "
+    
+    // In the report queries, add avatar for users
+    $reportQuery = "
 SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
 FROM reports rep 
 LEFT JOIN users u ON rep.user_id = u.id 
 WHERE rep.route_id = $routeId 
 ORDER BY rep.created_at DESC
 ";
-
-// Modify your allReportsQuery to include like counts
-$allReportsQuery = "
+    
+    // Modify your allReportsQuery to include like counts
+    $allReportsQuery = "
 SELECT rep.*, 
 CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
 u.name AS user_name, 
 u.avatar AS user_avatar,
 COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
 COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
+(SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
 " . ($userLoggedIn ? 
 "(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
-: "0 as user_vote") . "
+    : "0 as user_vote") . "
 FROM reports rep 
 LEFT JOIN routes r ON rep.route_id = r.id 
 LEFT JOIN users u ON rep.user_id = u.id 
@@ -175,16 +177,16 @@ GROUP BY rep.id
 ORDER BY rep.created_at DESC 
 LIMIT 20
 ";
-
-
-// Convert PHP data to JSON for JavaScript
-$routesJson = json_encode($routes);
-$reportsJson = json_encode($reports);
-?>
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
+    
+    
+    // Convert PHP data to JSON for JavaScript
+    $routesJson = json_encode($routes);
+    $reportsJson = json_encode($reports);
+    ?>
+    
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peta Jalan Aman</title>
@@ -192,28 +194,28 @@ $reportsJson = json_encode($reports);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root {
-    --primary-color: #2563eb;
-    --secondary-color: #1f2937;
-    --danger-color: #dc2626;
-    --success-color: #059669;
-    --warning-color: #d97706;
-    --safe-color: #10b981;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-}
-
-* {
+    :root {
+        --primary-color: #2563eb;
+        --secondary-color: #1f2937;
+        --danger-color: #dc2626;
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --safe-color: #10b981;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border-color: #e5e7eb;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9fafb;
+        --bg-tertiary: #f3f4f6;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+    }
+    
+    * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -342,14 +344,15 @@ header {
 
 .sidebar-header {
     padding: 1.25rem 1.5rem;
-    background-color: var(--bg-primary);
+    background-color: #2563eb;
     border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-header h5 {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #ffffff;
+    
     margin: 0;
 }
 
@@ -455,6 +458,7 @@ header {
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    margin-top: 7px;
 }
 
 .report-card:hover {
@@ -1579,295 +1583,419 @@ button {
         font-size: 0.8rem;
     }
 }
-        
-    </style>
+
+/* Comment styles */
+.comments-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.comment-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.comment-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.comment-date {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.comment-content {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.comment-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+}
+
+.comment-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    outline: none !important;
+}
+
+.comment-btn:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+}
+
+.comment-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+</style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <i class="fas fa-map-marked-alt"></i>
-            <h1>GoSafe</h1>
+<header>
+<div class="logo">
+<i class="fas fa-map-marked-alt"></i>
+<h1>GoSafe</h1>
+</div>
+<div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
+<a href="auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
+<a href="auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
+</div>
+<div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
+<a href="profile/index.php" class="user-avatar-link">
+<div class="user-avatar" id="userAvatar">
+<?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
+</div>
+</a>
+<span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
+<a href="auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
+</div>
+</header>
+
+<div class="main-container">
+<div class="map-container">
+<div id="map"></div>
+
+<div class="map-controls">
+<button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
+<i class="fas fa-location-arrow"></i>
+</button>
+
+<button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
+<i class="fas fa-route"></i>
+</button>
+</div>
+
+<!-- <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
+<i class="fas fa-location-arrow"></i>
+</button> -->
+
+<div class="mode-indicator" id="modeIndicator"></div>
+
+<!-- Route Creation Controls -->
+<div class="route-creation-controls" id="routeCreationControls">
+<h5 class="mb-2">Buat Rute Baru</h5>
+
+<div class="route-step" id="step1">
+<div class="route-step-icon">1</div>
+<span>Pilih Titik Awal</span>
+</div>
+
+<div class="route-step" id="step2">
+<div class="route-step-icon">2</div>
+<span>Pilih Titik Akhir</span>
+</div>
+
+<div class="route-step" id="step3">
+<div class="route-step-icon">3</div>
+<span>Buat Rute</span>
+</div>
+
+<div class="route-control-buttons">
+<button class="route-control-btn select-point-btn" id="selectStartBtn">
+<i class="fas fa-map-marker-alt"></i> Pilih Titik Awal
+</button>
+<button class="route-control-btn select-point-btn" id="selectEndBtn" disabled>
+<i class="fas fa-map-marker-alt"></i> Pilih Titik Akhir
+</button>
+<button class="route-control-btn create-route-btn" id="createRouteBtn" disabled>
+<i class="fas fa-route"></i> Buat Rute
+</button>
+<button class="route-control-btn cancel-route-btn" id="cancelRouteBtn">
+<i class="fas fa-times"></i> Batalkan
+</button>
+</div>
+</div>
+
+<div class="route-info-panel" id="routeInfoPanel">
+<div class="panel-header">
+<h5 id="routeNameTitle">Informasi Rute</h5>
+<button class="panel-close" id="closeRoutePanel">&times;</button>
+</div>
+<div id="routeCreatorInfo" class="route-creator"></div>
+
+<div class="route-stats" id="routeStats">
+<div class="stat-item">
+<span class="stat-value" id="totalReports">0</span>
+<span class="stat-label">Laporan</span>
+</div>
+<div class="stat-item">
+<span class="stat-value" id="crimeCount">0</span>
+<span class="stat-label">Kejahatan</span>
+</div>
+<div class="stat-item">
+<span class="stat-value" id="accidentCount">0</span>
+<span class="stat-label">Kecelakaan</span>
+</div>
+<div class="stat-item">
+<span class="stat-value" id="safeCount">0</span>
+<span class="stat-label">Aman</span>
+</div>
+</div>
+
+<div class="route-reports-list" id="routeReportsList">
+<!-- Route reports will be added here -->
+</div>
+<button class="add-to-route-btn" id="addToRouteBtn">
+<i class="fas fa-plus me-1"></i> Tambahkan Laporan
+</button>
+<div class="login-prompt" id="routeLoginPrompt">
+<i class="fas fa-info-circle"></i> Silakan masuk untuk menambahkan laporan
+</div>
+</div>
+
+<button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
+<i class="fas fa-route"></i>
+</button>
+</div>
+
+<div class="sidebar">
+<div class="sidebar-header">
+<h5 class="mb-0">Laporan Jalan</h5>
+</div>
+
+<div class="search-container">
+<div class="input-group">
+<input type="text" class="form-control" id="search" placeholder="Cari jalan, tempat, atau gedung...">
+<button class="btn btn-primary" type="button" id="searchBtn">
+<i class="fas fa-search"></i>
+</button>
+</div>
+</div>
+
+<div class="filter-section">
+<div class="filter-options">
+<button class="active" data-type="all">Semua</button>
+<button data-type="crime">Kejahatan</button>
+<button data-type="accident">Kecelakaan</button>
+<button data-type="hazard">Bahaya</button>
+<button data-type="safe_spot">Aman</button>
+</div>
+<small class="text-muted">Klik pada rute di peta untuk melihat detail dan menambahkan laporan</small>
+</div>
+
+<div class="reports-container">
+<div class="reports-list" id="reportsList">
+<!-- Reports will be loaded here -->
+</div>
+</div>
+</div>
+</div>
+
+<!-- Add Report Modal -->
+<div class="modal" id="reportModal">
+<div class="modal-content p-3">
+<div class="modal-header">
+<h4 class="mb-0">Tambah Laporan Baru</h4>
+<button class="close-btn">&times;</button>
+</div>
+<form id="reportForm" action="save_report.php" method="POST">
+<input type="hidden" id="reportRouteId" name="route_id">
+<div class="form-group">
+<label for="reportType">Jenis Laporan</label>
+<select id="reportType" name="type" required>
+<option value="">Pilih Jenis Laporan</option>
+<option value="crime">Daerah Rawan Kejahatan</option>
+<option value="accident">Titik Rawan Kecelakaan</option>
+<option value="hazard">Bahaya di Jalan</option>
+<option value="safe_spot">Titik Aman</option>
+</select>
+</div>
+<div class="form-group">
+<label for="reportDescription">Deskripsi</label>
+<textarea id="reportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
+</div>
+<button type="submit" class="submit-btn" id="reportSubmitBtn">Kirim Laporan</button>
+</form>
+</div>
+</div>
+
+<!-- Add Route Modal -->
+<div class="modal" id="routeModal">
+<div class="modal-content p-3">
+<div class="modal-header">
+<h4 class="mb-0">Buat Rute Baru</h4>
+<button class="close-btn" data-dismiss="route">&times;</button>
+</div>
+<form id="routeForm" action="save_route.php" method="POST">
+<div class="form-group">
+<label for="routeName">Nama Rute (Opsional)</label>
+<input type="text" id="routeName" name="name" placeholder="Masukkan nama rute...">
+</div>
+<div class="form-group">
+<label>Pilih titik awal dan akhir pada peta</label>
+<div class="alert alert-warning">
+<small>
+<i class="fas fa-exclamation-triangle"></i> 
+<strong>Penting:</strong> Setelah membuat rute, Anda harus menambahkan laporan atau rute akan dihapus.
+</small>
+</div>
+</div>
+<div class="form-group">
+<input type="hidden" id="startLat" name="start_lat">
+<input type="hidden" id="startLng" name="start_lng">
+<label>Titik Awal: <span id="startPointInfo">Belum dipilih</span></label>
+</div>
+<div class="form-group">
+<input type="hidden" id="endLat" name="end_lat">
+<input type="hidden" id="endLng" name="end_lng">
+<label>Titik Akhir: <span id="endPointInfo">Belum dipilih</span></label>
+</div>
+<button type="submit" class="submit-btn" id="confirmRouteBtn" disabled>Buat Rute</button>
+</form>
+</div>
+</div>
+
+<!-- User Profile Modal -->
+<div class="modal" id="userProfileModal">
+<div class="modal-content p-3">
+<div class="modal-header">
+<h4 class="mb-0">Profil Pengguna</h4>
+<button class="close-btn" data-dismiss="profile">&times;</button>
+</div>
+<div class="modal-body" id="userProfileContent">
+<div class="text-center">
+<div id="profileAvatar" class="user-avatar-large"></div>
+<h4 id="profileName" class="mt-3"></h4>
+<p id="profileUsername" class="text-muted"></p>
+</div>
+<div class="profile-stats mt-4">
+<div class="row text-center">
+<div class="col-4">
+<div class="stat-value" id="profileRoutes">0</div>
+<div class="stat-label">Rute</div>
+</div>
+<div class="col-4">
+<div class="stat-value" id="profileReports">0</div>
+<div class="stat-label">Laporan</div>
+</div>
+<div class="col-4">
+<div class="stat-value" id="profileReputation">0</div>
+<div class="stat-label">Reputasi</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Add Report Edit Modal -->
+<div class="modal" id="editReportModal">
+<div class="modal-content p-3">
+<div class="modal-header">
+<h4 class="mb-0">Edit Laporan</h4>
+<button class="close-btn" data-dismiss="edit">&times;</button>
+</div>
+<form id="editReportForm" action="update_report.php" method="POST">
+<input type="hidden" id="editReportId" name="report_id">
+<div class="form-group">
+<label for="editReportType">Jenis Laporan</label>
+<select id="editReportType" name="type" required>
+<option value="">Pilih Jenis Laporan</option>
+<option value="crime">Daerah Rawan Kejahatan</option>
+<option value="accident">Titik Rawan Kecelakaan</option>
+<option value="hazard">Bahaya di Jalan</option>
+<option value="safe_spot">Titik Aman</option>
+</select>
+</div>
+<div class="form-group">
+<label for="editReportDescription">Deskripsi</label>
+<textarea id="editReportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
+</div>
+<button type="submit" class="submit-btn" id="editReportSubmitBtn">Perbarui Laporan</button>
+</form>
+</div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal" id="commentModal">
+<div class="modal-content p-3">
+<div class="modal-header">
+<h4 class="mb-0">Komentar</h4>
+<button class="close-btn" data-dismiss="comment">&times;</button>
+</div>
+<div class="modal-body">
+<div class="comments-container" id="commentsContainer">
+<!-- Comments will be loaded here -->
+</div>
+<?php if ($userLoggedIn): ?>
+    <form id="commentForm">
+    <input type="hidden" id="commentReportId" name="report_id">
+    <div class="form-group">
+    <textarea id="commentContent" name="content" placeholder="Tulis komentar Anda..." rows="3" required></textarea>
+    </div>
+    <button type="submit" class="submit-btn" id="commentSubmitBtn">Kirim Komentar</button>
+    </form>
+    <?php else: ?>
+        <div class="login-prompt">
+        <i class="fas fa-info-circle"></i> Silakan masuk untuk menambahkan komentar
         </div>
-        <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
-            <a href="auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
-            <a href="auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
+        <?php endif; ?>
         </div>
-        <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
-            <a href="profile/index.php" class="user-avatar-link">
-                <div class="user-avatar" id="userAvatar">
-                    <?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
-                </div>
-            </a>
-            <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
-            <a href="auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
         </div>
-    </header>
-    
-    <div class="main-container">
-        <div class="map-container">
-            <div id="map"></div>
-            
-            <div class="map-controls">
-                <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
-                    <i class="fas fa-location-arrow"></i>
-                </button>
-                
-                <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
-                    <i class="fas fa-route"></i>
-                </button>
-            </div>
-            
-            <!-- <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
-                <i class="fas fa-location-arrow"></i>
-            </button> -->
-            
-            <div class="mode-indicator" id="modeIndicator"></div>
-            
-            <!-- Route Creation Controls -->
-            <div class="route-creation-controls" id="routeCreationControls">
-                <h5 class="mb-2">Buat Rute Baru</h5>
-                
-                <div class="route-step" id="step1">
-                    <div class="route-step-icon">1</div>
-                    <span>Pilih Titik Awal</span>
-                </div>
-                
-                <div class="route-step" id="step2">
-                    <div class="route-step-icon">2</div>
-                    <span>Pilih Titik Akhir</span>
-                </div>
-                
-                <div class="route-step" id="step3">
-                    <div class="route-step-icon">3</div>
-                    <span>Buat Rute</span>
-                </div>
-                
-                <div class="route-control-buttons">
-                    <button class="route-control-btn select-point-btn" id="selectStartBtn">
-                        <i class="fas fa-map-marker-alt"></i> Pilih Titik Awal
-                    </button>
-                    <button class="route-control-btn select-point-btn" id="selectEndBtn" disabled>
-                        <i class="fas fa-map-marker-alt"></i> Pilih Titik Akhir
-                    </button>
-                    <button class="route-control-btn create-route-btn" id="createRouteBtn" disabled>
-                        <i class="fas fa-route"></i> Buat Rute
-                    </button>
-                    <button class="route-control-btn cancel-route-btn" id="cancelRouteBtn">
-                        <i class="fas fa-times"></i> Batalkan
-                    </button>
-                </div>
-            </div>
-            
-            <div class="route-info-panel" id="routeInfoPanel">
-                <div class="panel-header">
-                    <h5 id="routeNameTitle">Informasi Rute</h5>
-                    <button class="panel-close" id="closeRoutePanel">&times;</button>
-                </div>
-                <div id="routeCreatorInfo" class="route-creator"></div>
-                
-                <div class="route-stats" id="routeStats">
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalReports">0</span>
-                        <span class="stat-label">Laporan</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="crimeCount">0</span>
-                        <span class="stat-label">Kejahatan</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="accidentCount">0</span>
-                        <span class="stat-label">Kecelakaan</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="safeCount">0</span>
-                        <span class="stat-label">Aman</span>
-                    </div>
-                </div>
-                
-                <div class="route-reports-list" id="routeReportsList">
-                    <!-- Route reports will be added here -->
-                </div>
-                <button class="add-to-route-btn" id="addToRouteBtn">
-                    <i class="fas fa-plus me-1"></i> Tambahkan Laporan
-                </button>
-                <div class="login-prompt" id="routeLoginPrompt">
-                    <i class="fas fa-info-circle"></i> Silakan masuk untuk menambahkan laporan
-                </div>
-            </div>
-            
-            <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
-                <i class="fas fa-route"></i>
-            </button>
         </div>
         
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h5 class="mb-0">Laporan Jalan</h5>
-            </div>
-            
-            <div class="search-container">
-                <div class="input-group">
-                    <input type="text" class="form-control" id="search" placeholder="Cari jalan, tempat, atau gedung...">
-                    <button class="btn btn-primary" type="button" id="searchBtn">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="filter-section">
-                <div class="filter-options">
-                    <button class="active" data-type="all">Semua</button>
-                    <button data-type="crime">Kejahatan</button>
-                    <button data-type="accident">Kecelakaan</button>
-                    <button data-type="hazard">Bahaya</button>
-                    <button data-type="safe_spot">Aman</button>
-                </div>
-                <small class="text-muted">Klik pada rute di peta untuk melihat detail dan menambahkan laporan</small>
-            </div>
-            
-            <div class="reports-container">
-                <div class="reports-list" id="reportsList">
-                    <!-- Reports will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Add Report Modal -->
-    <div class="modal" id="reportModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="mb-0">Tambah Laporan Baru</h4>
-                <button class="close-btn">&times;</button>
-            </div>
-            <form id="reportForm" action="save_report.php" method="POST">
-                <input type="hidden" id="reportRouteId" name="route_id">
-                <div class="form-group">
-                    <label for="reportType">Jenis Laporan</label>
-                    <select id="reportType" name="type" required>
-                        <option value="">Pilih Jenis Laporan</option>
-                        <option value="crime">Daerah Rawan Kejahatan</option>
-                        <option value="accident">Titik Rawan Kecelakaan</option>
-                        <option value="hazard">Bahaya di Jalan</option>
-                        <option value="safe_spot">Titik Aman</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="reportDescription">Deskripsi</label>
-                    <textarea id="reportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
-                </div>
-                <button type="submit" class="submit-btn" id="reportSubmitBtn">Kirim Laporan</button>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Add Route Modal -->
-    <div class="modal" id="routeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="mb-0">Buat Rute Baru</h4>
-                <button class="close-btn" data-dismiss="route">&times;</button>
-            </div>
-            <form id="routeForm" action="save_route.php" method="POST">
-                <div class="form-group">
-                    <label for="routeName">Nama Rute (Opsional)</label>
-                    <input type="text" id="routeName" name="name" placeholder="Masukkan nama rute...">
-                </div>
-                <div class="form-group">
-                    <label>Pilih titik awal dan akhir pada peta</label>
-                    <div class="alert alert-warning">
-                        <small>
-                            <i class="fas fa-exclamation-triangle"></i> 
-                            <strong>Penting:</strong> Setelah membuat rute, Anda harus menambahkan laporan atau rute akan dihapus.
-                        </small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="hidden" id="startLat" name="start_lat">
-                    <input type="hidden" id="startLng" name="start_lng">
-                    <label>Titik Awal: <span id="startPointInfo">Belum dipilih</span></label>
-                </div>
-                <div class="form-group">
-                    <input type="hidden" id="endLat" name="end_lat">
-                    <input type="hidden" id="endLng" name="end_lng">
-                    <label>Titik Akhir: <span id="endPointInfo">Belum dipilih</span></label>
-                </div>
-                <button type="submit" class="submit-btn" id="confirmRouteBtn" disabled>Buat Rute</button>
-            </form>
-        </div>
-    </div>
-    
-    <!-- User Profile Modal -->
-    <div class="modal" id="userProfileModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="mb-0">Profil Pengguna</h4>
-                <button class="close-btn" data-dismiss="profile">&times;</button>
-            </div>
-            <div class="modal-body" id="userProfileContent">
-                <div class="text-center">
-                    <div id="profileAvatar" class="user-avatar-large"></div>
-                    <h4 id="profileName" class="mt-3"></h4>
-                    <p id="profileUsername" class="text-muted"></p>
-                </div>
-                <div class="profile-stats mt-4">
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <div class="stat-value" id="profileRoutes">0</div>
-                            <div class="stat-label">Rute</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="stat-value" id="profileReports">0</div>
-                            <div class="stat-label">Laporan</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="stat-value" id="profileReputation">0</div>
-                            <div class="stat-label">Reputasi</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Add Report Edit Modal -->
-    <div class="modal" id="editReportModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="mb-0">Edit Laporan</h4>
-                <button class="close-btn" data-dismiss="edit">&times;</button>
-            </div>
-            <form id="editReportForm" action="update_report.php" method="POST">
-                <input type="hidden" id="editReportId" name="report_id">
-                <div class="form-group">
-                    <label for="editReportType">Jenis Laporan</label>
-                    <select id="editReportType" name="type" required>
-                        <option value="">Pilih Jenis Laporan</option>
-                        <option value="crime">Daerah Rawan Kejahatan</option>
-                        <option value="accident">Titik Rawan Kecelakaan</option>
-                        <option value="hazard">Bahaya di Jalan</option>
-                        <option value="safe_spot">Titik Aman</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editReportDescription">Deskripsi</label>
-                    <textarea id="editReportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
-                </div>
-                <button type="submit" class="submit-btn" id="editReportSubmitBtn">Perbarui Laporan</button>
-            </form>
-        </div>
-    </div>
-    
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
         // Pass PHP data to JavaScript
         const userLoggedIn = <?php echo $userLoggedIn ? 'true' : 'false'; ?>;
         const userData = <?php echo $userData ? json_encode($userData) : 'null'; ?>;
         const phpRoutes = <?php echo isset($routesJson) ? $routesJson : '[]'; ?>;
         const phpReports = <?php echo isset($reportsJson) ? $reportsJson : '[]'; ?>;
-    </script>
-    <script>
+        </script>
+        <script>
         // Initialize map
         const map = L.map('map').setView([-6.2088, 106.8456], 13); // Default to Jakarta
         
@@ -1889,6 +2017,8 @@ button {
         let routeTempLine = null;
         let reportSubmitted = false;
         let editReportModal = document.getElementById('editReportModal');
+        let commentModal = document.getElementById('commentModal');
+        let currentReportId = null;
         
         
         // DOM Elements
@@ -1939,15 +2069,185 @@ button {
             tryGeolocation();
             // setupReportActions();
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-    init();
-    setupReportActions(); // Add this line
-});
         
-        // Setup event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            setupReportActions(); // Add this line
+            
+            // Reinitialize routes to ensure they're clickable
+            setTimeout(() => {
+                loadRoutes();
+                addCommentButtonToReports();
+            }, 500);
+        });
+        
+        function addCommentButtonToReports() {
+            document.querySelectorAll('.report-card').forEach(card => {
+                const reportId = card.dataset.reportId || card.querySelector('.like-btn')?.getAttribute('data-report-id');
+                if (reportId) {
+                    const footer = card.querySelector('.report-footer');
+                    if (footer && !footer.querySelector('.comment-btn')) {
+                        const commentBtn = document.createElement('button');
+                        commentBtn.className = 'comment-btn';
+                        commentBtn.innerHTML = '<i class="far fa-comment"></i> <span class="comment-count">0</span>';
+                        commentBtn.setAttribute('data-report-id', reportId);
+                        commentBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openCommentModal(reportId);
+                        });
+                        
+                        // Add to like-dislike container
+                        const likeContainer = card.querySelector('.like-dislike-container');
+                        if (likeContainer) {
+                            likeContainer.appendChild(commentBtn);
+                        }
+                        
+                        // Load initial comment count
+                        loadCommentCount(reportId, commentBtn);
+                    }
+                }
+            });
+        }
+        
+        // Handle comment button clicks using event delegation
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.comment-btn')) {
+                const commentBtn = e.target.closest('.comment-btn');
+                const reportId = commentBtn.getAttribute('data-report-id');
+                if (reportId) {
+                    e.stopPropagation();
+                    openCommentModal(reportId);
+                }
+            }
+        });
+        
+        // Safe function to show/hide modals
+        function showModal(modal) {
+            if (modal && typeof modal.style !== 'undefined') {
+                modal.style.display = 'flex';
+            }
+        }
+        
+        function hideModal(modal) {
+            if (modal && typeof modal.style !== 'undefined') {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Load comment count for a report
+        function loadCommentCount(reportId, buttonElement) {
+            fetch(`get_comments.php?report_id=${reportId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const count = data.comments.length;
+                    if (buttonElement) {
+                        buttonElement.querySelector('.comment-count').textContent = count;
+                    }
+                    
+                    // Also update any other instances of this report's comment count
+                    document.querySelectorAll(`.comment-btn[data-report-id="${reportId}"] .comment-count`).forEach(el => {
+                        el.textContent = count;
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading comment count:', error);
+            });
+        }
+        
+        // Open comment modal
+        function openCommentModal(reportId) {
+            try {
+                currentReportId = reportId;
+                const commentReportId = document.getElementById('commentReportId');
+                if (commentReportId) {
+                    commentReportId.value = reportId;
+                }
+                commentModal.style.display = 'flex';
+                loadComments(reportId);
+            } catch (error) {
+                console.error('Error opening comment modal:', error);
+                alert('Could not open comments. Please try again.');
+            }
+        }
+        
+        // Load comments for a report
+        function loadComments(reportId) {
+            fetch(`get_comments.php?report_id=${reportId}`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('commentsContainer');
+                if (data.success) {
+                    if (data.comments.length === 0) {
+                        container.innerHTML = '<div class="text-center py-3 text-muted">Belum ada komentar</div>';
+                    } else {
+                        container.innerHTML = '';
+                        data.comments.forEach(comment => {
+                            const commentElement = createCommentElement(comment);
+                            container.appendChild(commentElement);
+                        });
+                    }
+                    
+                    // Update comment count on the button
+                    updateCommentCount(reportId, data.comments.length);
+                } else {
+                    container.innerHTML = `<div class="text-center py-3 text-danger">${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
+                document.getElementById('commentsContainer').innerHTML = 
+                '<div class="text-center py-3 text-danger">Gagal memuat komentar</div>';
+            });
+        }
+        
+        // Create comment element
+        function createCommentElement(comment) {
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment-item';
+            
+            const userAvatar = comment.user_avatar ? 
+            `<img src="uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
+            `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
+            
+            const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            commentDiv.innerHTML = `
+        <div class="comment-header">
+            <div class="comment-user">
+                ${userAvatar}
+                ${comment.user_name || 'Unknown'}
+            </div>
+            <div class="comment-date">${commentDate}</div>
+        </div>
+        <div class="comment-content">${comment.content}</div>
+    `;
+            
+            return commentDiv;
+        }
+        
+        // Update comment count
+        function updateCommentCount(reportId, count) {
+            document.querySelectorAll(`.comment-btn[data-report-id="${reportId}"] .comment-count`).forEach(el => {
+                el.textContent = count;
+            });
+        }
+        
+        // Setup event listeners SETUP EVENT LISTENER
         function setupEventListeners() {
             
+            function bringRouteLinesToFront() {
+                routeLines.forEach(line => {
+                    line.bringToFront();
+                });
+            }
             
             document.querySelector('[data-dismiss="edit"]').addEventListener('click', () => {
                 editReportModal.style.display = 'none';
@@ -2006,12 +2306,6 @@ button {
                         const modal = this.getAttribute('data-dismiss') === 'route' ? 
                         routeModal : reportModal;
                         
-                        // For report modal, check if report was submitted
-                        if (modal === reportModal && !reportSubmitted) {
-                            if (!confirm('Anda belum menambahkan laporan. Tutup anyway?')) {
-                                return;
-                            }
-                        }
                         
                         if (modal) modal.style.display = 'none';
                         setMode('view');
@@ -2043,6 +2337,138 @@ button {
                     selectedRoute = null;
                 });
             }
+            
+            
+            
+            
+            
+            
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                init();
+                setupReportActions();
+                
+                // Reinitialize routes to ensure they're clickable
+                setTimeout(() => {
+                    loadRoutes();
+                    addCommentButtonToReports();
+                }, 500);
+            }); 
+            
+            
+            
+            
+            
+            
+            
+            // Load comment count for a report
+            function loadCommentCount(reportId, buttonElement) {
+                fetch(`get_comments.php?report_id=${reportId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const count = data.comments.length;
+                        if (buttonElement) {
+                            buttonElement.querySelector('.comment-count').textContent = count;
+                        }
+                        
+                        // Also update any other instances of this report's comment count
+                        document.querySelectorAll(`.comment-btn[data-report-id="${reportId}"] .comment-count`).forEach(el => {
+                            el.textContent = count;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading comment count:', error);
+                });
+            }
+            
+            
+            
+            // Handle comment form submission - REPLACE THE EXISTING CODE
+            const commentForm = document.getElementById('commentForm');
+            if (commentForm) {
+                // Remove any existing event listeners first
+                const newCommentForm = commentForm.cloneNode(true);
+                commentForm.parentNode.replaceChild(newCommentForm, commentForm);
+                
+                // Add the event listener once
+                document.getElementById('commentForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitComment();
+                });
+            }
+            
+            // Submit comment
+            function submitComment() {
+                const formData = new FormData(document.getElementById('commentForm'));
+                const contentTextarea = document.getElementById('commentContent');
+                
+                if (!formData.get('content').trim()) {
+                    alert('Komentar tidak boleh kosong');
+                    return false; // Add return false to prevent further execution
+                }
+                
+                const submitBtn = document.getElementById('commentSubmitBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Mengirim...';
+                
+                fetch('save_comment.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add new comment to the list
+                        const container = document.getElementById('commentsContainer');
+                        if (container.innerHTML.includes('Belum ada komentar')) {
+                            container.innerHTML = '';
+                        }
+                        
+                        const commentElement = createCommentElement(data.comment);
+                        container.insertBefore(commentElement, container.firstChild);
+                        
+                        // Clear the form
+                        contentTextarea.value = '';
+                        
+                        // Update comment count
+                        const reportId = formData.get('report_id');
+                        loadCommentCount(reportId);
+                    } else {
+                        alert('Gagal mengirim komentar: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat mengirim komentar');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Kirim Komentar';
+                });
+
+                
+            }
+            
+            // Close comment modal
+            document.querySelector('[data-dismiss="comment"]').addEventListener('click', () => {
+                commentModal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === commentModal) {
+                    commentModal.style.display = 'none';
+                }
+            });
+            
+            // Close comment modal with escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && commentModal.style.display === 'flex') {
+                    commentModal.style.display = 'none';
+                }
+            });
             
             // Close modal when clicking outside
             window.addEventListener('click', (e) => {
@@ -2143,52 +2569,54 @@ button {
             }
         }
         
+        
+        
         // Add this function to show the edit menu
         function setupReportActions() {
             // Use event delegation for dynamically created elements
-    document.addEventListener('click', function(e) {
-        // Close all menus when clicking elsewhere
-        if (!e.target.closest('.report-actions')) {
-            document.querySelectorAll('.report-menu').forEach(menu => {
-                menu.classList.remove('show');
+            document.addEventListener('click', function(e) {
+                // Close all menus when clicking elsewhere
+                if (!e.target.closest('.report-actions')) {
+                    document.querySelectorAll('.report-menu').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+                
+                // Toggle menu when clicking the three dots
+                if (e.target.closest('.report-menu-btn')) {
+                    const menuBtn = e.target.closest('.report-menu-btn');
+                    const menu = menuBtn.nextElementSibling;
+                    const isVisible = menu.classList.contains('show');
+                    
+                    // Close all other menus
+                    document.querySelectorAll('.report-menu').forEach(m => {
+                        m.classList.remove('show');
+                    });
+                    
+                    // Toggle this menu
+                    if (!isVisible) {
+                        menu.classList.add('show');
+                    }
+                    
+                    e.stopPropagation();
+                }
+                
+                // Handle edit button click
+                if (e.target.closest('.report-menu-item.edit')) {
+                    const menuItem = e.target.closest('.report-menu-item.edit');
+                    const reportId = menuItem.getAttribute('data-report-id');
+                    openEditReportModal(reportId);
+                    e.stopPropagation();
+                }
+                
+                // Handle delete button click
+                if (e.target.closest('.report-menu-item.delete')) {
+                    const menuItem = e.target.closest('.report-menu-item.delete');
+                    const reportId = menuItem.getAttribute('data-report-id');
+                    deleteReport(reportId);
+                    e.stopPropagation();
+                }
             });
-        }
-        
-        // Toggle menu when clicking the three dots
-        if (e.target.closest('.report-menu-btn')) {
-            const menuBtn = e.target.closest('.report-menu-btn');
-            const menu = menuBtn.nextElementSibling;
-            const isVisible = menu.classList.contains('show');
-            
-            // Close all other menus
-            document.querySelectorAll('.report-menu').forEach(m => {
-                m.classList.remove('show');
-            });
-            
-            // Toggle this menu
-            if (!isVisible) {
-                menu.classList.add('show');
-            }
-            
-            e.stopPropagation();
-        }
-        
-        // Handle edit button click
-        if (e.target.closest('.report-menu-item.edit')) {
-            const menuItem = e.target.closest('.report-menu-item.edit');
-            const reportId = menuItem.getAttribute('data-report-id');
-            openEditReportModal(reportId);
-            e.stopPropagation();
-        }
-        
-        // Handle delete button click
-        if (e.target.closest('.report-menu-item.delete')) {
-            const menuItem = e.target.closest('.report-menu-item.delete');
-            const reportId = menuItem.getAttribute('data-report-id');
-            deleteReport(reportId);
-            e.stopPropagation();
-        }
-    });
         }
         
         // Function to open edit modal
@@ -2304,15 +2732,15 @@ button {
                                 console.error('Error parsing polyline:', e, 'for route:', route);
                                 // Fallback to straight line
                                 latLngs = [
-                                [parseFloat(startLat), parseFloat(startLng)],
-                                [parseFloat(endLat), parseFloat(endLng)]
+                                    [parseFloat(startLat), parseFloat(startLng)],
+                                    [parseFloat(endLat), parseFloat(endLng)]
                                 ];
                             }
                         } else {
                             // Fallback to straight line if no polyline
                             latLngs = [
-                            [parseFloat(startLat), parseFloat(startLng)],
-                            [parseFloat(endLat), parseFloat(endLng)]
+                                [parseFloat(startLat), parseFloat(startLng)],
+                                [parseFloat(endLat), parseFloat(endLng)]
                             ];
                         }
                         
@@ -2322,7 +2750,7 @@ button {
                             continue;
                         }
                         
-                        // Create the polyline
+                        // Create the polyline with proper event handling
                         const line = L.polyline(latLngs, {
                             color: getColorForReportType(route.reports && route.reports[0] ? route.reports[0].type : 'hazard'),
                             weight: 6,
@@ -2334,9 +2762,21 @@ button {
                         line.routeId = route.id;
                         routeLines.push(line);
                         
-                        // Add click event to show route reports
+                        // Add proper click event to show route reports
                         line.on('click', function(e) {
+                            // Prevent event propagation to map
+                            L.DomEvent.stopPropagation(e);
                             showRouteReports(route.id);
+                            
+                            // FIX: Bring the clicked route to front for better visibility
+                            routeLines.forEach(l => map.removeLayer(l));
+                            routeLines.forEach(l => map.addLayer(l));
+                            this.bringToFront();
+                        });
+                        
+                        // Also make the line bringable to front on hover for better UX
+                        line.on('mouseover', function() {
+                            this.bringToFront();
                         });
                         
                         // Add markers for start and end points with validation
@@ -2520,7 +2960,9 @@ button {
             if (!route.reports || route.reports.length === 0) {
                 routeReportsList.innerHTML = '<div class="text-center py-3 text-muted">Belum ada laporan untuk rute ini</div>';
             } else {
+                
                 route.reports.forEach(report => {
+                    
                     const userAvatar = report.user_avatar ? 
                     `<img src="uploads/${report.user_avatar}?t=${new Date().getTime()}" alt="${report.user_name}" class="user-avatar-small">` :
                     `<div class="user-avatar-small">${report.user_name ? report.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
@@ -2588,6 +3030,8 @@ button {
                     
                     routeReportsList.appendChild(reportItem);
                 });
+                // Add comment buttons to route reports
+                setTimeout(addCommentButtonToReports, 100);
             }
             
             // Add event listeners to user links
@@ -2608,6 +3052,15 @@ button {
             routeInfoPanel.style.zIndex = '1001';
             routeInfoPanel.style.maxHeight = '80vh';
             routeInfoPanel.style.overflowY = 'auto';
+            
+            // Show/hide login prompt and add report button based on login status
+            if (userLoggedIn) {
+                addToRouteBtn.style.display = 'block';
+                routeLoginPrompt.style.display = 'none';
+            } else {
+                addToRouteBtn.style.display = 'none';
+                routeLoginPrompt.style.display = 'block';
+            }
             
             // Position the panel near the route
             const midLat = (parseFloat(route.start_lat || route.start_latitude) + parseFloat(route.end_lat || route.end_latitude)) / 2;
@@ -2923,8 +3376,8 @@ button {
         // Fallback: Draw straight line
         function drawStraightLine() {
             const latLngs = [
-            [routeStartPoint.lat, routeStartPoint.lng],
-            [routeEndPoint.lat, routeEndPoint.lng]
+                [routeStartPoint.lat, routeStartPoint.lng],
+                [routeEndPoint.lat, routeEndPoint.lng]
             ];
             
             routeTempLine = L.polyline(latLngs, {
@@ -3010,85 +3463,87 @@ button {
             // Update mode indicator
             switch(mode) {
                 case 'addRouteStart':
-                modeIndicator.textContent = 'Mode: Pilih Titik Awal - Klik pada peta';
-                modeIndicator.style.display = 'block';
-                modeIndicator.style.backgroundColor = '#2ecc71';
-                document.body.classList.add('creating-route-mode');
-                break;
-                case 'addRouteEnd':
-                modeIndicator.textContent = 'Mode: Pilih Titik Akhir - Klik pada peta';
-                modeIndicator.style.display = 'block';
-                modeIndicator.style.backgroundColor = '#2ecc71';
-                document.body.classList.add('creating-route-mode');
-                break;
-                default:
-                modeIndicator.style.display = 'none';
-                document.body.classList.remove('creating-route-mode');
-            }
-        }
-        
-        // Search location
-        function searchLocation() {
-            const query = searchInput.value.trim();
-            if (!query) return;
-            
-            // In a real implementation, you would use a geocoding service here
-            // For demo purposes, we'll just show an alert
-            alert("Fitur pencarian lengkap akan diimplementasi dengan layanan geocoding. Pencarian untuk: " + query);
-            
-            // Clear search results
-            searchInput.value = '';
-        }
-        
-        // Filter reports
-        function filterReports(type) {
-            loadReports(type);
-        }
-        
-        // Load reports (from all routes)
-        function loadReports(filterType = 'all') {
-            // Clear current list
-            reportsList.innerHTML = '';
-            
-            let filteredReports = phpReports;
-            
-            // Apply filter
-            if (filterType !== 'all') {
-                filteredReports = filteredReports.filter(report => report.type === filterType);
-            }
-            
-            // Display reports
-            if (filteredReports.length === 0) {
-                reportsList.innerHTML = `
+                    modeIndicator.textContent = 'Mode: Pilih Titik Awal - Klik pada peta';
+                    modeIndicator.style.display = 'block';
+                    modeIndicator.style.backgroundColor = '#2ecc71';
+                    document.body.classList.add('creating-route-mode');
+                    break;
+                    case 'addRouteEnd':
+                        modeIndicator.textContent = 'Mode: Pilih Titik Akhir - Klik pada peta';
+                        modeIndicator.style.display = 'block';
+                        modeIndicator.style.backgroundColor = '#2ecc71';
+                        document.body.classList.add('creating-route-mode');
+                        break;
+                        default:
+                        modeIndicator.style.display = 'none';
+                        document.body.classList.remove('creating-route-mode');
+                    }
+                }
+                
+                // Search location
+                function searchLocation() {
+                    const query = searchInput.value.trim();
+                    if (!query) return;
+                    
+                    // In a real implementation, you would use a geocoding service here
+                    // For demo purposes, we'll just show an alert
+                    alert("Fitur pencarian lengkap akan diimplementasi dengan layanan geocoding. Pencarian untuk: " + query);
+                    
+                    // Clear search results
+                    searchInput.value = '';
+                }
+                
+                // Filter reports
+                function filterReports(type) {
+                    loadReports(type);
+                }
+                
+                // Load reports (from all routes)
+                function loadReports(filterType = 'all') {
+                    // Clear current list
+                    reportsList.innerHTML = '';
+                    
+                    let filteredReports = phpReports;
+                    
+                    // Apply filter
+                    if (filterType !== 'all') {
+                        filteredReports = filteredReports.filter(report => report.type === filterType);
+                    }
+                    
+                    // Display reports
+                    if (filteredReports.length === 0) {
+                        reportsList.innerHTML = `
                     <div class="no-reports">
                         <i class="fas fa-inbox"></i>
                         <p>Tidak ada laporan yang ditemukan</p>
                     </div>
                 `;
-            } else {
-                filteredReports.forEach(report => {
-                    addReportToDOM(report);
-                });
-                setTimeout(setupReportActions, 100);
-            }
-        }
-        
-        // Add report to DOM
-        function addReportToDOM(report) {
-            const likeActiveClass = report.user_vote == 1 ? 'active' : '';
-            const dislikeActiveClass = report.user_vote == -1 ? 'active' : '';
-            
-            // Check if current user is the report owner
-            const isOwner = userLoggedIn && currentUser && currentUser.id == report.user_id;
-            
-            
-            // Format edited text if report was edited
-            const editedText = report.edited_at ? 
-            `<div class="report-edited">Diedit pada: ${formatDate(report.edited_at)}</div>` : '';
-            
-            const reportCard = document.createElement('div');
-            reportCard.className = 'report-card';
-            reportCard.innerHTML = `
+                    } else {
+                        filteredReports.forEach(report => {
+                            addReportToDOM(report);
+                        });
+                        setTimeout(() => {
+                            setupReportActions();
+                            addCommentButtonToReports(); // Add this line
+                        }, 100);
+                    }
+                }
+                
+                // Add report to DOM
+                function addReportToDOM(report) {
+                    const likeActiveClass = report.user_vote == 1 ? 'active' : '';
+                    const dislikeActiveClass = report.user_vote == -1 ? 'active' : '';
+                    
+                    // Check if current user is the report owner
+                    const isOwner = userLoggedIn && currentUser && currentUser.id == report.user_id;
+                    
+                    // Format edited text if report was edited
+                    const editedText = report.edited_at ? 
+                    `<div class="report-edited">Diedit pada: ${formatDate(report.edited_at)}</div>` : '';
+                    
+                    const reportCard = document.createElement('div');
+                    reportCard.className = 'report-card';
+                    reportCard.innerHTML = `
         <div class="report-header">
             <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -3128,123 +3583,151 @@ button {
             </div>
         </div>
     `;
-            
-            // Add click event to focus on the route
-            reportCard.addEventListener('click', (e) => {
-                // Don't trigger route focus if clicking like/dislike buttons
-                if (!e.target.closest('.like-btn') && !e.target.closest('.dislike-btn')) {
-                    showRouteReports(report.route_id);
+                    
+                    // Add click event to focus on the route
+                    reportCard.addEventListener('click', (e) => {
+                        // Don't trigger route focus if clicking like/dislike buttons
+                        if (!e.target.closest('.like-btn') && !e.target.closest('.dislike-btn')) {
+                            showRouteReports(report.route_id);
+                        }
+                    });
+                    
+                    // Add like/dislike event listeners
+                    const likeBtn = reportCard.querySelector('.like-btn');
+                    const dislikeBtn = reportCard.querySelector('.dislike-btn');
+                    
+                    likeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleLike(report.id, 1, likeBtn, dislikeBtn);
+                    });
+                    
+                    dislikeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleLike(report.id, -1, likeBtn, dislikeBtn);
+                    });
+                    
+                    reportsList.appendChild(reportCard);
+                    
+                    // Add comment button to this report card
+                    setTimeout(() => {
+                        const reportId = report.id;
+                        const card = reportCard;
+                        const footer = card.querySelector('.report-footer');
+                        if (footer && !footer.querySelector('.comment-btn')) {
+                            const commentBtn = document.createElement('button');
+                            commentBtn.className = 'comment-btn';
+                            commentBtn.innerHTML = '<i class="far fa-comment"></i> <span class="comment-count">0</span>';
+                            commentBtn.setAttribute('data-report-id', reportId);
+                            commentBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                openCommentModal(reportId);
+                            });
+                            
+                            // Add to like-dislike container or create new container
+                            const likeContainer = card.querySelector('.like-dislike-container');
+                            if (likeContainer) {
+                                likeContainer.appendChild(commentBtn);
+                            } else {
+                                footer.appendChild(commentBtn);
+                            }
+                            
+                            // Load initial comment count
+                            loadCommentCount(reportId, commentBtn);
+                        }
+                    }, 100);
                 }
-            });
-            
-            // Add like/dislike event listeners
-            const likeBtn = reportCard.querySelector('.like-btn');
-            const dislikeBtn = reportCard.querySelector('.dislike-btn');
-            
-            likeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleLike(report.id, 1, likeBtn, dislikeBtn);
-            });
-            
-            dislikeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleLike(report.id, -1, likeBtn, dislikeBtn);
-            });
-            
-            reportsList.appendChild(reportCard);
-        }
-        
-        // Get Indonesian label for report type
-        function getTypeLabel(type) {
-            switch(type) {
-                case 'crime': return 'Kejahatan';
-                case 'accident': return 'Kecelakaan';
-                case 'hazard': return 'Bahaya';
-                case 'safe_spot': return 'Aman';
-                default: return 'Lainnya';
-            }
-        }
-        
-        // Format date
-        function formatDate(dateString) {
-            if (!dateString) return 'Tanggal tidak tersedia';
-            
-            const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
-        
-        
-        let userLocationMarker = null;
-        let userLocationCircle = null;
-        let watchId = null;
-        
-        // Try to get user's location
-        function tryGeolocation() {
-            if (navigator.geolocation) {
-                // First try to get current position quickly
-                navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    centerMapOnUser(position);
-                },
-                (error) => {
-                    console.log('Geolocation error:', error);
-                    // If quick location fails, try with high accuracy
-                    tryHighAccuracyGeolocation();
-                },
-                {
-                    enableHighAccuracy: false,
-                    timeout: 5000,
-                    maximumAge: 300000 // 5 minutes
+                
+                // Get Indonesian label for report type
+                function getTypeLabel(type) {
+                    switch(type) {
+                        case 'crime': return 'Kejahatan';
+                        case 'accident': return 'Kecelakaan';
+                        case 'hazard': return 'Bahaya';
+                        case 'safe_spot': return 'Aman';
+                        default: return 'Lainnya';
+                    }
                 }
-                );
-            } else {
-                alert('Geolocation tidak didukung oleh browser Anda.');
-            }
-        }
-        
-        function tryHighAccuracyGeolocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    centerMapOnUser(position);
-                },
-                (error) => {
-                    console.log('High accuracy geolocation error:', error);
-                    showGeolocationError(error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
+                
+                // Format date
+                function formatDate(dateString) {
+                    if (!dateString) return 'Tanggal tidak tersedia';
+                    
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                    });
                 }
-                );
-            }
-        }
-        
-        // Show geolocation error message
-        function showGeolocationError(error) {
-            let errorMessage;
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                errorMessage = "Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
-                break;
-                case error.POSITION_UNAVAILABLE:
-                errorMessage = "Informasi lokasi tidak tersedia.";
-                break;
-                case error.TIMEOUT:
-                errorMessage = "Permintaan lokasi waktu habis. Silakan coba lagi.";
-                break;
-                default:
-                errorMessage = "Terjadi kesalahan tidak diketahui saat mengambil lokasi.";
-            }
-            
-            // Show error as a temporary notification
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = `
+                
+                
+                let userLocationMarker = null;
+                let userLocationCircle = null;
+                let watchId = null;
+                
+                // Try to get user's location
+                function tryGeolocation() {
+                    if (navigator.geolocation) {
+                        // First try to get current position quickly
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                centerMapOnUser(position);
+                            },
+                            (error) => {
+                                console.log('Geolocation error:', error);
+                                // If quick location fails, try with high accuracy
+                                tryHighAccuracyGeolocation();
+                            },
+                            {
+                                enableHighAccuracy: false,
+                                timeout: 5000,
+                                maximumAge: 300000 // 5 minutes
+                            }
+                        );
+                    } else {
+                        alert('Geolocation tidak didukung oleh browser Anda.');
+                    }
+                }
+                
+                function tryHighAccuracyGeolocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                centerMapOnUser(position);
+                            },
+                            (error) => {
+                                console.log('High accuracy geolocation error:', error);
+                                showGeolocationError(error);
+                            },
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0
+                            }
+                        );
+                    }
+                }
+                
+                // Show geolocation error message
+                function showGeolocationError(error) {
+                    let errorMessage;
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
+                            break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = "Informasi lokasi tidak tersedia.";
+                                break;
+                                case error.TIMEOUT:
+                                    errorMessage = "Permintaan lokasi waktu habis. Silakan coba lagi.";
+                                    break;
+                                    default:
+                                    errorMessage = "Terjadi kesalahan tidak diketahui saat mengambil lokasi.";
+                                }
+                                
+                                // Show error as a temporary notification
+                                const errorDiv = document.createElement('div');
+                                errorDiv.style.cssText = `
         position: fixed;
         top: 100px;
         left: 50%;
@@ -3258,239 +3741,239 @@ button {
         text-align: center;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     `;
-            errorDiv.textContent = errorMessage;
-            document.body.appendChild(errorDiv);
-            
-            // Remove error message after 5 seconds
-            setTimeout(() => {
-                if (document.body.contains(errorDiv)) {
-                    document.body.removeChild(errorDiv);
-                }
-            }, 5000);
-        }
-        
-        // Add event listener for the location button
-        function setupLocationButton() {
-            const locationBtn = document.getElementById('locationBtn');
-            if (locationBtn) {
-                locationBtn.addEventListener('click', () => {
-                    tryGeolocation();
-                });
-            }
-        }
-        
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const logoutUrl = this.href;
-                
-                if (confirm('Apakah Anda yakin ingin keluar?')) {
-                    window.location.href = logoutUrl;
-                }
-            });
-        }
-        
-        
-        
-        // Center map on user's location
-        function centerMapOnUser(position) {
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
-            
-            // Remove existing user marker if any
-            if (userLocationMarker) {
-                map.removeLayer(userLocationMarker);
-            }
-            if (userLocationCircle) {
-                map.removeLayer(userLocationCircle);
-            }
-            
-            // Add accuracy circle
-            userLocationCircle = L.circle([userLat, userLng], {
-                radius: accuracy,
-                color: '#4285F4',
-                fillColor: '#4285F4',
-                fillOpacity: 0.2,
-                weight: 1
-            }).addTo(map);
-            
-            // Add user marker
-            userLocationMarker = L.marker([userLat, userLng], {
-                icon: L.divIcon({
-                    className: 'user-location-marker',
-                })
-            }).addTo(map).bindPopup('Lokasi Anda Saat Ini').openPopup();
-            
-            // Set map view to user's location
-            map.setView([userLat, userLng], 16);
-            
-            // Start watching position if not already watching
-            if (!watchId) {
-                startWatchingPosition();
-            }
-        }
-        
-        
-        // Start watching user's position
-        function startWatchingPosition() {
-            if (navigator.geolocation) {
-                watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-                    
-                    // Update user marker position
-                    if (userLocationMarker) {
-                        userLocationMarker.setLatLng([userLat, userLng]);
-                    }
-                    
-                    // Update accuracy circle
-                    if (userLocationCircle) {
-                        userLocationCircle.setLatLng([userLat, userLng]);
-                        userLocationCircle.setRadius(accuracy);
-                    }
-                },
-                (error) => {
-                    console.log('Watch position error:', error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-                );
-            }
-        }
-        
-        // Stop watching position
-        function stopWatchingPosition() {
-            if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
-        }
-        
-        
-        
-        // Update the user avatar in the navbar
-        function updateUserAvatar() {
-            if (userLoggedIn && userData && userData.avatar) {
-                const userAvatar = document.getElementById('userAvatar');
-                userAvatar.innerHTML = `<img src="uploads/${userData.avatar}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%;">`;
-            }
-        }
-        
-        
-        function showUserProfile(userId) {
-            fetch(`get_user_profile.php?id=${userId}`)
-            .then(response => response.json())
-            .then(user => {
-                // Show user profile modal
-                showProfileModal(user);
-            });
-        }
-        
-        
-        // Call this function when the page loads
-        updateUserAvatar();
-        
-        
-        // Update the form submission handlers
-        if (reportForm) {
-            reportForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                saveReport();
-            });
-        }
-        
-        if (routeForm) {
-            routeForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                saveRoute();
-            });
-        }
-        
-        // Function to show user profile modal
-        function showProfileModal(user) {
-            const modal = document.getElementById('userProfileModal');
-            const content = document.getElementById('userProfileContent');
-            
-            // Set user data
-            const avatarElement = document.getElementById('profileAvatar');
-            if (user.avatar) {
-                avatarElement.innerHTML = `<img src="${user.avatar}" alt="${user.name}">`;
-            } else {
-                avatarElement.innerHTML = user.name ? user.name.charAt(0).toUpperCase() : 'U';
-            }
-            
-            document.getElementById('profileName').textContent = user.name || 'Unknown';
-            document.getElementById('profileUsername').textContent = `@${user.username || 'user'}`;
-            document.getElementById('profileRoutes').textContent = user.route_count || '0';
-            document.getElementById('profileReports').textContent = user.report_count || '0';
-            document.getElementById('profileReputation').textContent = user.reputation_score || '0';
-            
-            modal.style.display = 'flex';
-        }
-        
-        // Close profile modal
-        document.querySelector('[data-dismiss="profile"]').addEventListener('click', () => {
-            document.getElementById('userProfileModal').style.display = 'none';
-        });
-        
-        
-        // Clean up geolocation when page is unloaded
-        window.addEventListener('beforeunload', () => {
-            stopWatchingPosition();
-        });
-        
-        // Also clean up when user navigates away
-        window.addEventListener('pagehide', () => {
-            stopWatchingPosition();
-        });
-        
-        
-        // Make user avatar clickable
-        function setupAvatarClick() {
-            const userAvatar = document.getElementById('userAvatar');
-            const userAvatarLink = document.querySelector('.user-avatar-link');
-            
-            if (userAvatar && userLoggedIn) {
-                // Add click event to the avatar
-                userAvatar.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.location.href = 'profile/index.php';
-                });
-                
-                // Also make the username clickable
-                const userName = document.getElementById('userName');
-                if (userName) {
-                    userName.style.cursor = 'pointer';
-                    userName.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        window.location.href = 'profile/index.php';
-                    });
-                    
-                    // Add hover effect to username
-                    userName.addEventListener('mouseenter', () => {
-                        userName.style.color = 'var(--primary-color)';
-                        userName.style.textDecoration = 'underline';
-                    });
-                    
-                    userName.addEventListener('mouseleave', () => {
-                        userName.style.color = 'white';
-                        userName.style.textDecoration = 'none';
-                    });
-                }
-            }
-        }
-        
-        
-        
-        // Initialize the app
-        init();
-    </script>
-</body>
-</html>
+                                errorDiv.textContent = errorMessage;
+                                document.body.appendChild(errorDiv);
+                                
+                                // Remove error message after 5 seconds
+                                setTimeout(() => {
+                                    if (document.body.contains(errorDiv)) {
+                                        document.body.removeChild(errorDiv);
+                                    }
+                                }, 5000);
+                            }
+                            
+                            // Add event listener for the location button
+                            function setupLocationButton() {
+                                const locationBtn = document.getElementById('locationBtn');
+                                if (locationBtn) {
+                                    locationBtn.addEventListener('click', () => {
+                                        tryGeolocation();
+                                    });
+                                }
+                            }
+                            
+                            const logoutBtn = document.getElementById('logoutBtn');
+                            if (logoutBtn) {
+                                logoutBtn.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    const logoutUrl = this.href;
+                                    
+                                    if (confirm('Apakah Anda yakin ingin keluar?')) {
+                                        window.location.href = logoutUrl;
+                                    }
+                                });
+                            }
+                            
+                            
+                            
+                            // Center map on user's location
+                            function centerMapOnUser(position) {
+                                const userLat = position.coords.latitude;
+                                const userLng = position.coords.longitude;
+                                const accuracy = position.coords.accuracy;
+                                
+                                // Remove existing user marker if any
+                                if (userLocationMarker) {
+                                    map.removeLayer(userLocationMarker);
+                                }
+                                if (userLocationCircle) {
+                                    map.removeLayer(userLocationCircle);
+                                }
+                                
+                                // Add accuracy circle
+                                userLocationCircle = L.circle([userLat, userLng], {
+                                    radius: accuracy,
+                                    color: '#4285F4',
+                                    fillColor: '#4285F4',
+                                    fillOpacity: 0.2,
+                                    weight: 1
+                                }).addTo(map);
+                                
+                                // Add user marker
+                                userLocationMarker = L.marker([userLat, userLng], {
+                                    icon: L.divIcon({
+                                        className: 'user-location-marker',
+                                    })
+                                }).addTo(map).bindPopup('Lokasi Anda Saat Ini').openPopup();
+                                
+                                // Set map view to user's location
+                                map.setView([userLat, userLng], 16);
+                                
+                                // Start watching position if not already watching
+                                if (!watchId) {
+                                    startWatchingPosition();
+                                }
+                            }
+                            
+                            
+                            // Start watching user's position
+                            function startWatchingPosition() {
+                                if (navigator.geolocation) {
+                                    watchId = navigator.geolocation.watchPosition(
+                                        (position) => {
+                                            const userLat = position.coords.latitude;
+                                            const userLng = position.coords.longitude;
+                                            const accuracy = position.coords.accuracy;
+                                            
+                                            // Update user marker position
+                                            if (userLocationMarker) {
+                                                userLocationMarker.setLatLng([userLat, userLng]);
+                                            }
+                                            
+                                            // Update accuracy circle
+                                            if (userLocationCircle) {
+                                                userLocationCircle.setLatLng([userLat, userLng]);
+                                                userLocationCircle.setRadius(accuracy);
+                                            }
+                                        },
+                                        (error) => {
+                                            console.log('Watch position error:', error);
+                                        },
+                                        {
+                                            enableHighAccuracy: true,
+                                            timeout: 10000,
+                                            maximumAge: 0
+                                        }
+                                    );
+                                }
+                            }
+                            
+                            // Stop watching position
+                            function stopWatchingPosition() {
+                                if (watchId !== null) {
+                                    navigator.geolocation.clearWatch(watchId);
+                                    watchId = null;
+                                }
+                            }
+                            
+                            
+                            
+                            // Update the user avatar in the navbar
+                            function updateUserAvatar() {
+                                if (userLoggedIn && userData && userData.avatar) {
+                                    const userAvatar = document.getElementById('userAvatar');
+                                    userAvatar.innerHTML = `<img src="uploads/${userData.avatar}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                                }
+                            }
+                            
+                            
+                            function showUserProfile(userId) {
+                                fetch(`get_user_profile.php?id=${userId}`)
+                                .then(response => response.json())
+                                .then(user => {
+                                    // Show user profile modal
+                                    showProfileModal(user);
+                                });
+                            }
+                            
+                            
+                            // Call this function when the page loads
+                            updateUserAvatar();
+                            
+                            
+                            // Update the form submission handlers
+                            if (reportForm) {
+                                reportForm.addEventListener('submit', (e) => {
+                                    e.preventDefault();
+                                    saveReport();
+                                });
+                            }
+                            
+                            if (routeForm) {
+                                routeForm.addEventListener('submit', (e) => {
+                                    e.preventDefault();
+                                    saveRoute();
+                                });
+                            }
+                            
+                            // Function to show user profile modal
+                            function showProfileModal(user) {
+                                const modal = document.getElementById('userProfileModal');
+                                const content = document.getElementById('userProfileContent');
+                                
+                                // Set user data
+                                const avatarElement = document.getElementById('profileAvatar');
+                                if (user.avatar) {
+                                    avatarElement.innerHTML = `<img src="${user.avatar}" alt="${user.name}">`;
+                                } else {
+                                    avatarElement.innerHTML = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                                }
+                                
+                                document.getElementById('profileName').textContent = user.name || 'Unknown';
+                                document.getElementById('profileUsername').textContent = `@${user.username || 'user'}`;
+                                document.getElementById('profileRoutes').textContent = user.route_count || '0';
+                                document.getElementById('profileReports').textContent = user.report_count || '0';
+                                document.getElementById('profileReputation').textContent = user.reputation_score || '0';
+                                
+                                modal.style.display = 'flex';
+                            }
+                            
+                            // Close profile modal
+                            document.querySelector('[data-dismiss="profile"]').addEventListener('click', () => {
+                                document.getElementById('userProfileModal').style.display = 'none';
+                            });
+                            
+                            
+                            // Clean up geolocation when page is unloaded
+                            window.addEventListener('beforeunload', () => {
+                                stopWatchingPosition();
+                            });
+                            
+                            // Also clean up when user navigates away
+                            window.addEventListener('pagehide', () => {
+                                stopWatchingPosition();
+                            });
+                            
+                            
+                            // Make user avatar clickable
+                            function setupAvatarClick() {
+                                const userAvatar = document.getElementById('userAvatar');
+                                const userAvatarLink = document.querySelector('.user-avatar-link');
+                                
+                                if (userAvatar && userLoggedIn) {
+                                    // Add click event to the avatar
+                                    userAvatar.addEventListener('click', (e) => {
+                                        e.preventDefault();
+                                        window.location.href = 'profile/index.php';
+                                    });
+                                    
+                                    // Also make the username clickable
+                                    const userName = document.getElementById('userName');
+                                    if (userName) {
+                                        userName.style.cursor = 'pointer';
+                                        userName.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            window.location.href = 'profile/index.php';
+                                        });
+                                        
+                                        // Add hover effect to username
+                                        userName.addEventListener('mouseenter', () => {
+                                            userName.style.color = 'var(--primary-color)';
+                                            userName.style.textDecoration = 'underline';
+                                        });
+                                        
+                                        userName.addEventListener('mouseleave', () => {
+                                            userName.style.color = 'black';
+                                            userName.style.textDecoration = 'none';
+                                        });
+                                    }
+                                }
+                            }
+                            
+                            
+                            
+                            // Initialize the app
+                            init();
+                            </script>
+                            </body>
+                            </html>

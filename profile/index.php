@@ -327,11 +327,13 @@ $stmt->close();
       letter-spacing: 0.5px;
     }
 
-    .report-type-badge.accident { background: var(--notion-red); color: white; }
-    .report-type-badge.hazard { background: var(--notion-orange); color: white; }
-    .report-type-badge.construction { background: var(--notion-blue); color: white; }
-    .report-type-badge.maintenance { background: var(--notion-purple); color: white; }
-    .report-type-badge.other { background: var(--notion-gray-600); color: white; }
+.report-type-badge.crime { background: var(--notion-red); color: white; }
+.report-type-badge.accident { background: #ff4d4d; color: white; }
+.report-type-badge.hazard { background: var(--notion-orange); color: white; }
+.report-type-badge.safe_spot { background: var(--notion-green); color: white; }
+.report-type-badge.other { background: var(--notion-gray-600); color: white; }
+
+
 
     .report-date {
       color: var(--notion-gray-600);
@@ -488,6 +490,8 @@ $stmt->close();
         margin-left: 0;
       }
     }
+
+
   </style>
 </head>
 <body>
@@ -525,7 +529,7 @@ $stmt->close();
         
         <div class="info-item">
           <div class="info-icon"><i class="fas fa-phone"></i></div>
-          <div class="info-label">Phone</div>
+          <div class="info-label">No Telp</div>
           <div class="info-value"><?php echo $user['phone_number'] ?: 'Not set'; ?></div>
         </div>
         
@@ -537,7 +541,7 @@ $stmt->close();
         
         <div class="info-item">
           <div class="info-icon"><i class="fas fa-star"></i></div>
-          <div class="info-label">Reputation</div>
+          <div class="info-label">Reputasi</div>
           <div class="info-value">
             <span class="reputation-badge"><?php echo $user['reputation_score'] ?: 0; ?></span>
           </div>
@@ -545,17 +549,17 @@ $stmt->close();
         
         <div class="info-item">
           <div class="info-icon"><i class="fas fa-calendar"></i></div>
-          <div class="info-label">Joined</div>
+          <div class="info-label">Bergabung</div>
           <div class="info-value"><?php echo date("F j, Y", strtotime($user['created_at'])); ?></div>
         </div>
       </div>
 
       <div class="action-buttons">
         <a href="edit_profile.php" class="btn-primary-custom">
-          <i class="fas fa-edit"></i> Edit Profile
+          <i class="fas fa-edit"></i> Edit Profil
         </a>
         <a href="../auth/logout.php" class="btn-secondary-custom">
-          <i class="fas fa-sign-out-alt"></i> Logout
+          <i class="fas fa-sign-out-alt"></i> Keluar
         </a>
       </div>
     </div>
@@ -565,7 +569,7 @@ $stmt->close();
       <div class="reports-header">
         <h3 class="reports-title">
           <i class="fas fa-flag"></i>
-          Your Reports
+          Laporan Anda
           <span class="reports-count"><?php echo $reports->num_rows; ?></span>
         </h3>
       </div>
@@ -575,9 +579,19 @@ $stmt->close();
           <?php while ($report = $reports->fetch_assoc()): ?>
             <div class="report-item">
               <div class="report-header">
+                <?php
+$type_map = [
+  'crime' => 'Kejahatan',
+  'accident' => 'Kecelakaan',
+  'hazard' => 'Bahaya',
+  'safe_spot' => 'Aman',
+  'other' => 'Lainnya'
+];
+?>
+
                 <span class="report-type-badge <?php echo $report['type']; ?>">
-                  <?php echo ucfirst($report['type']); ?>
-                </span>
+  <?php echo $type_map[$report['type']] ?? ucfirst($report['type']); ?>
+</span>
                 <span class="report-date">
                   <?php echo date("M d, Y • H:i", strtotime($report['created_at'])); ?>
                 </span>
@@ -599,10 +613,10 @@ $stmt->close();
         </div>
       <?php else: ?>
         <div class="empty-state">
-          <i class="fas fa-clipboard-list"></i>
-          <h4>No reports yet</h4>
-          <p>You haven't made any reports. Start contributing to make your community safer!</p>
-        </div>
+  <i class="fas fa-clipboard-list"></i>
+  <h4>Belum ada laporan</h4>
+  <p>Anda belum membuat laporan. Mulailah berkontribusi untuk membuat komunitas lebih aman!</p>
+</div>
       <?php endif; ?>
     </div>
   </div>
