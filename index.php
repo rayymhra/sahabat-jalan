@@ -1635,6 +1635,27 @@ button {
     object-fit: cover;
 }
 
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.comment-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.comment-delete-btn:hover {
+    color: var(--danger-color);
+    background-color: rgba(220, 38, 38, 0.1);
+}
+
 .comment-date {
     font-size: 0.75rem;
     color: var(--text-secondary);
@@ -1679,6 +1700,8 @@ button {
     outline: none;
     box-shadow: none;
 }
+
+
 
 </style>
 </head>
@@ -2173,65 +2196,77 @@ button {
         }
         
         // Load comments for a report
-        function loadComments(reportId) {
-            fetch(`get_comments.php?report_id=${reportId}`)
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('commentsContainer');
-                if (data.success) {
-                    if (data.comments.length === 0) {
-                        container.innerHTML = '<div class="text-center py-3 text-muted">Belum ada komentar</div>';
-                    } else {
-                        container.innerHTML = '';
-                        data.comments.forEach(comment => {
-                            const commentElement = createCommentElement(comment);
-                            container.appendChild(commentElement);
-                        });
-                    }
-                    
-                    // Update comment count on the button
-                    updateCommentCount(reportId, data.comments.length);
-                } else {
-                    container.innerHTML = `<div class="text-center py-3 text-danger">${data.message}</div>`;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading comments:', error);
-                document.getElementById('commentsContainer').innerHTML = 
-                '<div class="text-center py-3 text-danger">Gagal memuat komentar</div>';
-            });
+function loadComments(reportId) {
+    fetch(`get_comments.php?report_id=${reportId}`)
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('commentsContainer');
+        if (data.success) {
+            if (data.comments.length === 0) {
+                container.innerHTML = '<div class="text-center py-3 text-muted">Belum ada komentar</div>';
+            } else {
+                container.innerHTML = '';
+                data.comments.forEach(comment => {
+                    const commentElement = createCommentElement(comment, reportId);
+                    container.appendChild(commentElement);
+                });
+            }
+            
+            // Update comment count on the button
+            updateCommentCount(reportId, data.comments.length);
+        } else {
+            container.innerHTML = `<div class="text-center py-3 text-danger">${data.message}</div>`;
         }
+    })
+    .catch(error => {
+        console.error('Error loading comments:', error);
+        document.getElementById('commentsContainer').innerHTML = 
+            '<div class="text-center py-3 text-danger">Gagal memuat komentar</div>';
+    });
+}
         
         // Create comment element
-        function createCommentElement(comment) {
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment-item';
-            
-            const userAvatar = comment.user_avatar ? 
-            `<img src="uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
-            `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
-            
-            const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            commentDiv.innerHTML = `
+        // Create comment element with delete option
+function createCommentElement(comment, reportId) {
+    const commentDiv = document.createElement('div');
+    commentDiv.className = 'comment-item';
+    commentDiv.id = `comment-${comment.id}`;
+    
+    const userAvatar = comment.user_avatar ? 
+        `<img src="uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
+        `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
+    
+    const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Check if current user is the comment owner
+    const isOwner = userLoggedIn && currentUser && currentUser.id == comment.user_id;
+    const deleteButton = isOwner ? 
+        `<button class="comment-delete-btn" onclick="deleteComment(${comment.id}, ${reportId})">
+            <i class="fas fa-trash"></i>
+        </button>` : '';
+    
+    commentDiv.innerHTML = `
         <div class="comment-header">
             <div class="comment-user">
                 ${userAvatar}
                 ${comment.user_name || 'Unknown'}
             </div>
-            <div class="comment-date">${commentDate}</div>
+            <div class="comment-actions">
+                <div class="comment-date">${commentDate}</div>
+                ${deleteButton}
+            </div>
         </div>
         <div class="comment-content">${comment.content}</div>
     `;
-            
-            return commentDiv;
-        }
+    
+    return commentDiv;
+}
         
         // Update comment count
         function updateCommentCount(reportId, count) {
@@ -2567,7 +2602,37 @@ button {
                     }
                 });
             }
+        } //END OF SETUP EVENT LISTENER
+
+
+        // Function to delete a comment
+function deleteComment(commentId, reportId) {
+    if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('comment_id', commentId);
+
+    fetch('delete_comment.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Komentar berhasil dihapus!');
+            // Reload comments
+            loadComments(reportId);
+        } else {
+            alert('Gagal menghapus komentar: ' + data.message);
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menghapus komentar');
+    });
+}
         
         
         
