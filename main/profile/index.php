@@ -2,12 +2,59 @@
 session_start();
 include "../../connection.php";
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-
-$user_id = $_SESSION['user_id'];
+// Check if we're viewing another user's profile
+if (isset($_GET['id'])) {
+    $viewed_user_id = intval($_GET['id']);
+    
+    // Get the viewed user's data
+    $stmt = $conn->prepare("SELECT name, username, email, avatar, phone_number, bio, reputation_score, created_at 
+                            FROM users WHERE id = ?");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        // User not found, redirect to own profile
+        header("Location: index.php");
+        exit;
+    }
+    
+    $user = $result->fetch_assoc();
+    $stmt->close();
+    
+    // Get reports by this user
+    $stmt = $conn->prepare("SELECT id, type, description, photo_url, created_at 
+                            FROM reports WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $reports = $stmt->get_result();
+    $stmt->close();
+    
+    // Get routes created by this user
+    $stmt = $conn->prepare("SELECT id, name, start_latitude, start_longitude, end_latitude, end_longitude, created_at 
+                            FROM routes WHERE created_by = ? ORDER BY created_at DESC");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $routes = $stmt->get_result();
+    $stmt->close();
+    
+    $is_own_profile = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $viewed_user_id;
+}else {
+    // Viewing own profile
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: login.php");
+        exit;
+    }
+    
+    $viewed_user_id = $_SESSION['user_id'];
+    $is_own_profile = true;
+    
+    // Get user data (your existing code)
+    $stmt = $conn->prepare("SELECT name, username, email, avatar, phone_number, bio, reputation_score, created_at 
+                            FROM users WHERE id = ?");
+    $stmt->bind_param("i", $viewed_user_id);
+    
+    $user_id = $_SESSION['user_id'];
 
 // Get user data
 $stmt = $conn->prepare("SELECT name, username, email, avatar, phone_number, bio, reputation_score, created_at 
@@ -33,6 +80,9 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $routes = $stmt->get_result();
 $stmt->close();
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -581,7 +631,7 @@ $stmt->close();
       <i class="fas fa-arrow-left"></i>
       Back
     </a>
-    <h1 class="page-title">Profile</h1>
+    <h1 class="page-title">Profile <?php echo !$is_own_profile ? ' - ' . htmlspecialchars($user['name']) : ''; ?></h1>
   </div>
 
   <div class="main-layout">
@@ -633,21 +683,31 @@ $stmt->close();
       </div>
 
       <div class="action-buttons">
+    <?php if ($is_own_profile): ?>
         <a href="edit_profile.php" class="btn-primary-custom">
-          <i class="fas fa-edit"></i> Edit Profil
+            <i class="fas fa-edit"></i> Edit Profil
         </a>
-        <a href="../auth/logout.php" class="btn-secondary-custom">
-          <i class="fas fa-sign-out-alt"></i> Keluar
+        <a href="../../auth/logout.php" class="btn-secondary-custom">
+            <i class="fas fa-sign-out-alt"></i> Keluar
         </a>
-      </div>
-    </div>
+    <?php else: ?>
+        <!-- Optionally add a "Message" or "Follow" button for other users -->
+        <!-- <button class="btn-primary-custom" disabled>
+            <i class="fas fa-user"></i> Lihat Profil
+        </button> -->
+    <?php endif; ?>
+</div>
 
-    <!-- Content Section with Tabs -->
+
+
+    
+  </div>
+  <!-- Content Section with Tabs -->
     <div class="reports-section">
       <div class="reports-header">
         <h3 class="reports-title">
           <i class="fas fa-user-circle"></i>
-          Kontribusi Anda
+          Kontribusi
         </h3>
       </div>
 
@@ -750,7 +810,6 @@ $stmt->close();
         <?php endif; ?>
       </div>
     </div>
-  </div>
 </div>
 
 <script>
