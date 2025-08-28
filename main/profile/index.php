@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "../connection.php";
+include "../../connection.php";
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -24,6 +24,14 @@ $stmt = $conn->prepare("SELECT id, type, description, photo_url, created_at
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $reports = $stmt->get_result();
+$stmt->close();
+
+// Get routes created by this user - UPDATED TO MATCH NEW SCHEMA
+$stmt = $conn->prepare("SELECT id, name, start_latitude, start_longitude, end_latitude, end_longitude, created_at 
+                        FROM routes WHERE created_by = ? ORDER BY created_at DESC");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$routes = $stmt->get_result();
 $stmt->close();
 ?>
 <!DOCTYPE html>
@@ -257,6 +265,52 @@ $stmt->close();
       color: white;
     }
 
+    /* Content Tabs */
+    .content-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--notion-gray-200);
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--notion-gray-600);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .tab-btn.active {
+      color: var(--notion-blue);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--notion-blue);
+    }
+
+    .tab-btn:hover {
+      color: var(--notion-blue);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     /* Reports Section */
     .reports-section {
       background: var(--notion-white);
@@ -292,26 +346,26 @@ $stmt->close();
       font-weight: 600;
     }
 
-    .reports-list {
+    .reports-list, .routes-list {
       max-height: 600px;
       overflow-y: auto;
     }
 
-    .report-item {
+    .report-item, .route-item {
       padding: 20px 24px;
       border-bottom: 1px solid var(--notion-gray-200);
       transition: background-color 0.2s ease;
     }
 
-    .report-item:hover {
+    .report-item:hover, .route-item:hover {
       background: var(--notion-gray-100);
     }
 
-    .report-item:last-child {
+    .report-item:last-child, .route-item:last-child {
       border-bottom: none;
     }
 
-    .report-header {
+    .report-header, .route-header {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -327,33 +381,50 @@ $stmt->close();
       letter-spacing: 0.5px;
     }
 
-.report-type-badge.crime { background: var(--notion-red); color: white; }
-.report-type-badge.accident { background: #ff4d4d; color: white; }
-.report-type-badge.hazard { background: var(--notion-orange); color: white; }
-.report-type-badge.safe_spot { background: var(--notion-green); color: white; }
-.report-type-badge.other { background: var(--notion-gray-600); color: white; }
+    .report-type-badge.crime { background: var(--notion-red); color: white; }
+    .report-type-badge.accident { background: #ff4d4d; color: white; }
+    .report-type-badge.hazard { background: var(--notion-orange); color: white; }
+    .report-type-badge.safe_spot { background: var(--notion-green); color: white; }
+    .report-type-badge.other { background: var(--notion-gray-600); color: white; }
 
+    .route-badge {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--notion-purple);
+      color: white;
+    }
 
-
-    .report-date {
+    .report-date, .route-date {
       color: var(--notion-gray-600);
       font-size: 12px;
       font-weight: 500;
       margin-left: auto;
     }
 
-    .report-content {
+    .report-content, .route-content {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 16px;
       align-items: start;
     }
 
-    .report-description {
+    .report-description, .route-description {
       color: var(--notion-gray-800);
       font-size: 14px;
       line-height: 1.5;
       margin: 0;
+    }
+
+    .route-locations {
+      font-size: 14px;
+      color: var(--notion-gray-600);
+      margin-top: 8px;
+    }
+
+    .route-locations i {
+      margin-right: 4px;
     }
 
     .report-image {
@@ -447,7 +518,7 @@ $stmt->close();
         font-size: 12px;
       }
 
-      .report-content {
+      .report-content, .route-content {
         grid-template-columns: 1fr;
         gap: 12px;
       }
@@ -464,8 +535,17 @@ $stmt->close();
         gap: 8px;
       }
 
-      .report-item {
+      .report-item, .route-item {
         padding: 16px;
+      }
+
+      .content-tabs {
+        flex-direction: column;
+      }
+
+      .tab-btn {
+        width: 100%;
+        text-align: left;
       }
     }
 
@@ -480,18 +560,16 @@ $stmt->close();
         font-size: 13px;
       }
 
-      .report-header {
+      .report-header, .route-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
       }
 
-      .report-date {
+      .report-date, .route-date {
         margin-left: 0;
       }
     }
-
-
   </style>
 </head>
 <body>
@@ -511,7 +589,7 @@ $stmt->close();
     <div class="profile-card">
       <div class="text-center">
         <div class="avatar-container">
-          <img src="../uploads/<?php echo rawurlencode($user['avatar']); ?>" 
+          <img src="../../uploads/<?php echo rawurlencode($user['avatar']); ?>" 
                class="avatar" 
                alt="Avatar">
         </div>
@@ -564,63 +642,138 @@ $stmt->close();
       </div>
     </div>
 
-    <!-- Reports Section -->
+    <!-- Content Section with Tabs -->
     <div class="reports-section">
       <div class="reports-header">
         <h3 class="reports-title">
-          <i class="fas fa-flag"></i>
-          Laporan Anda
-          <span class="reports-count"><?php echo $reports->num_rows; ?></span>
+          <i class="fas fa-user-circle"></i>
+          Kontribusi Anda
         </h3>
       </div>
 
-      <?php if ($reports->num_rows > 0): ?>
-        <div class="reports-list">
-          <?php while ($report = $reports->fetch_assoc()): ?>
-            <div class="report-item">
-              <div class="report-header">
-                <?php
-$type_map = [
-  'crime' => 'Kejahatan',
-  'accident' => 'Kecelakaan',
-  'hazard' => 'Bahaya',
-  'safe_spot' => 'Aman',
-  'other' => 'Lainnya'
-];
-?>
+      <div class="content-tabs">
+        <button class="tab-btn active" data-tab="reports">
+          <i class="fas fa-flag"></i> Laporan
+          <span class="reports-count"><?php echo $reports->num_rows; ?></span>
+        </button>
+        <button class="tab-btn" data-tab="routes">
+          <i class="fas fa-route"></i> Rute
+          <span class="reports-count"><?php echo $routes->num_rows; ?></span>
+        </button>
+      </div>
 
-                <span class="report-type-badge <?php echo $report['type']; ?>">
-  <?php echo $type_map[$report['type']] ?? ucfirst($report['type']); ?>
-</span>
-                <span class="report-date">
-                  <?php echo date("M d, Y • H:i", strtotime($report['created_at'])); ?>
-                </span>
-              </div>
-              
-              <div class="report-content">
-                <p class="report-description">
-                  <?php echo nl2br(htmlspecialchars($report['description'])); ?>
-                </p>
+      <!-- Reports Tab -->
+      <div class="tab-content active" id="reports-tab">
+        <?php if ($reports->num_rows > 0): ?>
+          <div class="reports-list">
+            <?php while ($report = $reports->fetch_assoc()): ?>
+              <div class="report-item">
+                <div class="report-header">
+                  <?php
+                  $type_map = [
+                    'crime' => 'Kejahatan',
+                    'accident' => 'Kecelakaan',
+                    'hazard' => 'Bahaya',
+                    'safe_spot' => 'Aman',
+                    'other' => 'Lainnya'
+                  ];
+                  ?>
+
+                  <span class="report-type-badge <?php echo $report['type']; ?>">
+                    <?php echo $type_map[$report['type']] ?? ucfirst($report['type']); ?>
+                  </span>
+                  <span class="report-date">
+                    <?php echo date("M d, Y • H:i", strtotime($report['created_at'])); ?>
+                  </span>
+                </div>
                 
-                <?php if ($report['photo_url']): ?>
-                  <img src="../uploads/<?php echo rawurlencode($report['photo_url']); ?>" 
-                       alt="Report photo" 
-                       class="report-image">
-                <?php endif; ?>
+                <div class="report-content">
+                  <p class="report-description">
+                    <?php echo nl2br(htmlspecialchars($report['description'])); ?>
+                  </p>
+                  
+                  <?php if ($report['photo_url']): ?>
+                    <img src="../uploads/<?php echo rawurlencode($report['photo_url']); ?>" 
+                         alt="Report photo" 
+                         class="report-image">
+                  <?php endif; ?>
+                </div>
               </div>
-            </div>
-          <?php endwhile; ?>
-        </div>
-      <?php else: ?>
-        <div class="empty-state">
-  <i class="fas fa-clipboard-list"></i>
-  <h4>Belum ada laporan</h4>
-  <p>Anda belum membuat laporan. Mulailah berkontribusi untuk membuat komunitas lebih aman!</p>
-</div>
-      <?php endif; ?>
+            <?php endwhile; ?>
+          </div>
+        <?php else: ?>
+          <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h4>Belum ada laporan</h4>
+            <p>Anda belum membuat laporan. Mulailah berkontribusi untuk membuat komunitas lebih aman!</p>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <!-- Routes Tab -->
+      <div class="tab-content" id="routes-tab">
+        <?php if ($routes->num_rows > 0): ?>
+          <div class="routes-list">
+            <?php while ($route = $routes->fetch_assoc()): ?>
+              <div class="route-item">
+                <div class="route-header">
+                  <span class="route-badge">
+                    Rute
+                  </span>
+                  <span class="route-date">
+                    <?php echo date("M d, Y • H:i", strtotime($route['created_at'])); ?>
+                  </span>
+                </div>
+                
+                <div class="route-content">
+                  <div>
+                    <h5 class="route-name"><?php echo htmlspecialchars($route['name']); ?></h5>
+                    <div class="route-locations">
+                      <div><i class="fas fa-play-circle"></i> 
+                        Start: <?php echo htmlspecialchars($route['start_latitude']); ?>, <?php echo htmlspecialchars($route['start_longitude']); ?>
+                      </div>
+                      <div><i class="fas fa-flag-checkered"></i> 
+                        End: <?php echo htmlspecialchars($route['end_latitude']); ?>, <?php echo htmlspecialchars($route['end_longitude']); ?>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php endwhile; ?>
+          </div>
+        <?php else: ?>
+          <div class="empty-state">
+            <i class="fas fa-route"></i>
+            <h4>Belum ada rute</h4>
+            <p>Anda belum membuat rute. Bagikan rute aman Anda untuk membantu komunitas!</p>
+          </div>
+        <?php endif; ?>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+  // Tab functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Update active button
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Show active content
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
+  });
+</script>
 
 </body>
 </html>

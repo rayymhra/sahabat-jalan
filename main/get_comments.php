@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once 'connection.php';
+include_once '../connection.php';
 
 if (!isset($_GET['report_id'])) {
     echo json_encode(['success' => false, 'message' => 'Report ID not provided']);

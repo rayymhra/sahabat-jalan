@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "../connection.php";
+include "../../connection.php";
 
 if (!isset($_SESSION['user_id'])) {
   header("Location: login.php");
@@ -548,7 +548,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <!-- Avatar Section -->
       <div class="avatar-section">
         <div class="avatar-container">
-          <img src="../uploads/<?php echo htmlspecialchars($user['avatar']); ?>" 
+          <img src="../../uploads/<?php echo htmlspecialchars($user['avatar']); ?>" 
                class="avatar-preview" 
                alt="Current avatar"
                id="avatarPreview">

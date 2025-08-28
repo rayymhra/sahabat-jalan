@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once 'connection.php';
+include_once '../connection.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Silakan login terlebih dahulu']);
@@ -9,6 +9,8 @@ if (!isset($_SESSION['user_id'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $report_id = $_POST['report_id'];
+    $type = $_POST['type'];
+    $description = $_POST['description'];
     $user_id = $_SESSION['user_id'];
     
     // Check if user owns the report
@@ -25,19 +27,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $report = $result->fetch_assoc();
     if ($report['user_id'] != $user_id) {
-        echo json_encode(['success' => false, 'message' => 'Anda tidak memiliki izin untuk menghapus laporan ini']);
+        echo json_encode(['success' => false, 'message' => 'Anda tidak memiliki izin untuk mengedit laporan ini']);
         exit;
     }
     
-    // Delete the report
-    $deleteQuery = "DELETE FROM reports WHERE id = ?";
-    $stmt = $conn->prepare($deleteQuery);
-    $stmt->bind_param("i", $report_id);
+    // Update the report
+    $updateQuery = "UPDATE reports SET type = ?, description = ?, edited_at = NOW(), edit_count = edit_count + 1 WHERE id = ?";
+    $stmt = $conn->prepare($updateQuery);
+    $stmt->bind_param("ssi", $type, $description, $report_id);
     
     if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Laporan berhasil dihapus']);
+        echo json_encode(['success' => true, 'message' => 'Laporan berhasil diperbarui']);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Gagal menghapus laporan: ' . $conn->error]);
+        echo json_encode(['success' => false, 'message' => 'Gagal memperbarui laporan: ' . $conn->error]);
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'Metode request tidak valid']);

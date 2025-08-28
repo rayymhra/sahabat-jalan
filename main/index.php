@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once 'connection.php'; // Your database connection file
+include_once '../connection.php'; // Your database connection file
 
 $userLoggedIn = isset($_SESSION['user_id']);
 $userData = $userLoggedIn ? [
@@ -1701,6 +1701,16 @@ button {
     box-shadow: none;
 }
 
+.reporter-name {
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reporter-name:hover {
+    text-decoration: underline;
+    color: #1d4ed8;
+}
 
 
 </style>
@@ -2090,6 +2100,7 @@ button {
             loadRoutes();
             loadReports();
             tryGeolocation();
+            setupReporterClicks();
             // setupReportActions();
         }
         
@@ -2196,62 +2207,62 @@ button {
         }
         
         // Load comments for a report
-function loadComments(reportId) {
-    fetch(`get_comments.php?report_id=${reportId}`)
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('commentsContainer');
-        if (data.success) {
-            if (data.comments.length === 0) {
-                container.innerHTML = '<div class="text-center py-3 text-muted">Belum ada komentar</div>';
-            } else {
-                container.innerHTML = '';
-                data.comments.forEach(comment => {
-                    const commentElement = createCommentElement(comment, reportId);
-                    container.appendChild(commentElement);
-                });
-            }
-            
-            // Update comment count on the button
-            updateCommentCount(reportId, data.comments.length);
-        } else {
-            container.innerHTML = `<div class="text-center py-3 text-danger">${data.message}</div>`;
+        function loadComments(reportId) {
+            fetch(`get_comments.php?report_id=${reportId}`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('commentsContainer');
+                if (data.success) {
+                    if (data.comments.length === 0) {
+                        container.innerHTML = '<div class="text-center py-3 text-muted">Belum ada komentar</div>';
+                    } else {
+                        container.innerHTML = '';
+                        data.comments.forEach(comment => {
+                            const commentElement = createCommentElement(comment, reportId);
+                            container.appendChild(commentElement);
+                        });
+                    }
+                    
+                    // Update comment count on the button
+                    updateCommentCount(reportId, data.comments.length);
+                } else {
+                    container.innerHTML = `<div class="text-center py-3 text-danger">${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
+                document.getElementById('commentsContainer').innerHTML = 
+                '<div class="text-center py-3 text-danger">Gagal memuat komentar</div>';
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error loading comments:', error);
-        document.getElementById('commentsContainer').innerHTML = 
-            '<div class="text-center py-3 text-danger">Gagal memuat komentar</div>';
-    });
-}
         
         // Create comment element
         // Create comment element with delete option
-function createCommentElement(comment, reportId) {
-    const commentDiv = document.createElement('div');
-    commentDiv.className = 'comment-item';
-    commentDiv.id = `comment-${comment.id}`;
-    
-    const userAvatar = comment.user_avatar ? 
-        `<img src="uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
-        `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
-    
-    const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    // Check if current user is the comment owner
-    const isOwner = userLoggedIn && currentUser && currentUser.id == comment.user_id;
-    const deleteButton = isOwner ? 
-        `<button class="comment-delete-btn" onclick="deleteComment(${comment.id}, ${reportId})">
+        function createCommentElement(comment, reportId) {
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment-item';
+            commentDiv.id = `comment-${comment.id}`;
+            
+            const userAvatar = comment.user_avatar ? 
+            `<img src="../uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
+            `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
+            
+            const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Check if current user is the comment owner
+            const isOwner = userLoggedIn && currentUser && currentUser.id == comment.user_id;
+            const deleteButton = isOwner ? 
+            `<button class="comment-delete-btn" onclick="deleteComment(${comment.id}, ${reportId})">
             <i class="fas fa-trash"></i>
         </button>` : '';
-    
-    commentDiv.innerHTML = `
+            
+            commentDiv.innerHTML = `
         <div class="comment-header">
             <div class="comment-user">
                 ${userAvatar}
@@ -2264,9 +2275,9 @@ function createCommentElement(comment, reportId) {
         </div>
         <div class="comment-content">${comment.content}</div>
     `;
-    
-    return commentDiv;
-}
+            
+            return commentDiv;
+        }
         
         // Update comment count
         function updateCommentCount(reportId, count) {
@@ -2482,7 +2493,7 @@ function createCommentElement(comment, reportId) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Kirim Komentar';
                 });
-
+                
                 
             }
             
@@ -2603,36 +2614,54 @@ function createCommentElement(comment, reportId) {
                 });
             }
         } //END OF SETUP EVENT LISTENER
-
-
-        // Function to delete a comment
-function deleteComment(commentId, reportId) {
-    if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('comment_id', commentId);
-
-    fetch('delete_comment.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Komentar berhasil dihapus!');
-            // Reload comments
-            loadComments(reportId);
-        } else {
-            alert('Gagal menghapus komentar: ' + data.message);
+        
+        
+        // Add this function to handle reporter name clicks
+        function setupReporterClicks() {
+            document.addEventListener('click', function(e) {
+                const reporterElement = e.target.closest('.reporter-name');
+                if (reporterElement) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const userId = reporterElement.getAttribute('data-user-id');
+                    if (userId) {
+                        // Redirect to the user's profile page
+                        window.location.href = `profile/index.php?id=${userId}`;
+                    }
+                }
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat menghapus komentar');
-    });
-}
+        
+        
+        // Function to delete a comment
+        function deleteComment(commentId, reportId) {
+            if (!confirm('Apakah Anda yakin ingin menghapus komentar ini?')) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('comment_id', commentId);
+            
+            fetch('delete_comment.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Komentar berhasil dihapus!');
+                    // Reload comments
+                    loadComments(reportId);
+                } else {
+                    alert('Gagal menghapus komentar: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menghapus komentar');
+            });
+        }
         
         
         
@@ -3014,7 +3043,7 @@ function deleteComment(commentId, reportId) {
             // Show creator with avatar
             // In showRouteReports function, update avatar URLs:
             const creatorAvatar = route.creator_avatar ? 
-            `<img src="${route.creator_avatar.startsWith('http') ? route.creator_avatar : 'uploads/' + route.creator_avatar}?t=${new Date().getTime()}" alt="${route.creator_name}" class="user-avatar-small">` :
+            `<img src="../uploads/${route.creator_avatar.startsWith('http') ? route.creator_avatar : '../uploads/' + route.creator_avatar}?t=${new Date().getTime()}" alt="${route.creator_name}" class="user-avatar-small">` :
             `<div class="user-avatar-small">${route.creator_name ? route.creator_name.charAt(0).toUpperCase() : 'U'}</div>`;
             
             routeCreatorInfo.innerHTML = `Dibuat oleh: <span class="user-link" data-user-id="${route.created_by}">${creatorAvatar} ${route.creator_name || 'Unknown'}</span>`;
@@ -3029,7 +3058,7 @@ function deleteComment(commentId, reportId) {
                 route.reports.forEach(report => {
                     
                     const userAvatar = report.user_avatar ? 
-                    `<img src="uploads/${report.user_avatar}?t=${new Date().getTime()}" alt="${report.user_name}" class="user-avatar-small">` :
+                    `<img src="../uploads/${report.user_avatar}?t=${new Date().getTime()}" alt="${report.user_name}" class="user-avatar-small">` :
                     `<div class="user-avatar-small">${report.user_name ? report.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
                     
                     const likeActiveClass = report.user_vote === 1 ? 'active' : '';
@@ -3051,11 +3080,11 @@ function deleteComment(commentId, reportId) {
                 </button>
                 <div class="report-menu">
                     <button class="report-menu-item edit" data-report-id="${report.id}">
-        <i class="fas fa-edit"></i> Edit
-    </button>
-    <button class="report-menu-item delete" data-report-id="${report.id}">
-        <i class="fas fa-trash"></i> Hapus
-    </button>
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="report-menu-item delete" data-report-id="${report.id}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
                 </div>
             </div>
             ` : ''}
@@ -3064,7 +3093,7 @@ function deleteComment(commentId, reportId) {
     <p class="report-description">${report.description}</p>
     <div class="report-footer">
         <div class="report-user" data-user-id="${report.user_id}">
-            <small>Oleh: ${userAvatar} ${report.user_name || 'Unknown'}</small>
+            <small>Oleh: ${userAvatar} <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span></small>
         </div>
         <div class="like-dislike-container">
             <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
@@ -3139,7 +3168,7 @@ function deleteComment(commentId, reportId) {
             if (userLoggedIn && userData && userData.avatar) {
                 const userAvatar = document.getElementById('userAvatar');
                 // Add timestamp to prevent caching
-                userAvatar.innerHTML = `<img src="uploads/${userData.avatar}?t=${new Date().getTime()}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                userAvatar.innerHTML = `<img src="../uploads/${userData.avatar}?t=${new Date().getTime()}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%;">`;
             }
         }
         
@@ -3607,47 +3636,47 @@ function deleteComment(commentId, reportId) {
                     `<div class="report-edited">Diedit pada: ${formatDate(report.edited_at)}</div>` : '';
                     
                     const reportCard = document.createElement('div');
-                    reportCard.className = 'report-card';
-                    reportCard.innerHTML = `
-        <div class="report-header">
-            <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="report-date">${formatDate(report.created_at)}</span>
-                ${isOwner ? `
-                <div class="report-actions">
-                    <button class="report-menu-btn">
-                        <i class="fas fa-ellipsis-h"></i>
+reportCard.className = 'report-card';
+reportCard.innerHTML = `
+    <div class="report-header">
+        <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="report-date">${formatDate(report.created_at)}</span>
+            ${isOwner ? `
+            <div class="report-actions">
+                <button class="report-menu-btn">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <div class="report-menu">
+                    <button class="report-menu-item edit" data-report-id="${report.id}">
+                        <i class="fas fa-edit"></i> Edit
                     </button>
-                    <div class="report-menu">
-                        <button class="report-menu-item edit" data-report-id="${report.id}">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="report-menu-item delete" data-report-id="${report.id}">
-                            <i class="fas fa-trash"></i> Hapus
-                        </button>
-                    </div>
+                    <button class="report-menu-item delete" data-report-id="${report.id}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
                 </div>
-                ` : ''}
             </div>
+            ` : ''}
         </div>
-        <p class="report-description">${report.description}</p>
-        ${editedText}
-        <div class="report-footer">
-            <div class="report-user">
-                <small>Oleh: ${report.user_name || 'Unknown'} • ${report.route_name || 'Rute #' + report.route_id}</small>
-            </div>
-            <div class="like-dislike-container">
-                <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
-                    <i class="fas fa-thumbs-up"></i>
-                    <span class="like-count">${report.likes || 0}</span>
-                </button>
-                <button class="dislike-btn ${dislikeActiveClass}" data-report-id="${report.id}">
-                    <i class="fas fa-thumbs-down"></i>
-                    <span class="dislike-count">${report.dislikes || 0}</span>
-                </button>
-            </div>
+    </div>
+    <p class="report-description">${report.description}</p>
+    ${editedText}
+    <div class="report-footer">
+        <div class="report-user">
+            <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name || 'Rute #' + report.route_id}</small>
         </div>
-    `;
+        <div class="like-dislike-container">
+            <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
+                <i class="fas fa-thumbs-up"></i>
+                <span class="like-count">${report.likes || 0}</span>
+            </button>
+            <button class="dislike-btn ${dislikeActiveClass}" data-report-id="${report.id}">
+                <i class="fas fa-thumbs-down"></i>
+                <span class="dislike-count">${report.dislikes || 0}</span>
+            </button>
+        </div>
+    </div>
+`;
                     
                     // Add click event to focus on the route
                     reportCard.addEventListener('click', (e) => {
@@ -3927,7 +3956,7 @@ function deleteComment(commentId, reportId) {
                             function updateUserAvatar() {
                                 if (userLoggedIn && userData && userData.avatar) {
                                     const userAvatar = document.getElementById('userAvatar');
-                                    userAvatar.innerHTML = `<img src="uploads/${userData.avatar}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                                    userAvatar.innerHTML = `<img src="../uploads/${userData.avatar}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%;">`;
                                 }
                             }
                             
