@@ -58,6 +58,7 @@ $userData = $userLoggedIn ? [
     r.end_latitude as end_lat, 
     r.end_longitude as end_lng,
     u.name AS creator_name, 
+    u.id AS creator_id,
     u.avatar AS creator_avatar 
     FROM routes r 
     LEFT JOIN users u ON r.created_by = u.id 
@@ -1608,11 +1609,28 @@ button {
 }
 
 .comment-user {
+    cursor: pointer;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.comment-user:hover {
+    background-color: var(--bg-secondary);
+}
+
+.comment-username {
+    color: var(--primary-color);
     font-weight: 500;
-    font-size: 0.875rem;
+    transition: color 0.2s ease;
+}
+
+.comment-user:hover .comment-username {
+    color: var(--primary-color-dark);
+    text-decoration: underline;
 }
 
 .comment-avatar {
@@ -1722,8 +1740,8 @@ button {
 <h1>GoSafe</h1>
 </div>
 <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
-<a href="auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
-<a href="auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
+<a href="../auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
+<a href="../auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
 </div>
 <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
 <a href="profile/index.php" class="user-avatar-link">
@@ -1732,7 +1750,7 @@ button {
 </div>
 </a>
 <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
-<a href="auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
+<a href="../auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
 </div>
 </header>
 
@@ -2097,11 +2115,12 @@ button {
             setupEventListeners();
             setupLocationButton();
             setupAvatarClick();
+            setupCommentUserClicks(); 
             loadRoutes();
             loadReports();
             tryGeolocation();
             setupReporterClicks();
-            // setupReportActions();
+            setupReportActions();
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -2237,36 +2256,38 @@ button {
         }
         
         // Create comment element
-        // Create comment element with delete option
-        function createCommentElement(comment, reportId) {
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment-item';
-            commentDiv.id = `comment-${comment.id}`;
-            
-            const userAvatar = comment.user_avatar ? 
-            `<img src="../uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
-            `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
-            
-            const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            // Check if current user is the comment owner
-            const isOwner = userLoggedIn && currentUser && currentUser.id == comment.user_id;
-            const deleteButton = isOwner ? 
-            `<button class="comment-delete-btn" onclick="deleteComment(${comment.id}, ${reportId})">
+function createCommentElement(comment, reportId) {
+    const commentDiv = document.createElement('div');
+    commentDiv.className = 'comment-item';
+    commentDiv.id = `comment-${comment.id}`;
+    
+    const userAvatar = comment.user_avatar ? 
+        `<img src="../uploads/${comment.user_avatar}" alt="${comment.user_name}" class="comment-avatar">` :
+        `<div class="comment-avatar">${comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
+    
+    const commentDate = new Date(comment.created_at).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Check if current user is the comment owner
+    const isOwner = userLoggedIn && currentUser && currentUser.id == comment.user_id;
+    const deleteButton = isOwner ? 
+        `<button class="comment-delete-btn" onclick="deleteComment(${comment.id}, ${reportId})">
             <i class="fas fa-trash"></i>
         </button>` : '';
-            
-            commentDiv.innerHTML = `
+    
+    // Make the user name clickable with data-user-id attribute
+    commentDiv.innerHTML = `
         <div class="comment-header">
-            <div class="comment-user">
+            <div class="comment-user" data-user-id="${comment.user_id}" style="cursor: pointer;">
                 ${userAvatar}
-                ${comment.user_name || 'Unknown'}
+                <span class="comment-username" data-user-id="${comment.user_id}">
+                    ${comment.user_name || 'Unknown'}
+                </span>
             </div>
             <div class="comment-actions">
                 <div class="comment-date">${commentDate}</div>
@@ -2275,9 +2296,9 @@ button {
         </div>
         <div class="comment-content">${comment.content}</div>
     `;
-            
-            return commentDiv;
-        }
+    
+    return commentDiv;
+}
         
         // Update comment count
         function updateCommentCount(reportId, count) {
@@ -2614,24 +2635,64 @@ button {
                 });
             }
         } //END OF SETUP EVENT LISTENER
+
+
+        // Handle clicks on comment users
+function setupCommentUserClicks() {
+    document.addEventListener('click', function(e) {
+        // Check if clicked on comment user or username
+        const commentUser = e.target.closest('.comment-user');
+        const commentUsername = e.target.closest('.comment-username');
+        
+        const targetElement = commentUser || commentUsername;
+        
+        if (targetElement) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const userId = targetElement.getAttribute('data-user-id');
+            if (userId) {
+                // Close comment modal first
+                if (commentModal) {
+                    commentModal.style.display = 'none';
+                }
+                
+                // Redirect to user profile
+                window.location.href = `profile/index.php?id=${userId}`;
+            }
+        }
+    });
+}
         
         
         // Add this function to handle reporter name clicks
         function setupReporterClicks() {
-            document.addEventListener('click', function(e) {
-                const reporterElement = e.target.closest('.reporter-name');
-                if (reporterElement) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const userId = reporterElement.getAttribute('data-user-id');
-                    if (userId) {
-                        // Redirect to the user's profile page
-                        window.location.href = `profile/index.php?id=${userId}`;
-                    }
-                }
-            });
+    document.addEventListener('click', function(e) {
+        const reporterElement = e.target.closest('.reporter-name');
+        if (reporterElement) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const userId = reporterElement.getAttribute('data-user-id');
+            if (userId) {
+                // Redirect to the profile page
+                window.location.href = `profile/index.php?id=${userId}`;
+            }
         }
+        
+        // Also handle user avatar clicks in route reports
+        const userLink = e.target.closest('.user-link');
+        if (userLink) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const userId = userLink.getAttribute('data-user-id');
+            if (userId) {
+                window.location.href = `profile/index.php?id=${userId}`;
+            }
+        }
+    });
+}
         
         
         // Function to delete a comment
@@ -2662,56 +2723,59 @@ button {
                 alert('Terjadi kesalahan saat menghapus komentar');
             });
         }
-        
-        
-        
-        // Add this function to show the edit menu
+
         function setupReportActions() {
-            // Use event delegation for dynamically created elements
-            document.addEventListener('click', function(e) {
-                // Close all menus when clicking elsewhere
-                if (!e.target.closest('.report-actions')) {
-                    document.querySelectorAll('.report-menu').forEach(menu => {
-                        menu.classList.remove('show');
-                    });
-                }
-                
-                // Toggle menu when clicking the three dots
-                if (e.target.closest('.report-menu-btn')) {
-                    const menuBtn = e.target.closest('.report-menu-btn');
-                    const menu = menuBtn.nextElementSibling;
-                    const isVisible = menu.classList.contains('show');
-                    
-                    // Close all other menus
-                    document.querySelectorAll('.report-menu').forEach(m => {
-                        m.classList.remove('show');
-                    });
-                    
-                    // Toggle this menu
-                    if (!isVisible) {
-                        menu.classList.add('show');
-                    }
-                    
-                    e.stopPropagation();
-                }
-                
-                // Handle edit button click
-                if (e.target.closest('.report-menu-item.edit')) {
-                    const menuItem = e.target.closest('.report-menu-item.edit');
-                    const reportId = menuItem.getAttribute('data-report-id');
-                    openEditReportModal(reportId);
-                    e.stopPropagation();
-                }
-                
-                // Handle delete button click
-                if (e.target.closest('.report-menu-item.delete')) {
-                    const menuItem = e.target.closest('.report-menu-item.delete');
-                    const reportId = menuItem.getAttribute('data-report-id');
-                    deleteReport(reportId);
-                    e.stopPropagation();
-                }
-            });
+    // Remove any existing event listeners first
+    document.removeEventListener('click', handleReportActions);
+    
+    // Add the event listener once
+    document.addEventListener('click', handleReportActions);
+}
+
+function handleReportActions(e) {
+    // Close all menus when clicking elsewhere
+    if (!e.target.closest('.report-actions')) {
+        document.querySelectorAll('.report-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+    
+    // Toggle menu when clicking the three dots
+    if (e.target.closest('.report-menu-btn')) {
+        const menuBtn = e.target.closest('.report-menu-btn');
+        const menu = menuBtn.nextElementSibling;
+        const isVisible = menu.classList.contains('show');
+        
+        // Close all other menus
+        document.querySelectorAll('.report-menu').forEach(m => {
+            m.classList.remove('show');
+        });
+        
+        // Toggle this menu
+        if (!isVisible) {
+            menu.classList.add('show');
         }
+        
+        e.stopPropagation();
+    }
+    
+    // Handle edit button click
+    if (e.target.closest('.report-menu-item.edit')) {
+        const menuItem = e.target.closest('.report-menu-item.edit');
+        const reportId = menuItem.getAttribute('data-report-id');
+        openEditReportModal(reportId);
+        e.stopPropagation();
+    }
+    
+    // Handle delete button click
+    if (e.target.closest('.report-menu-item.delete')) {
+        const menuItem = e.target.closest('.report-menu-item.delete');
+        const reportId = menuItem.getAttribute('data-report-id');
+        deleteReport(reportId);
+        e.stopPropagation();
+    }
+}
+        
         
         // Function to open edit modal
         function openEditReportModal(reportId) {
@@ -2737,34 +2801,40 @@ button {
         }
         
         // Function to delete report
+        let isDeleting = false;
         function deleteReport(reportId) {
-            if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) {
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('report_id', reportId);
-            
-            fetch('delete_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Laporan berhasil dihapus!');
-                    // Refresh the reports
-                    fetchRoutesFromServer();
-                    fetchReportsFromServer();
-                } else {
-                    alert('Gagal menghapus laporan: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan saat menghapus laporan');
-            });
+    if (isDeleting) return;
+    
+    if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) {
+        return;
+    }
+    
+    isDeleting = true;
+    const formData = new FormData();
+    formData.append('report_id', reportId);
+    
+    fetch('delete_report.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Laporan berhasil dihapus!');
+            // Refresh the reports
+            fetchRoutesFromServer();
+            fetchReportsFromServer();
+        } else {
+            alert('Gagal menghapus laporan: ' + data.message);
         }
+        isDeleting = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menghapus laporan');
+        isDeleting = false;
+    });
+}
         
         // Load routes from PHP data
         // Load routes from PHP data with actual road paths
@@ -3962,12 +4032,7 @@ reportCard.innerHTML = `
                             
                             
                             function showUserProfile(userId) {
-                                fetch(`get_user_profile.php?id=${userId}`)
-                                .then(response => response.json())
-                                .then(user => {
-                                    // Show user profile modal
-                                    showProfileModal(user);
-                                });
+                                window.location.href = `profile/index.php?id=${userId}`;
                             }
                             
                             

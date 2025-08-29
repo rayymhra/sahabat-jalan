@@ -14,7 +14,7 @@ $query = "SELECT c.*, u.name as user_name, u.avatar as user_avatar
           FROM comments c 
           LEFT JOIN users u ON c.user_id = u.id 
           WHERE c.report_id = ? 
-          ORDER BY c.created_at DESC";
+          ORDER BY c.created_at ASC";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $report_id);
 $stmt->execute();
