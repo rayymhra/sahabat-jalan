@@ -210,7 +210,7 @@ $reportsJson = json_encode($reports);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
+            --primary-color: #3B82F6;
             --secondary-color: #1f2937;
             --danger-color: #dc2626;
             --success-color: #059669;
@@ -355,11 +355,13 @@ $reportsJson = json_encode($reports);
             display: flex;
             flex-direction: column;
             z-index: 2;
+
+            
         }
         
         .sidebar-header {
             padding: 1.25rem 1.5rem;
-            background-color: #2563eb;
+            background-color: var(--primary-color);
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -406,63 +408,63 @@ $reportsJson = json_encode($reports);
             transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
-
+        
         .search-wrapper {
-    position: relative;
-}
-
-.autocomplete-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-top: none;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
-    box-shadow: var(--shadow-md);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-}
-
-.autocomplete-item {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-}
-
-.autocomplete-item:hover {
-    background-color: var(--bg-secondary);
-}
-
-.autocomplete-item i {
-    margin-right: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-}
-
-.autocomplete-item .name {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.autocomplete-item .type {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-left: auto;
-}
-
-.no-results {
-    padding: 0.75rem 1rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    text-align: center;
-}
+            position: relative;
+        }
+        
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .autocomplete-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .autocomplete-item:hover {
+            background-color: var(--bg-secondary);
+        }
+        
+        .autocomplete-item i {
+            margin-right: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        .autocomplete-item .name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .autocomplete-item .type {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-left: auto;
+        }
+        
+        .no-results {
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-align: center;
+        }
         
         .filter-section {
             padding: 1rem 1.5rem;
@@ -1397,6 +1399,119 @@ $reportsJson = json_encode($reports);
             border-color: #1d4ed8;
             transform: translateY(-1px);
         }
+/* Mobile - show button, sidebar hidden by default */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%; /* hidden */
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    z-index: 2000;
+    transition: right 0.3s ease-in-out;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+  }
+
+  .sidebar.open {
+    right: 0 !important; /* force slide in */
+    display: block !important;
+  }
+
+  .toggle-sidebar-btn {
+    display: flex;
+    position: fixed;
+    bottom: 20px; /* Changed from top to bottom */
+    left: 15px;   /* Changed from right to left */
+    z-index: 2100;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+  }
+  
+  .toggle-sidebar-btn:hover {
+    background: #1d4ed8;
+  }
+}
+
+/* Desktop - always show sidebar */
+@media (min-width: 769px) {
+  .sidebar {
+    display: flex !important;
+    position: relative;
+    right: 0;
+    width: 380px;
+    height: auto;
+  }
+  .toggle-sidebar-btn {
+    display: none !important; /* always hidden */
+  }
+}
+
+/* Base style (hidden by default) */
+.toggle-sidebar-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  z-index: 2100;
+  display: none; /* start hidden */
+}
+.toggle-sidebar-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Mobile - show button */
+@media (max-width: 768px) {
+  .toggle-sidebar-btn {
+    display: flex; /* only visible on mobile */
+    position: fixed;
+    bottom: 20px; /* adjust placement if needed */
+    right: 15px;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    z-index: 2000;
+    transition: right 0.3s ease-in-out;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+  }
+  .sidebar.open {
+    right: 0;
+  }
+}
+
+/* Desktop - hide button, show sidebar */
+@media (min-width: 769px) {
+  .toggle-sidebar-btn {
+    display: none !important;
+  }
+  .sidebar {
+    display: flex !important;
+    position: relative;
+    right: 0;
+    width: 380px;
+    height: auto;
+  }
+}
+
         
         /* Responsive design */
         @media (max-width: 992px) {
@@ -1406,7 +1521,7 @@ $reportsJson = json_encode($reports);
             
             .sidebar {
                 width: 100%;
-                height: 40%;
+                height: 100%;
                 order: 2;
                 border-left: none;
                 border-top: 1px solid var(--border-color);
@@ -1870,24 +1985,89 @@ $reportsJson = json_encode($reports);
         .btn-danger:hover {
             background-color: #b91c1c;
         }
-
+        
         .edit-route-name-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-size: 0.875rem;
-    width: 100%;
-    transition: all 0.2s ease;
-    margin-bottom: 0.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.875rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+        
+        .edit-route-name-btn:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .map-search-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
-.edit-route-name-btn:hover {
-    background-color: #1d4ed8;
-    transform: translateY(-1px);
+.map-search-container .input-group {
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
 }
+
+.map-search-container .form-control {
+    border: none;
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+    background-color: var(--bg-primary);
+}
+
+.map-search-container .btn {
+    border: none;
+    padding: 0.875rem 1rem;
+    background-color: var(--primary-color);
+}
+
+.map-search-container .autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .map-search-container {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+    
+    .map-search-container .form-control {
+        padding: 0.75rem;
+    }
+    
+    .map-search-container .btn {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .map-search-container {
+        top: 10px;
+        left: 5px;
+        right: 5px;
+    }
+}
+
+
+
         
         
     </style>
@@ -1913,9 +2093,27 @@ $reportsJson = json_encode($reports);
         </div>
     </header>
     
+    
     <div class="main-container">
         <div class="map-container">
             <div id="map"></div>
+
+            <button class="toggle-sidebar-btn" id="toggleSidebarBtn">
+  <i class="fas fa-list"></i>
+</button>
+
+
+            <div class="map-search-container">
+        <div class="search-wrapper">
+            <div class="input-group">
+                <input type="text" id="search" class="form-control" placeholder="Cari lokasi...">
+                <button class="btn btn-primary" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="autocomplete-results" id="autocompleteResults"></div>
+        </div>
+    </div>
             
             <div class="map-controls">
                 <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
@@ -2008,12 +2206,12 @@ $reportsJson = json_encode($reports);
                     <button class="route-action-btn delete-route-btn" id="deleteRouteBtn">
                         <i class="fas fa-trash"></i> Hapus Rute
                     </button>
-                                   <button class="route-action-btn edit-route-name-btn" id="editRouteNameBtn" style="margin-bottom: 0.5rem;">
-    <i class="fas fa-edit"></i> Edit Nama Rute
-</button>
+                    <button class="route-action-btn edit-route-name-btn" id="editRouteNameBtn" style="margin-bottom: 0.5rem;">
+                        <i class="fas fa-edit"></i> Edit Nama Rute
+                    </button>
                 </div>
-
- 
+                
+                
             </div>
             
             <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
@@ -2021,20 +2219,12 @@ $reportsJson = json_encode($reports);
             </button>
         </div>
         
+        
         <div class="sidebar">
             <div class="sidebar-header">
                 <h5 class="mb-0">Laporan Jalan</h5>
             </div>
             
-            <div class="search-container">
-    <div class="input-group search-wrapper">
-        <input type="text" class="form-control" id="search" placeholder="Cari jalan, tempat, atau gedung..." autocomplete="off">
-        <button class="btn btn-primary" type="button" id="searchBtn">
-            <i class="fas fa-search"></i>
-        </button>
-        <div class="autocomplete-results" id="autocompleteResults"></div>
-    </div>
-</div>
             
             <div class="filter-section">
                 <div class="filter-options">
@@ -2224,26 +2414,26 @@ $reportsJson = json_encode($reports);
             </div>
         </div>
     </div>
-
+    
     <!-- Edit Route Name Modal -->
-<div class="modal" id="editRouteNameModal">
-    <div class="modal-content p-3">
-        <div class="modal-header">
-            <h4 class="mb-0">Edit Nama Rute</h4>
-            <button class="close-btn" data-dismiss="edit-route-name">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="editRouteNameForm">
-                <input type="hidden" id="editRouteId" name="route_id">
-                <div class="form-group">
-                    <label for="editRouteName">Nama Rute</label>
-                    <input type="text" id="editRouteName" name="route_name" placeholder="Masukkan nama rute..." required>
-                </div>
-                <button type="submit" class="submit-btn" id="editRouteNameSubmitBtn">Simpan Perubahan</button>
-            </form>
+    <div class="modal" id="editRouteNameModal">
+        <div class="modal-content p-3">
+            <div class="modal-header">
+                <h4 class="mb-0">Edit Nama Rute</h4>
+                <button class="close-btn" data-dismiss="edit-route-name">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editRouteNameForm">
+                    <input type="hidden" id="editRouteId" name="route_id">
+                    <div class="form-group">
+                        <label for="editRouteName">Nama Rute</label>
+                        <input type="text" id="editRouteName" name="route_name" placeholder="Masukkan nama rute..." required>
+                    </div>
+                    <button type="submit" class="submit-btn" id="editRouteNameSubmitBtn">Simpan Perubahan</button>
+                </form>
+            </div>
         </div>
     </div>
-</div>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -2825,16 +3015,18 @@ $reportsJson = json_encode($reports);
                 
                 // Search functionality
                 if (searchBtn) {
-                    searchBtn.addEventListener('click', searchLocation);
-                }
-                
-                if (searchInput) {
-                    searchInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
-                            searchLocation();
-                        }
-                    });
-                }
+    searchBtn.addEventListener('click', () => {
+        searchLocation();
+    });
+}
+
+if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchLocation();
+        }
+    });
+}
                 
                 // Add report to route
                 if (addToRouteBtn) {
@@ -2855,121 +3047,76 @@ $reportsJson = json_encode($reports);
                     });
                 }
             } //END OF SETUP EVENT LISTENER
-
-
+            
+            
             function initSearch() {
-    const searchInput = document.getElementById('search');
-    const searchBtn = document.getElementById('searchBtn');
-    const autocompleteResults = document.getElementById('autocompleteResults');
-    
-    // Debounce function to limit API calls
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-    
-    // Handle search input with debouncing
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.trim();
-        if (query.length < 3) {
-            hideAutocomplete();
-            return;
-        }
-        
-        searchLocationAutocomplete(query);
-    }, 300));
-    
-    // Handle search button click
-    searchBtn.addEventListener('click', function() {
-        const query = searchInput.value.trim();
-        if (query) {
-            searchLocation(query);
-        }
-    });
-    
-    // Handle Enter key in search input
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const query = searchInput.value.trim();
-            if (query) {
-                searchLocation(query);
+                const searchInput = document.getElementById('search');
+                const searchBtn = document.getElementById('searchBtn');
+                const autocompleteResults = document.getElementById('autocompleteResults');
+                
+                // Debounce function to limit API calls
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                // Handle search input with debouncing
+                searchInput.addEventListener('input', debounce(function(e) {
+                    const query = e.target.value.trim();
+                    if (query.length < 3) {
+                        hideAutocomplete();
+                        return;
+                    }
+                    
+                    searchLocationAutocomplete(query);
+                }, 300));
+                
+                // Handle search button click
+                searchBtn.addEventListener('click', function() {
+                    const query = searchInput.value.trim();
+                    if (query) {
+                        searchLocation(query);
+                    }
+                });
+                
+                // Handle Enter key in search input
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const query = searchInput.value.trim();
+                        if (query) {
+                            searchLocation(query);
+                        }
+                    }
+                });
+                
+                // Close autocomplete when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                        hideAutocomplete();
+                    }
+                });
             }
-        }
-    });
-    
-    // Close autocomplete when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
-            hideAutocomplete();
-        }
-    });
-}
-
-// Function to search for locations with autocomplete
+            
+            // Function to search for locations with autocomplete
 function searchLocationAutocomplete(query) {
     // Use Nominatim API for geocoding (OpenStreetMap)
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
     
     fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            displayAutocompleteResults(data);
-        })
-        .catch(error => {
-            console.error('Error fetching autocomplete results:', error);
-        });
-}
-
-// Function to display autocomplete results
-function displayAutocompleteResults(results) {
-    const autocompleteResults = document.getElementById('autocompleteResults');
-    
-    if (results.length === 0) {
-        autocompleteResults.innerHTML = '<div class="no-results">Tidak ada hasil ditemukan</div>';
-        autocompleteResults.style.display = 'block';
-        return;
-    }
-    
-    searchResults = results;
-    
-    let html = '';
-    results.forEach((result, index) => {
-        const type = getLocationType(result);
-        const icon = getIconForType(type);
-        
-        html += `
-            <div class="autocomplete-item" data-index="${index}">
-                <i class="${icon}"></i>
-                <span class="name">${result.display_name.split(',')[0]}</span>
-                <span class="type">${type}</span>
-            </div>
-        `;
+    .then(response => response.json())
+    .then(data => {
+        displayAutocompleteResults(data);
+    })
+    .catch(error => {
+        console.error('Error fetching autocomplete results:', error);
     });
-    
-    autocompleteResults.innerHTML = html;
-    autocompleteResults.style.display = 'block';
-    
-    // Add click event listeners to autocomplete items
-    const items = autocompleteResults.querySelectorAll('.autocomplete-item');
-    items.forEach(item => {
-        item.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            selectSearchResult(index);
-        });
-    });
-}
-
-// Function to hide autocomplete results
-function hideAutocomplete() {
-    const autocompleteResults = document.getElementById('autocompleteResults');
-    autocompleteResults.style.display = 'none';
 }
 
 // Function to select a search result
@@ -2981,164 +3128,222 @@ function selectSearchResult(index) {
     searchInput.value = result.display_name.split(',')[0];
     hideAutocomplete();
     
-    // Move map to the selected location
-    moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+    // Perform the search with the selected result
+    searchLocation(result.display_name);
 }
-
-// Function to search for a location directly
-function searchLocation(query) {
-    // Use Nominatim API for geocoding (OpenStreetMap)
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.length > 0) {
-                const result = data[0];
+            
+            // Function to display autocomplete results
+            function displayAutocompleteResults(results) {
+                const autocompleteResults = document.getElementById('autocompleteResults');
+                
+                if (results.length === 0) {
+                    autocompleteResults.innerHTML = '<div class="no-results">Tidak ada hasil ditemukan</div>';
+                    autocompleteResults.style.display = 'block';
+                    return;
+                }
+                
+                searchResults = results;
+                
+                let html = '';
+                results.forEach((result, index) => {
+                    const type = getLocationType(result);
+                    const icon = getIconForType(type);
+                    
+                    html += `
+                    <div class="autocomplete-item" data-index="${index}">
+                        <i class="${icon}"></i>
+                        <span class="name">${result.display_name.split(',')[0]}</span>
+                        <span class="type">${type}</span>
+                    </div>
+                    `;
+                });
+                
+                autocompleteResults.innerHTML = html;
+                autocompleteResults.style.display = 'block';
+                
+                // Add click event listeners to autocomplete items
+                const items = autocompleteResults.querySelectorAll('.autocomplete-item');
+                items.forEach(item => {
+                    item.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        selectSearchResult(index);
+                    });
+                });
+            }
+            
+            // Function to hide autocomplete results
+            function hideAutocomplete() {
+                const autocompleteResults = document.getElementById('autocompleteResults');
+                autocompleteResults.style.display = 'none';
+            }
+            
+            // Function to select a search result
+            function selectSearchResult(index) {
+                const result = searchResults[index];
+                const searchInput = document.getElementById('search');
+                
+                // Update search input with selected result
+                searchInput.value = result.display_name.split(',')[0];
+                hideAutocomplete();
+                
+                // Move map to the selected location
                 moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
-            } else {
-                alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
             }
-        })
-        .catch(error => {
-            console.error('Error fetching location:', error);
-            alert('Terjadi kesalahan saat mencari lokasi.');
-        });
-}
-
-// Function to move map to a specific location
-function moveMapToLocation(lat, lng, name) {
-    // Remove previous search marker if exists
-    if (currentSearchMarker) {
-        map.removeLayer(currentSearchMarker);
-    }
-    
-    // Create a new marker for the searched location
-    currentSearchMarker = L.marker([lat, lng], {
-        icon: L.divIcon({
-            className: 'search-marker',
-            html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 24px;"></i>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 24]
-        })
-    }).addTo(map);
-    
-    // Bind popup with location name
-    currentSearchMarker.bindPopup(`<b>${name}</b>`).openPopup();
-    
-    // Move map to the location
-    map.setView([lat, lng], 15);
-}
-
-// Helper function to determine location type
-function getLocationType(result) {
-    if (result.type === 'administrative') {
-        return 'Administratif';
-    } else if (result.class === 'highway') {
-        return 'Jalan';
-    } else if (result.class === 'place') {
-        return 'Tempat';
-    } else if (result.class === 'building') {
-        return 'Gedung';
-    } else if (result.class === 'amenity') {
-        return 'Fasilitas';
-    } else if (result.class === 'natural') {
-        return 'Alam';
-    } else if (result.class === 'tourism') {
-        return 'Wisata';
-    } else {
-        return 'Lokasi';
-    }
-}
-
-// Helper function to get icon for location type
-function getIconForType(type) {
-    switch(type) {
-        case 'Jalan': return 'fas fa-road';
-        case 'Tempat': return 'fas fa-map-marker-alt';
-        case 'Gedung': return 'fas fa-building';
-        case 'Fasilitas': return 'fas fa-utensils';
-        case 'Alam': return 'fas fa-tree';
-        case 'Wisata': return 'fas fa-camera';
-        case 'Administratif': return 'fas fa-landmark';
-        default: return 'fas fa-map-pin';
-    }
-}
-
             
-
+            // Function to search for a location directly
+            function searchLocation(query) {
+                // Use Nominatim API for geocoding (OpenStreetMap)
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+                
+                fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const result = data[0];
+                        moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+                    } else {
+                        alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching location:', error);
+                    alert('Terjadi kesalahan saat mencari lokasi.');
+                });
+            }
+            
+            // Function to move map to a specific location
+            function moveMapToLocation(lat, lng, name) {
+                // Remove previous search marker if exists
+                if (currentSearchMarker) {
+                    map.removeLayer(currentSearchMarker);
+                }
+                
+                // Create a new marker for the searched location
+                currentSearchMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'search-marker',
+                        html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 24px;"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    })
+                }).addTo(map);
+                
+                // Bind popup with location name
+                currentSearchMarker.bindPopup(`<b>${name}</b>`).openPopup();
+                
+                // Move map to the location
+                map.setView([lat, lng], 15);
+            }
+            
+            // Helper function to determine location type
+            function getLocationType(result) {
+                if (result.type === 'administrative') {
+                    return 'Administratif';
+                } else if (result.class === 'highway') {
+                    return 'Jalan';
+                } else if (result.class === 'place') {
+                    return 'Tempat';
+                } else if (result.class === 'building') {
+                    return 'Gedung';
+                } else if (result.class === 'amenity') {
+                    return 'Fasilitas';
+                } else if (result.class === 'natural') {
+                    return 'Alam';
+                } else if (result.class === 'tourism') {
+                    return 'Wisata';
+                } else {
+                    return 'Lokasi';
+                }
+            }
+            
+            // Helper function to get icon for location type
+            function getIconForType(type) {
+                switch(type) {
+                    case 'Jalan': return 'fas fa-road';
+                    case 'Tempat': return 'fas fa-map-marker-alt';
+                    case 'Gedung': return 'fas fa-building';
+                    case 'Fasilitas': return 'fas fa-utensils';
+                    case 'Alam': return 'fas fa-tree';
+                    case 'Wisata': return 'fas fa-camera';
+                    case 'Administratif': return 'fas fa-landmark';
+                    default: return 'fas fa-map-pin';
+                }
+            }
+            
+            
+            
             // Function to open edit route name modal
-function openEditRouteNameModal(routeId, currentName) {
-    document.getElementById('editRouteId').value = routeId;
-    document.getElementById('editRouteName').value = currentName || '';
-    document.getElementById('editRouteNameModal').style.display = 'flex';
-}
-
-// Function to update route name
-function updateRouteName() {
-    const formData = new FormData(document.getElementById('editRouteNameForm'));
-    const submitBtn = document.getElementById('editRouteNameSubmitBtn');
-    
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Menyimpan...';
-    
-    fetch('update_route_name.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Nama rute berhasil diperbarui!');
-            document.getElementById('editRouteNameModal').style.display = 'none';
-            
-            // Update the UI with the new name
-            const routeNameTitle = document.getElementById('routeNameTitle');
-            const newName = formData.get('route_name');
-            routeNameTitle.textContent = newName || 'Rute #' + formData.get('route_id');
-            
-            // Refresh routes to update the name everywhere
-            fetchRoutesFromServer();
-        } else {
-            alert('Gagal memperbarui nama rute: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat memperbarui nama rute');
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Simpan Perubahan';
-    });
-}
-
-// Add event listener for edit route name button
-document.addEventListener('DOMContentLoaded', function() {
-    // Edit route name form submission
-    const editRouteNameForm = document.getElementById('editRouteNameForm');
-    if (editRouteNameForm) {
-        editRouteNameForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            updateRouteName();
-        });
-    }
-    
-    // Close edit route name modal
-    document.querySelector('[data-dismiss="edit-route-name"]').addEventListener('click', function() {
-        document.getElementById('editRouteNameModal').style.display = 'none';
-    });
-    
-    // Edit route name button click
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('#editRouteNameBtn')) {
-            if (selectedRoute) {
-                openEditRouteNameModal(selectedRoute.id, selectedRoute.name);
+            function openEditRouteNameModal(routeId, currentName) {
+                document.getElementById('editRouteId').value = routeId;
+                document.getElementById('editRouteName').value = currentName || '';
+                document.getElementById('editRouteNameModal').style.display = 'flex';
             }
-        }
-    });
-});
-
+            
+            // Function to update route name
+            function updateRouteName() {
+                const formData = new FormData(document.getElementById('editRouteNameForm'));
+                const submitBtn = document.getElementById('editRouteNameSubmitBtn');
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Menyimpan...';
+                
+                fetch('update_route_name.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Nama rute berhasil diperbarui!');
+                        document.getElementById('editRouteNameModal').style.display = 'none';
+                        
+                        // Update the UI with the new name
+                        const routeNameTitle = document.getElementById('routeNameTitle');
+                        const newName = formData.get('route_name');
+                        routeNameTitle.textContent = newName || 'Rute #' + formData.get('route_id');
+                        
+                        // Refresh routes to update the name everywhere
+                        fetchRoutesFromServer();
+                    } else {
+                        alert('Gagal memperbarui nama rute: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat memperbarui nama rute');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Simpan Perubahan';
+                });
+            }
+            
+            // Add event listener for edit route name button
+            document.addEventListener('DOMContentLoaded', function() {
+                // Edit route name form submission
+                const editRouteNameForm = document.getElementById('editRouteNameForm');
+                if (editRouteNameForm) {
+                    editRouteNameForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        updateRouteName();
+                    });
+                }
+                
+                // Close edit route name modal
+                document.querySelector('[data-dismiss="edit-route-name"]').addEventListener('click', function() {
+                    document.getElementById('editRouteNameModal').style.display = 'none';
+                });
+                
+                // Edit route name button click
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('#editRouteNameBtn')) {
+                        if (selectedRoute) {
+                            openEditRouteNameModal(selectedRoute.id, selectedRoute.name);
+                        }
+                    }
+                });
+            });
+            
             
             // Handle clicks on comment users
             function setupCommentUserClicks() {
@@ -3671,141 +3876,141 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show reports for a specific route
             function showRouteReports(routeId) {
-    const route = phpRoutes.find(r => r.id == routeId);
-    if (!route) {
-        console.error('Route not found with ID:', routeId);
-        return;
-    }
-
-    selectedRoute = route;
-
-    // Update route info panel
-    routeReportsList.innerHTML = '';
-    routeNameTitle.textContent = route.name || 'Rute #' + route.id;
-
-    // Show creator with avatar
-    const creatorAvatar = route.creator_avatar 
-        ? `<img src="../uploads/${route.creator_avatar.startsWith('http') ? route.creator_avatar : '../uploads/' + route.creator_avatar}?t=${new Date().getTime()}" alt="${route.creator_name}" class="user-avatar-small">`
-        : `<div class="user-avatar-small">${route.creator_name ? route.creator_name.charAt(0).toUpperCase() : 'U'}</div>`;
-    
-    routeCreatorInfo.innerHTML = `Dibuat oleh: <span class="user-link" data-user-id="${route.created_by}">${creatorAvatar} ${route.creator_name || 'Unknown'}</span>`;
-
-    // Check route ownership here (once, for the whole route)
-    if (userLoggedIn && currentUser && currentUser.id == route.created_by) {
-    document.getElementById('routeActions').style.display = 'block';
-} else {
-    document.getElementById('routeActions').style.display = 'none';
-}
-
-
-    // Update statistics
-    updateRouteStats(route);
-
-    if (!route.reports || route.reports.length === 0) {
-        routeReportsList.innerHTML = '<div class="text-center py-3 text-muted">Belum ada laporan untuk rute ini</div>';
-    } else {
-        route.reports.forEach(report => {
-            const userAvatar = report.user_avatar 
-                ? `<img src="../uploads/${report.user_avatar}?t=${new Date().getTime()}" alt="${report.user_name}" class="user-avatar-small">`
-                : `<div class="user-avatar-small">${report.user_name ? report.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
-            
-            const likeActiveClass = report.user_vote === 1 ? 'active' : '';
-            const dislikeActiveClass = report.user_vote === -1 ? 'active' : '';
-            const isOwner = userLoggedIn && currentUser && currentUser.id == report.user_id;
-
-            const reportItem = document.createElement('div');
-            reportItem.className = 'report-card';
-            reportItem.innerHTML = `
-                <div class="report-header">
-                    <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="report-date">${formatDate(report.created_at)}</span>
-                        ${isOwner ? `
-                        <div class="report-actions">
-                            <button class="report-menu-btn">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                            <div class="report-menu">
-                                <button class="report-menu-item edit" data-report-id="${report.id}">
-                                    <i class="fas fa-edit"></i> Edit
+                const route = phpRoutes.find(r => r.id == routeId);
+                if (!route) {
+                    console.error('Route not found with ID:', routeId);
+                    return;
+                }
+                
+                selectedRoute = route;
+                
+                // Update route info panel
+                routeReportsList.innerHTML = '';
+                routeNameTitle.textContent = route.name || 'Rute #' + route.id;
+                
+                // Show creator with avatar
+                const creatorAvatar = route.creator_avatar 
+                ? `<img src="../uploads/${route.creator_avatar.startsWith('http') ? route.creator_avatar : '../uploads/' + route.creator_avatar}?t=${new Date().getTime()}" alt="${route.creator_name}" class="user-avatar-small">`
+                : `<div class="user-avatar-small">${route.creator_name ? route.creator_name.charAt(0).toUpperCase() : 'U'}</div>`;
+                
+                routeCreatorInfo.innerHTML = `Dibuat oleh: <span class="user-link" data-user-id="${route.created_by}">${creatorAvatar} ${route.creator_name || 'Unknown'}</span>`;
+                
+                // Check route ownership here (once, for the whole route)
+                if (userLoggedIn && currentUser && currentUser.id == route.created_by) {
+                    document.getElementById('routeActions').style.display = 'block';
+                } else {
+                    document.getElementById('routeActions').style.display = 'none';
+                }
+                
+                
+                // Update statistics
+                updateRouteStats(route);
+                
+                if (!route.reports || route.reports.length === 0) {
+                    routeReportsList.innerHTML = '<div class="text-center py-3 text-muted">Belum ada laporan untuk rute ini</div>';
+                } else {
+                    route.reports.forEach(report => {
+                        const userAvatar = report.user_avatar 
+                        ? `<img src="../uploads/${report.user_avatar}?t=${new Date().getTime()}" alt="${report.user_name}" class="user-avatar-small">`
+                        : `<div class="user-avatar-small">${report.user_name ? report.user_name.charAt(0).toUpperCase() : 'U'}</div>`;
+                        
+                        const likeActiveClass = report.user_vote === 1 ? 'active' : '';
+                        const dislikeActiveClass = report.user_vote === -1 ? 'active' : '';
+                        const isOwner = userLoggedIn && currentUser && currentUser.id == report.user_id;
+                        
+                        const reportItem = document.createElement('div');
+                        reportItem.className = 'report-card';
+                        reportItem.innerHTML = `
+                        <div class="report-header">
+                            <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="report-date">${formatDate(report.created_at)}</span>
+                                ${isOwner ? `
+                                <div class="report-actions">
+                                    <button class="report-menu-btn">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <div class="report-menu">
+                                        <button class="report-menu-item edit" data-report-id="${report.id}">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="report-menu-item delete" data-report-id="${report.id}">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </button>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <p class="report-description">${report.description}</p>
+                        <div class="report-footer">
+                            <div class="report-user" data-user-id="${report.user_id}">
+                                <small>Oleh: ${userAvatar} <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span></small>
+                            </div>
+                            <div class="like-dislike-container">
+                                <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
+                                    <i class="fas fa-thumbs-up"></i>
+                                    <span class="like-count">${report.likes || 0}</span>
                                 </button>
-                                <button class="report-menu-item delete" data-report-id="${report.id}">
-                                    <i class="fas fa-trash"></i> Hapus
+                                <button class="dislike-btn ${dislikeActiveClass}" data-report-id="${report.id}">
+                                    <i class="fas fa-thumbs-down"></i>
+                                    <span class="dislike-count">${report.dislikes || 0}</span>
                                 </button>
                             </div>
                         </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <p class="report-description">${report.description}</p>
-                <div class="report-footer">
-                    <div class="report-user" data-user-id="${report.user_id}">
-                        <small>Oleh: ${userAvatar} <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span></small>
-                    </div>
-                    <div class="like-dislike-container">
-                        <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
-                            <i class="fas fa-thumbs-up"></i>
-                            <span class="like-count">${report.likes || 0}</span>
-                        </button>
-                        <button class="dislike-btn ${dislikeActiveClass}" data-report-id="${report.id}">
-                            <i class="fas fa-thumbs-down"></i>
-                            <span class="dislike-count">${report.dislikes || 0}</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            // Like/dislike event listeners
-            const likeBtn = reportItem.querySelector('.like-btn');
-            const dislikeBtn = reportItem.querySelector('.dislike-btn');
-            likeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleLike(report.id, 1, likeBtn, dislikeBtn);
-            });
-            dislikeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleLike(report.id, -1, likeBtn, dislikeBtn);
-            });
-
-            routeReportsList.appendChild(reportItem);
-        });
-
-        // Add comment buttons to route reports
-        setTimeout(addCommentButtonToReports, 100);
-    }
-
-    // User profile click events
-    document.querySelectorAll('.user-link, .report-user').forEach(element => {
-        element.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const userId = this.getAttribute('data-user-id');
-            if (userId) {
-                showUserProfile(userId);
+                        `;
+                        
+                        // Like/dislike event listeners
+                        const likeBtn = reportItem.querySelector('.like-btn');
+                        const dislikeBtn = reportItem.querySelector('.dislike-btn');
+                        likeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            handleLike(report.id, 1, likeBtn, dislikeBtn);
+                        });
+                        dislikeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            handleLike(report.id, -1, likeBtn, dislikeBtn);
+                        });
+                        
+                        routeReportsList.appendChild(reportItem);
+                    });
+                    
+                    // Add comment buttons to route reports
+                    setTimeout(addCommentButtonToReports, 100);
+                }
+                
+                // User profile click events
+                document.querySelectorAll('.user-link, .report-user').forEach(element => {
+                    element.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const userId = this.getAttribute('data-user-id');
+                        if (userId) {
+                            showUserProfile(userId);
+                        }
+                    });
+                });
+                
+                // Show the panel
+                routeInfoPanel.style.display = 'block';
+                routeInfoPanel.style.zIndex = '1001';
+                routeInfoPanel.style.maxHeight = '80vh';
+                routeInfoPanel.style.overflowY = 'auto';
+                
+                // Show/hide login prompt and add report button
+                if (userLoggedIn) {
+                    addToRouteBtn.style.display = 'block';
+                    routeLoginPrompt.style.display = 'none';
+                } else {
+                    addToRouteBtn.style.display = 'none';
+                    routeLoginPrompt.style.display = 'block';
+                }
+                
+                // Center map on route
+                const midLat = (parseFloat(route.start_lat || route.start_latitude) + parseFloat(route.end_lat || route.end_latitude)) / 2;
+                const midLng = (parseFloat(route.start_lng || route.start_longitude) + parseFloat(route.end_lng || route.end_longitude)) / 2;
+                map.setView([midLat, midLng], 13);
             }
-        });
-    });
-
-    // Show the panel
-    routeInfoPanel.style.display = 'block';
-    routeInfoPanel.style.zIndex = '1001';
-    routeInfoPanel.style.maxHeight = '80vh';
-    routeInfoPanel.style.overflowY = 'auto';
-
-    // Show/hide login prompt and add report button
-    if (userLoggedIn) {
-        addToRouteBtn.style.display = 'block';
-        routeLoginPrompt.style.display = 'none';
-    } else {
-        addToRouteBtn.style.display = 'none';
-        routeLoginPrompt.style.display = 'block';
-    }
-
-    // Center map on route
-    const midLat = (parseFloat(route.start_lat || route.start_latitude) + parseFloat(route.end_lat || route.end_latitude)) / 2;
-    const midLng = (parseFloat(route.start_lng || route.start_longitude) + parseFloat(route.end_lng || route.end_longitude)) / 2;
-    map.setView([midLat, midLng], 13);
-}
-
+            
             
             // Update the user avatar in the navbar
             // Update the updateUserAvatar function
@@ -3960,9 +4165,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const hazardStat = document.createElement('div');
                     hazardStat.className = 'stat-item';
                     hazardStat.innerHTML = `
-            <span class="stat-value" id="hazardCount">0</span>
-            <span class="stat-label">Bahaya</span>
-        `;
+                    <span class="stat-value" id="hazardCount">0</span>
+                    <span class="stat-label">Bahaya</span>
+                    `;
                     routeStats.insertBefore(hazardStat, safeCount.parentElement.nextSibling);
                 }
                 
@@ -4220,17 +4425,41 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Search location
-            function searchLocation() {
-                const query = searchInput.value.trim();
-                if (!query) return;
-                
-                // In a real implementation, you would use a geocoding service here
-                // For demo purposes, we'll just show an alert
-                alert("Fitur pencarian lengkap akan diimplementasi dengan layanan geocoding. Pencarian untuk: " + query);
-                
-                // Clear search results
-                searchInput.value = '';
-            }
+function searchLocation(query = null) {
+    const searchTerm = query || searchInput.value.trim();
+    if (!searchTerm) return;
+    
+    // Use Nominatim API for geocoding (OpenStreetMap)
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=1`;
+    
+    // Show loading state
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch(url)
+    .then(response => response.json())
+    .then(data => {
+        if (data.length > 0) {
+            const result = data[0];
+            moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+        } else {
+            alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching location:', error);
+        alert('Terjadi kesalahan saat mencari lokasi.');
+    })
+    .finally(() => {
+        // Reset button state
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = '<i class="fas fa-search"></i>';
+        
+        // Clear search input
+        searchInput.value = '';
+        hideAutocomplete();
+    });
+}
             
             // Filter reports
             function filterReports(type) {
@@ -4256,7 +4485,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-inbox"></i>
                         <p>Tidak ada laporan yang ditemukan</p>
                     </div>
-                `;
+                    `;
                 } else {
                     filteredReports.forEach(report => {
                         addReportToDOM(report);
@@ -4283,45 +4512,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reportCard = document.createElement('div');
                 reportCard.className = 'report-card';
                 reportCard.innerHTML = `
-    <div class="report-header">
-        <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="report-date">${formatDate(report.created_at)}</span>
-            ${isOwner ? `
-            <div class="report-actions">
-                <button class="report-menu-btn">
-                    <i class="fas fa-ellipsis-h"></i>
-                </button>
-                <div class="report-menu">
-                    <button class="report-menu-item edit" data-report-id="${report.id}">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="report-menu-item delete" data-report-id="${report.id}">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
+                <div class="report-header">
+                    <span class="report-type ${report.type}">${getTypeLabel(report.type)}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="report-date">${formatDate(report.created_at)}</span>
+                        ${isOwner ? `
+                        <div class="report-actions">
+                            <button class="report-menu-btn">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <div class="report-menu">
+                                <button class="report-menu-item edit" data-report-id="${report.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="report-menu-item delete" data-report-id="${report.id}">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
-            </div>
-            ` : ''}
-        </div>
-    </div>
-    <p class="report-description">${report.description}</p>
-    ${editedText}
-    <div class="report-footer">
-        <div class="report-user">
-            <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name || 'Rute #' + report.route_id}</small>
-        </div>
-        <div class="like-dislike-container">
-            <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
-                <i class="fas fa-thumbs-up"></i>
-                <span class="like-count">${report.likes || 0}</span>
-            </button>
-            <button class="dislike-btn ${dislikeActiveClass}" data-report-id="${report.id}">
-                <i class="fas fa-thumbs-down"></i>
-                <span class="dislike-count">${report.dislikes || 0}</span>
-            </button>
-        </div>
-    </div>
-`;
+                <p class="report-description">${report.description}</p>
+                ${editedText}
+                <div class="report-footer">
+                    <div class="report-user">
+                        <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name || 'Rute #' + report.route_id}</small>
+                    </div>
+                    <div class="like-dislike-container">
+                        <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span class="like-count">${report.likes || 0}</span>
+                        </button>
+                        <button class="dislike-btn ${dislikeActiveClass}" data-report-id="${report.id}">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span class="dislike-count">${report.dislikes || 0}</span>
+                        </button>
+                    </div>
+                </div>
+                `;
                 
                 // Add click event to focus on the route
                 reportCard.addEventListener('click', (e) => {
@@ -4467,19 +4696,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show error as a temporary notification
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = `
-        position: fixed;
-        top: 100px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #ff6b6b;
-        color: white;
-        padding: 1rem;
-        border-radius: 4px;
-        z-index: 2000;
-        max-width: 80%;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    `;
+                position: fixed;
+                top: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #ff6b6b;
+                color: white;
+                padding: 1rem;
+                border-radius: 4px;
+                z-index: 2000;
+                max-width: 80%;
+                text-align: center;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                `;
                 errorDiv.textContent = errorMessage;
                 document.body.appendChild(errorDiv);
                 
@@ -4703,6 +4932,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleButton = document.getElementById('toggleSidebarBtn');
+  const sidebar = document.querySelector('.sidebar');
+  
+  if (toggleButton && sidebar) {
+    toggleButton.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent event from bubbling up
+      sidebar.classList.toggle('open');
+      
+      // Change icon based on state
+      const icon = this.querySelector('i');
+      if (sidebar.classList.contains('open')) {
+        icon.className = 'fas fa-times';
+      } else {
+        icon.className = 'fas fa-list';
+      }
+    });
+    
+    // Close sidebar when clicking outside of it
+    document.addEventListener('click', function(event) {
+      const isClickInsideSidebar = sidebar.contains(event.target);
+      const isClickOnToggleButton = toggleButton.contains(event.target);
+      
+      if (!isClickInsideSidebar && !isClickOnToggleButton && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        const icon = toggleButton.querySelector('i');
+        icon.className = 'fas fa-list';
+      }
+    });
+  }
+});
+
             
             
             
