@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   // Handle avatar upload
   $avatar = $user['avatar'];
  if (!empty($_FILES['avatar']['name'])) {
-    $targetDir = "../uploads/";
+    $targetDir = "../../uploads/";
 
     // Get original name safely
     $originalName = basename($_FILES["avatar"]["name"]);

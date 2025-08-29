@@ -2120,7 +2120,7 @@ button {
             loadReports();
             tryGeolocation();
             setupReporterClicks();
-            // setupReportActions();
+            setupReportActions();
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -2723,56 +2723,59 @@ function setupCommentUserClicks() {
                 alert('Terjadi kesalahan saat menghapus komentar');
             });
         }
-        
-        
-        
-        // Add this function to show the edit menu
+
         function setupReportActions() {
-            // Use event delegation for dynamically created elements
-            document.addEventListener('click', function(e) {
-                // Close all menus when clicking elsewhere
-                if (!e.target.closest('.report-actions')) {
-                    document.querySelectorAll('.report-menu').forEach(menu => {
-                        menu.classList.remove('show');
-                    });
-                }
-                
-                // Toggle menu when clicking the three dots
-                if (e.target.closest('.report-menu-btn')) {
-                    const menuBtn = e.target.closest('.report-menu-btn');
-                    const menu = menuBtn.nextElementSibling;
-                    const isVisible = menu.classList.contains('show');
-                    
-                    // Close all other menus
-                    document.querySelectorAll('.report-menu').forEach(m => {
-                        m.classList.remove('show');
-                    });
-                    
-                    // Toggle this menu
-                    if (!isVisible) {
-                        menu.classList.add('show');
-                    }
-                    
-                    e.stopPropagation();
-                }
-                
-                // Handle edit button click
-                if (e.target.closest('.report-menu-item.edit')) {
-                    const menuItem = e.target.closest('.report-menu-item.edit');
-                    const reportId = menuItem.getAttribute('data-report-id');
-                    openEditReportModal(reportId);
-                    e.stopPropagation();
-                }
-                
-                // Handle delete button click
-                if (e.target.closest('.report-menu-item.delete')) {
-                    const menuItem = e.target.closest('.report-menu-item.delete');
-                    const reportId = menuItem.getAttribute('data-report-id');
-                    deleteReport(reportId);
-                    e.stopPropagation();
-                }
-            });
+    // Remove any existing event listeners first
+    document.removeEventListener('click', handleReportActions);
+    
+    // Add the event listener once
+    document.addEventListener('click', handleReportActions);
+}
+
+function handleReportActions(e) {
+    // Close all menus when clicking elsewhere
+    if (!e.target.closest('.report-actions')) {
+        document.querySelectorAll('.report-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+    
+    // Toggle menu when clicking the three dots
+    if (e.target.closest('.report-menu-btn')) {
+        const menuBtn = e.target.closest('.report-menu-btn');
+        const menu = menuBtn.nextElementSibling;
+        const isVisible = menu.classList.contains('show');
+        
+        // Close all other menus
+        document.querySelectorAll('.report-menu').forEach(m => {
+            m.classList.remove('show');
+        });
+        
+        // Toggle this menu
+        if (!isVisible) {
+            menu.classList.add('show');
         }
+        
+        e.stopPropagation();
+    }
+    
+    // Handle edit button click
+    if (e.target.closest('.report-menu-item.edit')) {
+        const menuItem = e.target.closest('.report-menu-item.edit');
+        const reportId = menuItem.getAttribute('data-report-id');
+        openEditReportModal(reportId);
+        e.stopPropagation();
+    }
+    
+    // Handle delete button click
+    if (e.target.closest('.report-menu-item.delete')) {
+        const menuItem = e.target.closest('.report-menu-item.delete');
+        const reportId = menuItem.getAttribute('data-report-id');
+        deleteReport(reportId);
+        e.stopPropagation();
+    }
+}
+        
         
         // Function to open edit modal
         function openEditReportModal(reportId) {
@@ -2798,34 +2801,40 @@ function setupCommentUserClicks() {
         }
         
         // Function to delete report
+        let isDeleting = false;
         function deleteReport(reportId) {
-            if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) {
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('report_id', reportId);
-            
-            fetch('delete_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Laporan berhasil dihapus!');
-                    // Refresh the reports
-                    fetchRoutesFromServer();
-                    fetchReportsFromServer();
-                } else {
-                    alert('Gagal menghapus laporan: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan saat menghapus laporan');
-            });
+    if (isDeleting) return;
+    
+    if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) {
+        return;
+    }
+    
+    isDeleting = true;
+    const formData = new FormData();
+    formData.append('report_id', reportId);
+    
+    fetch('delete_report.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Laporan berhasil dihapus!');
+            // Refresh the reports
+            fetchRoutesFromServer();
+            fetchReportsFromServer();
+        } else {
+            alert('Gagal menghapus laporan: ' + data.message);
         }
+        isDeleting = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menghapus laporan');
+        isDeleting = false;
+    });
+}
         
         // Load routes from PHP data
         // Load routes from PHP data with actual road paths
