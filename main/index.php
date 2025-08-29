@@ -11,6 +11,24 @@ $userData = $userLoggedIn ? [
 'avatar' => $_SESSION['avatar']
 ] : null;
 
+
+// Check if a specific report is requested
+$highlighted_report_id = null;
+if (isset($_GET['report_id'])) {
+    $highlighted_report_id = intval($_GET['report_id']);
+    
+    // Verify the report exists and user has permission to view it
+    $check_report_stmt = $conn->prepare("SELECT id FROM reports WHERE id = ?");
+    $check_report_stmt->bind_param("i", $highlighted_report_id);
+    $check_report_stmt->execute();
+    $check_report_result = $check_report_stmt->get_result();
+    
+    if ($check_report_result->num_rows === 0) {
+        $highlighted_report_id = null; // Report doesn't exist
+    }
+    $check_report_stmt->close();
+}
+
 // Function to get like counts for reports
 function getReportLikes($conn, $report_id, $user_id = null) {
     // Use prepared statements to prevent SQL injection
@@ -2067,6 +2085,20 @@ $reportsJson = json_encode($reports);
 }
 
 
+/* Highlight effect for reports */
+.report-highlighted {
+    animation: highlight-pulse 2s ease-in-out;
+    border: 2px solid #3B82F6 !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+}
+
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+
 
         
         
@@ -2214,8 +2246,8 @@ $reportsJson = json_encode($reports);
                 
             </div>
             
-            <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
-                <i class="fas fa-route"></i>
+            <!-- <button class="add-route-btn" id="addRouteBtn" title="Tambah Rute Baru">
+                <i class="fas fa-route"></i> -->
             </button>
         </div>
         
@@ -3047,6 +3079,67 @@ if (searchInput) {
                     });
                 }
             } //END OF SETUP EVENT LISTENER
+
+            // Function to highlight and scroll to a specific report
+function highlightReport(reportId) {
+    if (!reportId) return;
+    
+    // Find the report card with matching data-report-id
+    const reportCards = document.querySelectorAll('.report-card');
+    let targetReport = null;
+    
+    reportCards.forEach(card => {
+        const cardReportId = card.getAttribute('data-report-id') || 
+                            card.querySelector('.like-btn')?.getAttribute('data-report-id');
+        
+        if (cardReportId == reportId) {
+            targetReport = card;
+            
+            // Add highlight class
+            card.classList.add('report-highlighted');
+            
+            // Scroll to the report
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+            
+            // Remove highlight after some time
+            setTimeout(() => {
+                card.classList.remove('report-highlighted');
+            }, 5000);
+        }
+    });
+    
+    // If report is in a route panel, open that route
+    if (!targetReport) {
+        // Try to find which route contains this report
+        phpRoutes.forEach(route => {
+            if (route.reports && route.reports.some(report => report.id == reportId)) {
+                showRouteReports(route.id);
+                
+                // After a delay, try to highlight the report again
+                setTimeout(() => {
+                    highlightReport(reportId);
+                }, 1000);
+                return;
+            }
+        });
+    }
+}
+
+// Call this function when the page loads if there's a report_id parameter
+document.addEventListener('DOMContentLoaded', function() {
+    // Get report_id from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportId = urlParams.get('report_id');
+    
+    if (reportId) {
+        // Wait for reports to load
+        setTimeout(() => {
+            highlightReport(reportId);
+        }, 1000);
+    }
+});
             
             
             function initSearch() {

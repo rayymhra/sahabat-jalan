@@ -1243,7 +1243,7 @@ body::-webkit-scrollbar-thumb:hover {
 
             <div class="nav-right">
                 <div class="nav-login">
-                    <a href="../auth/login.php" class="login-btn" id="login-btn">
+                    <a href="auth/login.php" class="login-btn" id="login-btn">
                         <i class="bi bi-person-circle"></i>
                         <span>Masuk</span>
                     </a>
@@ -1299,15 +1299,16 @@ body::-webkit-scrollbar-thumb:hover {
                     GO SAFE adalah platform komunitas untuk menandai rute aman dan area berbahaya
                     membantu orang lain memilih jalur terbaik dan lebih aman.
                 </p>
-                <button class="hero-btn">
+                <!-- <button class="hero-btn">
                     <span>Lihat Peta!</span>
                     <i class="bi bi-arrow-right"></i>
-                </button>
+                </button> -->
+                <a href="main" class="hero-btn">Lihat Peta!</a>
             </div>
              </div>
         
         <div class="hero-image">
-           <img src="../assets/img/logo.png" alt="">
+           <img src="assets/img/logo.png" alt="">
         </div>
     </div>
 </section>

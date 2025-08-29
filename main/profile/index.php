@@ -22,9 +22,12 @@ if (isset($_GET['id'])) {
     $user = $result->fetch_assoc();
     $stmt->close();
     
-    // Get reports by this user
-    $stmt = $conn->prepare("SELECT id, type, description, photo_url, created_at 
-                            FROM reports WHERE user_id = ? ORDER BY created_at DESC");
+    // Get reports by this user with route names
+    $stmt = $conn->prepare("SELECT r.id, r.type, r.description, r.photo_url, r.created_at, rt.name as route_name
+                            FROM reports r 
+                            LEFT JOIN routes rt ON r.route_id = rt.id 
+                            WHERE r.user_id = ? 
+                            ORDER BY r.created_at DESC");
     $stmt->bind_param("i", $viewed_user_id);
     $stmt->execute();
     $reports = $stmt->get_result();
@@ -38,8 +41,19 @@ if (isset($_GET['id'])) {
     $routes = $stmt->get_result();
     $stmt->close();
     
+    // Get comments by this user
+    $stmt = $conn->prepare("SELECT c.id, c.report_id, c.content, c.created_at, r.type as report_type
+                            FROM comments c 
+                            JOIN reports r ON c.report_id = r.id 
+                            WHERE c.user_id = ? 
+                            ORDER BY c.created_at DESC");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $comments = $stmt->get_result();
+    $stmt->close();
+    
     $is_own_profile = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $viewed_user_id;
-}else {
+} else {
     // Viewing own profile
     if (!isset($_SESSION['user_id'])) {
         header("Location: login.php");
@@ -49,40 +63,84 @@ if (isset($_GET['id'])) {
     $viewed_user_id = $_SESSION['user_id'];
     $is_own_profile = true;
     
-    // Get user data (your existing code)
+    // Get user data
     $stmt = $conn->prepare("SELECT name, username, email, avatar, phone_number, bio, reputation_score, created_at 
                             FROM users WHERE id = ?");
     $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+
+    // Get reports by this user with route names
+    $stmt = $conn->prepare("SELECT r.id, r.type, r.description, r.photo_url, r.created_at, rt.name as route_name
+                            FROM reports r 
+                            LEFT JOIN routes rt ON r.route_id = rt.id 
+                            WHERE r.user_id = ? 
+                            ORDER BY r.created_at DESC");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $reports = $stmt->get_result();
+    $stmt->close();
+
+    // Get routes created by this user
+    $stmt = $conn->prepare("SELECT id, name, start_latitude, start_longitude, end_latitude, end_longitude, created_at 
+                            FROM routes WHERE created_by = ? ORDER BY created_at DESC");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $routes = $stmt->get_result();
+    $stmt->close();
     
-    $user_id = $_SESSION['user_id'];
-
-// Get user data
-$stmt = $conn->prepare("SELECT name, username, email, avatar, phone_number, bio, reputation_score, created_at 
-                        FROM users WHERE id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-$stmt->close();
-
-// Get reports by this user
-$stmt = $conn->prepare("SELECT id, type, description, photo_url, created_at 
-                        FROM reports WHERE user_id = ? ORDER BY created_at DESC");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$reports = $stmt->get_result();
-$stmt->close();
-
-// Get routes created by this user - UPDATED TO MATCH NEW SCHEMA
-$stmt = $conn->prepare("SELECT id, name, start_latitude, start_longitude, end_latitude, end_longitude, created_at 
-                        FROM routes WHERE created_by = ? ORDER BY created_at DESC");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$routes = $stmt->get_result();
-$stmt->close();
+    // Get comments by this user
+    $stmt = $conn->prepare("SELECT c.id, c.report_id, c.content, c.created_at, r.type as report_type
+                            FROM comments c 
+                            JOIN reports r ON c.report_id = r.id 
+                            WHERE c.user_id = ? 
+                            ORDER BY c.created_at DESC");
+    $stmt->bind_param("i", $viewed_user_id);
+    $stmt->execute();
+    $comments = $stmt->get_result();
+    $stmt->close();
 }
 
-
+// Handle delete actions
+if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['delete_report'])) {
+        $report_id = intval($_POST['report_id']);
+        $stmt = $conn->prepare("DELETE FROM reports WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $report_id, $viewed_user_id);
+        $stmt->execute();
+        $stmt->close();
+        
+        // Refresh page to show updated list
+        header("Location: " . $_SERVER['PHP_SELF'] . (isset($_GET['id']) ? '?id=' . $viewed_user_id : ''));
+        exit;
+    }
+    
+    if (isset($_POST['delete_route'])) {
+        $route_id = intval($_POST['route_id']);
+        $stmt = $conn->prepare("DELETE FROM routes WHERE id = ? AND created_by = ?");
+        $stmt->bind_param("ii", $route_id, $viewed_user_id);
+        $stmt->execute();
+        $stmt->close();
+        
+        // Refresh page to show updated list
+        header("Location: " . $_SERVER['PHP_SELF'] . (isset($_GET['id']) ? '?id=' . $viewed_user_id : ''));
+        exit;
+    }
+    
+    if (isset($_POST['delete_comment'])) {
+        $comment_id = intval($_POST['comment_id']);
+        $stmt = $conn->prepare("DELETE FROM comments WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $comment_id, $viewed_user_id);
+        $stmt->execute();
+        $stmt->close();
+        
+        // Refresh page to show updated list
+        header("Location: " . $_SERVER['PHP_SELF'] . (isset($_GET['id']) ? '?id=' . $viewed_user_id : ''));
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -620,6 +678,14 @@ $stmt->close();
         margin-left: 0;
       }
     }
+
+    .route-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 14px;
+}
   </style>
 </head>
 <body>
@@ -712,126 +778,218 @@ $stmt->close();
       </div>
 
       <div class="content-tabs">
-        <button class="tab-btn active" data-tab="reports">
-          <i class="fas fa-flag"></i> Laporan
-          <span class="reports-count"><?php echo $reports->num_rows; ?></span>
-        </button>
-        <button class="tab-btn" data-tab="routes">
-          <i class="fas fa-route"></i> Rute
-          <span class="reports-count"><?php echo $routes->num_rows; ?></span>
-        </button>
-      </div>
+    <button class="tab-btn active" data-tab="reports">
+        <i class="fas fa-flag"></i> Laporan
+        <span class="reports-count"><?php echo $reports->num_rows; ?></span>
+    </button>
+    <button class="tab-btn" data-tab="routes">
+        <i class="fas fa-route"></i> Rute
+        <span class="reports-count"><?php echo $routes->num_rows; ?></span>
+    </button>
+    <button class="tab-btn" data-tab="comments">
+        <i class="fas fa-comment"></i> Komentar
+        <span class="reports-count"><?php echo $comments->num_rows; ?></span>
+    </button>
+</div>
 
       <!-- Reports Tab -->
       <div class="tab-content active" id="reports-tab">
-        <?php if ($reports->num_rows > 0): ?>
-          <div class="reports-list">
+    <?php if ($reports->num_rows > 0): ?>
+        <div class="reports-list">
             <?php while ($report = $reports->fetch_assoc()): ?>
-              <div class="report-item">
-                <div class="report-header">
-                  <?php
-                  $type_map = [
-                    'crime' => 'Kejahatan',
-                    'accident' => 'Kecelakaan',
-                    'hazard' => 'Bahaya',
-                    'safe_spot' => 'Aman',
-                    'other' => 'Lainnya'
-                  ];
-                  ?>
+                <div class="report-item">
+                    <div class="report-header">
+                        <?php
+                        $type_map = [
+                            'crime' => 'Kejahatan',
+                            'accident' => 'Kecelakaan',
+                            'hazard' => 'Bahaya',
+                            'safe_spot' => 'Aman',
+                            'other' => 'Lainnya'
+                        ];
+                        ?>
 
-                  <span class="report-type-badge <?php echo $report['type']; ?>">
-                    <?php echo $type_map[$report['type']] ?? ucfirst($report['type']); ?>
-                  </span>
-                  <span class="report-date">
-                    <?php echo date("M d, Y • H:i", strtotime($report['created_at'])); ?>
-                  </span>
+                        <span class="report-type-badge <?php echo $report['type']; ?>">
+                            <?php echo $type_map[$report['type']] ?? ucfirst($report['type']); ?>
+                        </span>
+                        <span class="report-date">
+                            <?php echo date("M d, Y • H:i", strtotime($report['created_at'])); ?>
+                        </span>
+                    </div>
+                    
+                    <div class="report-content">
+                        <div>
+                            <p class="report-description">
+                                <?php echo nl2br(htmlspecialchars($report['description'])); ?>
+                            </p>
+
+                            
+                            
+                            <!-- Show route name if available -->
+                            <?php if (!empty($report['route_name'])): ?>
+                                <div class="route-info" style="margin-top: 8px;">
+                                    <i class="fas fa-route" style="color: #8b46ff;"></i>
+                                    <span style="font-size: 14px; color: #8b46ff;">
+                                        Rute: <?php echo htmlspecialchars($report['route_name']); ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <?php if ($report['photo_url']): ?>
+                            <img src="../uploads/<?php echo rawurlencode($report['photo_url']); ?>" 
+                                 alt="Report photo" 
+                                 class="report-image">
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- Delete button for own reports -->
+                    <?php if ($is_own_profile): ?>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <form method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus laporan ini?');">
+                                <input type="hidden" name="report_id" value="<?php echo $report['id']; ?>">
+                                <button type="submit" name="delete_report" class="btn-secondary-custom" style="padding: 6px 12px; font-size: 12px;">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                    
                 </div>
-                
-                <div class="report-content">
-                  <p class="report-description">
-                    <?php echo nl2br(htmlspecialchars($report['description'])); ?>
-                  </p>
-                  
-                  <?php if ($report['photo_url']): ?>
-                    <img src="../uploads/<?php echo rawurlencode($report['photo_url']); ?>" 
-                         alt="Report photo" 
-                         class="report-image">
-                  <?php endif; ?>
-                </div>
-              </div>
             <?php endwhile; ?>
-          </div>
-        <?php else: ?>
-          <div class="empty-state">
+        </div>
+    <?php else: ?>
+        <div class="empty-state">
             <i class="fas fa-clipboard-list"></i>
             <h4>Belum ada laporan</h4>
             <p>Anda belum membuat laporan. Mulailah berkontribusi untuk membuat komunitas lebih aman!</p>
-          </div>
-        <?php endif; ?>
-      </div>
+        </div>
+    <?php endif; ?>
+</div>
 
       <!-- Routes Tab -->
       <div class="tab-content" id="routes-tab">
-        <?php if ($routes->num_rows > 0): ?>
-          <div class="routes-list">
+    <?php if ($routes->num_rows > 0): ?>
+        <div class="routes-list">
             <?php while ($route = $routes->fetch_assoc()): ?>
-              <div class="route-item">
-                <div class="route-header">
-                  <span class="route-badge">
-                    Rute
-                  </span>
-                  <span class="route-date">
-                    <?php echo date("M d, Y • H:i", strtotime($route['created_at'])); ?>
-                  </span>
-                </div>
-                
-                <div class="route-content">
-                  <div>
-                    <h5 class="route-name"><?php echo htmlspecialchars($route['name']); ?></h5>
-                    <div class="route-locations">
-                      <div><i class="fas fa-play-circle"></i> 
-                        Start: <?php echo htmlspecialchars($route['start_latitude']); ?>, <?php echo htmlspecialchars($route['start_longitude']); ?>
-                      </div>
-                      <div><i class="fas fa-flag-checkered"></i> 
-                        End: <?php echo htmlspecialchars($route['end_latitude']); ?>, <?php echo htmlspecialchars($route['end_longitude']); ?>
-                      </div>
+                <div class="route-item">
+                    <div class="route-header">
+                        <span class="route-badge">
+                            Rute
+                        </span>
+                        <span class="route-date">
+                            <?php echo date("M d, Y • H:i", strtotime($route['created_at'])); ?>
+                        </span>
                     </div>
-                  </div>
+                    
+                    <div class="route-content">
+                        <div>
+                            <h5 class="route-name"><?php echo htmlspecialchars($route['name']); ?></h5>
+                            <div class="route-locations">
+                                <div><i class="fas fa-play-circle"></i> 
+                                    Start: <?php echo htmlspecialchars($route['start_latitude']); ?>, <?php echo htmlspecialchars($route['start_longitude']); ?>
+                                </div>
+                                <div><i class="fas fa-flag-checkered"></i> 
+                                    End: <?php echo htmlspecialchars($route['end_latitude']); ?>, <?php echo htmlspecialchars($route['end_longitude']); ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delete button for own routes -->
+                    <?php if ($is_own_profile): ?>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <form method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus rute ini?');">
+                                <input type="hidden" name="route_id" value="<?php echo $route['id']; ?>">
+                                <button type="submit" name="delete_route" class="btn-secondary-custom" style="padding: 6px 12px; font-size: 12px;">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
                 </div>
-              </div>
             <?php endwhile; ?>
-          </div>
-        <?php else: ?>
-          <div class="empty-state">
+        </div>
+    <?php else: ?>
+        <div class="empty-state">
             <i class="fas fa-route"></i>
             <h4>Belum ada rute</h4>
             <p>Anda belum membuat rute. Bagikan rute aman Anda untuk membantu komunitas!</p>
-          </div>
-        <?php endif; ?>
-      </div>
-    </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<div class="tab-content" id="comments-tab">
+    <?php if ($comments->num_rows > 0): ?>
+        <div class="reports-list">
+            <?php while ($comment = $comments->fetch_assoc()): ?>
+                <div class="report-item">
+                    <div class="report-header">
+                        <span class="report-type-badge <?php echo $comment['report_type']; ?>">
+                            Komentar
+                        </span>
+                        <span class="report-date">
+                            <?php echo date("M d, Y • H:i", strtotime($comment['created_at'])); ?>
+                        </span>
+                    </div>
+                    
+                    <div class="report-content">
+                        <p class="report-description">
+                            <?php echo nl2br(htmlspecialchars($comment['content'])); ?>
+                        </p>
+                        
+                        <div style="margin-top: 8px;">
+                            <a href="../index.php?report_id=<?php echo $comment['report_id']; ?>" 
+                               class="btn-primary-custom" 
+                               style="padding: 6px 12px; font-size: 12px;">
+                                <i class="fas fa-external-link-alt"></i> Lihat Laporan
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Delete button for own comments -->
+                    <?php if ($is_own_profile): ?>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <form method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus komentar ini?');">
+                                <input type="hidden" name="comment_id" value="<?php echo $comment['id']; ?>">
+                                <button type="submit" name="delete_comment" class="btn-secondary-custom" style="padding: 6px 12px; font-size: 12px;">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endwhile; ?>
+        </div>
+    <?php else: ?>
+        <div class="empty-state">
+            <i class="fas fa-comments"></i>
+            <h4>Belum ada komentar</h4>
+            <p>Anda belum memberikan komentar pada laporan apapun.</p>
+        </div>
+    <?php endif; ?>
 </div>
 
 <script>
   // Tab functionality
-  document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
     tabButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const tabId = button.getAttribute('data-tab');
-        
-        // Update active button
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        
-        // Show active content
-        tabContents.forEach(content => content.classList.remove('active'));
-        document.getElementById(`${tabId}-tab`).classList.add('active');
-      });
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+            
+            // Update active button
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Show active content
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
     });
-  });
+});
 </script>
 
 </body>
