@@ -204,7 +204,7 @@ $reportsJson = json_encode($reports);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peta Jalan Aman</title>
+    <title>GoSafe - Peta Jalan Aman</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -406,6 +406,63 @@ $reportsJson = json_encode($reports);
             transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
+
+        .search-wrapper {
+    position: relative;
+}
+
+.autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+}
+
+.autocomplete-item:hover {
+    background-color: var(--bg-secondary);
+}
+
+.autocomplete-item i {
+    margin-right: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.autocomplete-item .name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.autocomplete-item .type {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-left: auto;
+}
+
+.no-results {
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-align: center;
+}
         
         .filter-section {
             padding: 1rem 1.5rem;
@@ -1970,13 +2027,14 @@ $reportsJson = json_encode($reports);
             </div>
             
             <div class="search-container">
-                <div class="input-group">
-                    <input type="text" class="form-control" id="search" placeholder="Cari jalan, tempat, atau gedung...">
-                    <button class="btn btn-primary" type="button" id="searchBtn">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
+    <div class="input-group search-wrapper">
+        <input type="text" class="form-control" id="search" placeholder="Cari jalan, tempat, atau gedung..." autocomplete="off">
+        <button class="btn btn-primary" type="button" id="searchBtn">
+            <i class="fas fa-search"></i>
+        </button>
+        <div class="autocomplete-results" id="autocompleteResults"></div>
+    </div>
+</div>
             
             <div class="filter-section">
                 <div class="filter-options">
@@ -2220,6 +2278,8 @@ $reportsJson = json_encode($reports);
         let editReportModal = document.getElementById('editReportModal');
         let commentModal = document.getElementById('commentModal');
         let currentReportId = null;
+        let searchResults = [];
+        let currentSearchMarker = null;
         
         
         // DOM Elements
@@ -2272,6 +2332,7 @@ $reportsJson = json_encode($reports);
             tryGeolocation();
             setupReporterClicks();
             setupReportActions();
+            initSearch();
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -2794,6 +2855,216 @@ $reportsJson = json_encode($reports);
                     });
                 }
             } //END OF SETUP EVENT LISTENER
+
+
+            function initSearch() {
+    const searchInput = document.getElementById('search');
+    const searchBtn = document.getElementById('searchBtn');
+    const autocompleteResults = document.getElementById('autocompleteResults');
+    
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Handle search input with debouncing
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.trim();
+        if (query.length < 3) {
+            hideAutocomplete();
+            return;
+        }
+        
+        searchLocationAutocomplete(query);
+    }, 300));
+    
+    // Handle search button click
+    searchBtn.addEventListener('click', function() {
+        const query = searchInput.value.trim();
+        if (query) {
+            searchLocation(query);
+        }
+    });
+    
+    // Handle Enter key in search input
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query) {
+                searchLocation(query);
+            }
+        }
+    });
+    
+    // Close autocomplete when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+            hideAutocomplete();
+        }
+    });
+}
+
+// Function to search for locations with autocomplete
+function searchLocationAutocomplete(query) {
+    // Use Nominatim API for geocoding (OpenStreetMap)
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            displayAutocompleteResults(data);
+        })
+        .catch(error => {
+            console.error('Error fetching autocomplete results:', error);
+        });
+}
+
+// Function to display autocomplete results
+function displayAutocompleteResults(results) {
+    const autocompleteResults = document.getElementById('autocompleteResults');
+    
+    if (results.length === 0) {
+        autocompleteResults.innerHTML = '<div class="no-results">Tidak ada hasil ditemukan</div>';
+        autocompleteResults.style.display = 'block';
+        return;
+    }
+    
+    searchResults = results;
+    
+    let html = '';
+    results.forEach((result, index) => {
+        const type = getLocationType(result);
+        const icon = getIconForType(type);
+        
+        html += `
+            <div class="autocomplete-item" data-index="${index}">
+                <i class="${icon}"></i>
+                <span class="name">${result.display_name.split(',')[0]}</span>
+                <span class="type">${type}</span>
+            </div>
+        `;
+    });
+    
+    autocompleteResults.innerHTML = html;
+    autocompleteResults.style.display = 'block';
+    
+    // Add click event listeners to autocomplete items
+    const items = autocompleteResults.querySelectorAll('.autocomplete-item');
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            selectSearchResult(index);
+        });
+    });
+}
+
+// Function to hide autocomplete results
+function hideAutocomplete() {
+    const autocompleteResults = document.getElementById('autocompleteResults');
+    autocompleteResults.style.display = 'none';
+}
+
+// Function to select a search result
+function selectSearchResult(index) {
+    const result = searchResults[index];
+    const searchInput = document.getElementById('search');
+    
+    // Update search input with selected result
+    searchInput.value = result.display_name.split(',')[0];
+    hideAutocomplete();
+    
+    // Move map to the selected location
+    moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+}
+
+// Function to search for a location directly
+function searchLocation(query) {
+    // Use Nominatim API for geocoding (OpenStreetMap)
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                const result = data[0];
+                moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+            } else {
+                alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching location:', error);
+            alert('Terjadi kesalahan saat mencari lokasi.');
+        });
+}
+
+// Function to move map to a specific location
+function moveMapToLocation(lat, lng, name) {
+    // Remove previous search marker if exists
+    if (currentSearchMarker) {
+        map.removeLayer(currentSearchMarker);
+    }
+    
+    // Create a new marker for the searched location
+    currentSearchMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: 'search-marker',
+            html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 24px;"></i>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24]
+        })
+    }).addTo(map);
+    
+    // Bind popup with location name
+    currentSearchMarker.bindPopup(`<b>${name}</b>`).openPopup();
+    
+    // Move map to the location
+    map.setView([lat, lng], 15);
+}
+
+// Helper function to determine location type
+function getLocationType(result) {
+    if (result.type === 'administrative') {
+        return 'Administratif';
+    } else if (result.class === 'highway') {
+        return 'Jalan';
+    } else if (result.class === 'place') {
+        return 'Tempat';
+    } else if (result.class === 'building') {
+        return 'Gedung';
+    } else if (result.class === 'amenity') {
+        return 'Fasilitas';
+    } else if (result.class === 'natural') {
+        return 'Alam';
+    } else if (result.class === 'tourism') {
+        return 'Wisata';
+    } else {
+        return 'Lokasi';
+    }
+}
+
+// Helper function to get icon for location type
+function getIconForType(type) {
+    switch(type) {
+        case 'Jalan': return 'fas fa-road';
+        case 'Tempat': return 'fas fa-map-marker-alt';
+        case 'Gedung': return 'fas fa-building';
+        case 'Fasilitas': return 'fas fa-utensils';
+        case 'Alam': return 'fas fa-tree';
+        case 'Wisata': return 'fas fa-camera';
+        case 'Administratif': return 'fas fa-landmark';
+        default: return 'fas fa-map-pin';
+    }
+}
+
             
 
             // Function to open edit route name modal
