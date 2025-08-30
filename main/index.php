@@ -104,12 +104,12 @@ if ($conn) {
             
             // Fetch reports for this route
             $reportQuery = "
-            SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
-            FROM reports rep 
-            LEFT JOIN users u ON rep.user_id = u.id 
-            WHERE rep.route_id = $routeId 
-            ORDER BY rep.created_at DESC
-            ";
+SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
+FROM reports rep 
+LEFT JOIN users u ON rep.user_id = u.id 
+WHERE rep.route_id = $routeId 
+ORDER BY rep.created_at DESC
+";
             $reportResult = $conn->query($reportQuery);
             
             $routeReports = [];
@@ -137,24 +137,24 @@ if ($conn) {
     // ================================
     // Modify your allReportsQuery to include like counts
     $allReportsQuery = "
-    SELECT rep.*, 
-    CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
-    u.name AS user_name, 
-    u.avatar AS user_avatar,
-    COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
-    COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
-    (SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
-    " . ($userLoggedIn ? 
-    "(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
-    : "0 as user_vote") . "
-    FROM reports rep 
-    LEFT JOIN routes r ON rep.route_id = r.id 
-    LEFT JOIN users u ON rep.user_id = u.id 
-    LEFT JOIN likes l ON rep.id = l.report_id
-    GROUP BY rep.id
-    ORDER BY rep.created_at DESC 
-    LIMIT 20
-    ";
+SELECT rep.*, 
+CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
+u.name AS user_name, 
+u.avatar AS user_avatar,
+COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
+COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
+(SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
+" . ($userLoggedIn ? 
+"(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
+: "0 as user_vote") . "
+FROM reports rep 
+LEFT JOIN routes r ON rep.route_id = r.id 
+LEFT JOIN users u ON rep.user_id = u.id 
+LEFT JOIN likes l ON rep.id = l.report_id
+GROUP BY rep.id
+ORDER BY rep.created_at DESC 
+LIMIT 20
+";
     $allReportsResult = $conn->query($allReportsQuery);
     
     if ($allReportsResult) {
@@ -2115,6 +2115,30 @@ $reportsJson = json_encode($reports);
     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
 }
 
+.report-attachment {
+    margin: 0.75rem 0;
+}
+
+.attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.attachment-link:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
 
 
         
@@ -2124,8 +2148,11 @@ $reportsJson = json_encode($reports);
 <body>
     <header>
         <div class="logo">
-            <i class="fas fa-map-marked-alt"></i>
+            <a href="index.php" style="display: flex;">
+                <i class="fas fa-map-marked-alt"></i>
             <h1>GoSafe</h1>
+            </a>
+            
         </div>
         <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
             <a href="../auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
@@ -2317,6 +2344,11 @@ $reportsJson = json_encode($reports);
                     <label for="reportDescription">Deskripsi</label>
                     <textarea id="reportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
                 </div>
+                <div class="form-group">
+    <label for="reportPhoto">Lampiran Foto (Opsional)</label>
+    <input type="file" id="reportPhoto" name="photo" accept="image/*" class="form-control">
+    <small class="text-muted">Maksimal ukuran: 2MB. Format: JPG, PNG, GIF</small>
+</div>
                 <button type="submit" class="submit-btn" id="reportSubmitBtn">Kirim Laporan</button>
             </form>
         </div>
@@ -4088,6 +4120,7 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
                             </div>
                         </div>
                         <p class="report-description">${report.description}</p>
+                        
                         <div class="report-footer">
                             <div class="report-user" data-user-id="${report.user_id}">
                                 <small>Oleh: ${userAvatar} <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span></small>
@@ -4104,6 +4137,19 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
                             </div>
                         </div>
                         `;
+
+                        if (report.photo_url) {
+    const attachmentHtml = `
+    <div class="report-attachment">
+        <a href="view_photo.php?id=${report.id}" target="_blank" class="attachment-link">
+            <i class="fas fa-paperclip"></i> Lihat Lampiran
+        </a>
+    </div>
+    `;
+    // Tambahkan setelah deskripsi laporan
+    reportItem.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
+}
+                        
                         
                         // Like/dislike event listeners
                         const likeBtn = reportItem.querySelector('.like-btn');
@@ -4680,6 +4726,7 @@ function searchLocation(query = null) {
                 </div>
                 <p class="report-description">${report.description}</p>
                 ${editedText}
+                
                 <div class="report-footer">
                     <div class="report-user">
                         <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name}</small>
@@ -4696,6 +4743,16 @@ function searchLocation(query = null) {
                     </div>
                 </div>
                 `;
+                if (report.photo_url) {
+    const attachmentHtml = `
+    <div class="report-attachment">
+        <a href="view_photo.php?id=${report.id}" target="_blank" class="attachment-link">
+            <i class="fas fa-paperclip"></i> Lihat Lampiran
+        </a>
+    </div>
+    `;
+    reportCard.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
+}
                 
                 // Add click event to focus on the route
                 reportCard.addEventListener('click', (e) => {
