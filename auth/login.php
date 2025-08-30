@@ -296,10 +296,10 @@ body {
             <form method="POST">
                 <div class="input-group">
                     <svg class="input-icon user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
+                        <path d="M4 4h16v16H4z" stroke="none"></path>
+                        <path d="M16 2H8a2 2 0 0 0-2 2v16l6-3 6 3V4a2 2 0 0 0-2-2z"></path>
                     </svg>
-                    <input type="text" name="username_email" class="form-input" placeholder="Masukan Username" required>
+                    <input type="text" name="username_email" class="form-input" placeholder="Masukan Email" required>
                 </div>
                 
                 <div class="input-group">
