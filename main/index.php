@@ -4620,6 +4620,7 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
             }
             
             // Search location
+// Function to search for a location directly with fly animation
 function searchLocation(query = null) {
     const searchTerm = query || searchInput.value.trim();
     if (!searchTerm) return;
@@ -4636,7 +4637,21 @@ function searchLocation(query = null) {
     .then(data => {
         if (data.length > 0) {
             const result = data[0];
-            moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+            
+            // First zoom out a bit to show context
+            if (map.getZoom() > 10) {
+                map.flyTo(map.getCenter(), 10, {
+                    duration: 1,
+                    easeLinearity: 0.25,
+                    animate: true
+                });
+            }
+            
+            // Then fly to the location after a short delay
+            setTimeout(() => {
+                moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+            }, 1000);
+            
         } else {
             alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
         }
@@ -5138,6 +5153,35 @@ function searchLocation(query = null) {
                     }
                 }
             }
+
+            // Function to move map to a specific location with fly animation
+function moveMapToLocation(lat, lng, name, zoomLevel = 15) {
+    // Remove previous search marker if exists
+    if (currentSearchMarker) {
+        map.removeLayer(currentSearchMarker);
+    }
+
+    // Create a new marker for the searched location
+    currentSearchMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: 'search-marker',
+            html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 24px;"></i>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24]
+        })
+    }).addTo(map);
+
+    // Bind popup with location name
+    currentSearchMarker.bindPopup(`<b>${name}</b>`).openPopup();
+
+    // Fly to the location with smooth animation
+    map.flyTo([lat, lng], zoomLevel, {
+        duration: 2, // Animation duration in seconds
+        easeLinearity: 0.25,
+        // Optional: Add some additional animation steps for better UX
+        animate: true
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   const toggleButton = document.getElementById('toggleSidebarBtn');
