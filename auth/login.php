@@ -64,305 +64,192 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            transition: all 0.3s ease;
-        }
-        
-        body {
-            background: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #384e64;
-            overflow-x: hidden;
-        }
-        
-        .login-container {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Background decorative elements */
-        .login-container::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, rgba(92, 153, 238, 0.1) 25%, transparent 25%),
-                        linear-gradient(-45deg, rgba(92, 153, 238, 0.1) 25%, transparent 25%),
-                        linear-gradient(45deg, transparent 75%, rgba(92, 153, 238, 0.1) 75%),
-                        linear-gradient(-45deg, transparent 75%, rgba(92, 153, 238, 0.1) 75%);
-            background-size: 100px 100px;
-            background-position: 0 0, 0 50px, 50px -50px, -50px 0px;
-            animation: slidePattern 20s linear infinite;
-            z-index: -1;
-        }
-        
-        @keyframes slidePattern {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(100px); }
-        }
-        
-        .brand-title {
-            color: #5c99ee;
-            font-size: 2rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 4px 8px rgba(92, 153, 238, 0.3);
-            animation: fadeInDown 1s ease;
-        }
-        
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .login-card {
-            background: #f7fafe;
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(92, 153, 238, 0.12), 
-                        0 4px 12px rgba(0, 0, 0, 0.06);
-            padding: 1.8rem;
-            max-width: 380px;
-            width: 100%;
-            backdrop-filter: blur(10px);
-            animation: fadeInUp 1s ease 0.3s both;
-            position: relative;
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #5c99ee, #2b0cb0);
-            border-radius: 20px 20px 0 0;
-        }
-        
-        .login-title {
-            color: #384e64;
-            font-size: 1.5rem;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-label {
-            color: #384e64;
-            font-weight: 500;
-            margin-bottom: 0.7rem;
-        }
-        
-        .form-control {
-            border: 2px solid #e8f1ff;
-            border-radius: 10px;
-            padding: 0.7rem 1rem;
-            font-size: 0.95rem;
-            color: #384e64;
-            background: rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            border-color: #5c99ee;
-            box-shadow: 0 0 0 0.25rem rgba(92, 153, 238, 0.15);
-            background: #ffffff;
-            transform: translateY(-2px);
-        }
-        
-        .form-control::placeholder {
-            color: #a8b5c8;
-        }
-        
-        .btn-primary {
-            background: #5c99ee;
-            border: none;
-            border-radius: 10px;
-            padding: 0.7rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-primary:hover {
-            background: #2b0cb0;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(43, 12, 176, 0.4);
-        }
-        
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-        
-        .btn-outline-danger {
-            border: 2px solid #e8f1ff;
-            color: #384e64;
-            border-radius: 10px;
-            padding: 0.7rem 1.5rem;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.8);
-        }
-        
-        .btn-outline-danger:hover {
-            background: #5c99ee;
-            border-color: #5c99ee;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(92, 153, 238, 0.3);
-        }
-        
-        .alert {
-            border: none;
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            animation: shake 0.6s ease;
-        }
-        
-        @keyframes shake {
-            0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        }
-        
-        .alert-danger {
-            background: linear-gradient(135deg, #ffe8e8, #ffebeb);
-            color: #d63384;
-            border-left: 4px solid #dc3545;
-        }
-        
-        .divider {
-            color: #a8b5c8;
-            font-weight: 500;
-            position: relative;
-            margin: 1.5rem 0;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 45%;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #e8f1ff, transparent);
-        }
-        
-        .divider::before { left: 0; }
-        .divider::after { right: 0; }
-        
-        .link-primary {
-            color: #5c99ee;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .link-primary::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background: #5c99ee;
-            transition: width 0.3s ease;
-        }
-        
-        .link-primary:hover {
-            color: #2b0cb0;
-            text-decoration: none;
-        }
-        
-        .link-primary:hover::after {
-            width: 100%;
-            background: #2b0cb0;
-        }
-        
-        .mb-3 {
-            margin-bottom: 1.2rem !important;
-        }
-        
-        .input-group {
-            position: relative;
-        }
-        
-        .input-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #5c99ee;
-            z-index: 5;
-            transition: all 0.3s ease;
-        }
-        
-        .input-with-icon {
-            padding-left: 45px;
-        }
-        
-        .form-control:focus + .input-icon {
-            color: #2b0cb0;
-            transform: translateY(-50%) scale(1.1);
-        }
-        
-        .google-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            transition: transform 0.3s ease;
-        }
-        
-        .btn:hover .google-icon {
-            transform: rotate(360deg);
-        }
-        
-        @media (max-width: 576px) {
-            .brand-title {
-                font-size: 1.8rem;
-                margin-bottom: 1rem;
-            }
-            
-            .login-card {
-                padding: 1.5rem 1.25rem;
-                margin: 0.5rem;
-                max-width: 350px;
-            }
-            
-            .login-title {
-                font-size: 1.3rem;
-                margin-bottom: 1.2rem;
-            }
-        }
+       /* ===== Reset sederhana ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f7fafe;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #384a64;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Container login */
+.login-container {
+  width: 100%;
+  max-width: 420px;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Card login */
+.login-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Judul brand */
+.brand-title {
+  color: #5c99ee;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Judul card */
+.login-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.2rem;
+  color: #384a64;
+}
+
+/* Input */
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-control {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.95rem;
+  background: #fff;
+  color: #384a64;
+}
+
+.form-control:focus {
+  border-color: #5c99ee;
+  box-shadow: 0 0 0 3px rgba(92, 153, 238, 0.15);
+  outline: none;
+}
+
+/* Button utama */
+.btn-primary {
+  background: #5c99ee;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.btn-primary:hover {
+  background: #2b6cb0;
+  transform: translateY(-2px);
+}
+
+/* Button Google */
+.btn-outline-danger {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.65rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  background: #fff;
+  color: #384a64;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.btn-outline-danger:hover {
+  border-color: #5c99ee;
+  color: #5c99ee;
+  background: #f7fafe;
+}
+
+/* Icon Google */
+.google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Link */
+.link-primary {
+  color: #5c99ee;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link-primary:hover {
+  color: #2b6cb0;
+  text-decoration: underline;
+}
+
+/* Divider */
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #a0aec0;
+  font-size: 0.85rem;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.divider::before {
+  left: 0;
+}
+.divider::after {
+  right: 0;
+}
+
+/* Alert */
+.alert {
+  border-radius: 8px;
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.alert-danger {
+  background: #ffe8e8;
+  color: #c53030;
+  border-left: 4px solid #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .login-card {
+    padding: 1.5rem 1rem;
+  }
+  .brand-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .login-title {
+    font-size: 1.1rem;
+  }
+}
+
     </style>
 </head>
 <body>
@@ -387,7 +274,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="input-group">
                             <input type="text" name="username_email" class="form-control input-with-icon" 
                                    placeholder="Masukan username atau email" required>
-                            <i class="fas fa-user input-icon"></i>
+                            <i class=""></i>
                         </div>
                     </div>
                     
@@ -398,7 +285,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="input-group">
                             <input type="password" name="password" class="form-control input-with-icon" 
                                    placeholder="Masukan password Anda" required>
-                            <i class="fas fa-lock input-icon"></i>
+                            <i class=""></i>
                         </div>
                     </div>
                     
