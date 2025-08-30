@@ -842,6 +842,14 @@ if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
                                  class="report-image">
                         <?php endif; ?>
                     </div>
+
+                    <div style="margin-top: 12px; text-align: right;">
+                    <a href="../index.php?report_id=<?php echo $report['id']; ?>" 
+                       class="btn-primary-custom" 
+                       style="padding: 6px 12px; font-size: 12px; margin-left: 8px;">
+                        <i class="fas fa-external-link-alt"></i> Lihat Laporan
+                    </a>
+                        </div>
                     
                     <!-- Delete button for own reports -->
                     <?php if ($is_own_profile): ?>
@@ -906,7 +914,15 @@ if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </button>
                             </form>
                         </div>
-                    <?php endif; ?>
+
+                        <?php endif; ?>
+                        <div style="margin-top: 12px; text-align: right;">
+                    <a href="../index.php?highlight_route=<?php echo $route['id']; ?>" 
+                       class="btn-primary-custom" 
+                       style="padding: 6px 12px; font-size: 12px; margin-left: 8px;">
+                        <i class="fas fa-external-link-alt"></i> Lihat Rute
+                    </a>
+                    </div>
                 </div>
             <?php endwhile; ?>
         </div>

@@ -5110,6 +5110,43 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// Add this function to handle URL parameters on page load
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Handle report highlighting
+    const reportId = urlParams.get('highlight_report');
+    if (reportId) {
+        // Remove the parameter from URL without refreshing
+        const newUrl = window.location.pathname + window.location.search.replace(/highlight_report=[^&]*&?/, '').replace(/&$/, '');
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // Highlight the report after a short delay to ensure everything is loaded
+        setTimeout(() => {
+            highlightReport(reportId);
+        }, 1000);
+    }
+    
+    // Handle route highlighting
+    const routeId = urlParams.get('highlight_route');
+    if (routeId) {
+        // Remove the parameter from URL without refreshing
+        const newUrl = window.location.pathname + window.location.search.replace(/highlight_route=[^&]*&?/, '').replace(/&$/, '');
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // Show the route after a short delay to ensure everything is loaded
+        setTimeout(() => {
+            showRouteReports(routeId);
+        }, 1000);
+    }
+}
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+    handleUrlParameters(); // Add this line
+});
+
             
             
             
