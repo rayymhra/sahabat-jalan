@@ -3,987 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Landingpage - Go Safe!</title>
+    <title>Go Safe! - Peta Jalan Aman</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #5c99ee;
+            --primary-hover: #4a8de8;
+            --secondary: #64748b;
+            --accent: #7db3f0;
+            --surface: #ffffff;
+            --surface-elevated: #f8fafc;
+            --surface-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
         * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Bebas Neue', cursive;
-    background-color: #f5f5f5;
-    overflow-x: hidden;
-}
-
-.navbar {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 85%;
-    max-width: 1200px;
-    background-color: #ffffff;
-    border-radius: 25px;
-    padding: 15px 25px;
-    z-index: 1000;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.nav-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.nav-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.nav-right .login-btn {
-    text-decoration: none;
-}
-
-.nav-logo span {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #384a64;
-    letter-spacing: 1px;
-}
-
-.nav-menu {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
-
-.nav-link {
-    color: #384a64;
-    text-decoration: none;
-    font-size: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    position: relative;
-    transition: all 0.3s ease;
-    padding: 8px 0;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: #5c99ee;
-}
-
-.nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color:  #5c99ee;
-    transition: width 0.3s ease;
-}
-
-.nav-link:hover::after,
-.nav-link.active::after {
-    width: 100%;
-}
-
-.nav-login {
-    display: flex;
-    align-items: center;
-}
-
-.login-btn {
-    background-color: #5c99ee;
-    color: #ffffff;
-    border: none;
-    border-radius: 15px;
-    padding: 10px 20px;
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.login-btn:hover {
-    background-color: #2B6CB0;
-    color: #faf5ec;
-}
-
-.login-btn i {
-    font-size: 1.2rem;
-}
-
-.nav-toggle {
-    display: none;
-    flex-direction: column;
-    cursor: pointer;
-    gap: 4px;
-}
-
-.bar {
-    width: 25px;
-    height: 3px;
-    background-color: #384a64;
-    transition: all 0.3s ease;
-    border-radius: 2px;
-}
-
-.nav-toggle.active .bar:nth-child(1) {
-    transform: rotate(-45deg) translate(-5px, 6px);
-}
-
-.nav-toggle.active .bar:nth-child(2) {
-    opacity: 0;
-}
-
-.nav-toggle.active .bar:nth-child(3) {
-    transform: rotate(45deg) translate(-5px, -6px);
-}
-
-.sidebar {
-    position: fixed;
-    top: 0;
-    right: -350px;
-    width: 320px;
-    height: 100vh;
-    background-color: #fff;
-    z-index: 1001;
-    transition: all 0.3s ease;
-    border-radius: 25px 0 0 25px;
-    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
-}
-
-.sidebar.active {
-    right: 0;
-}
-
-.sidebar-content {
-    padding: 30px 25px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(209, 212, 213, 0.2);
-}
-
-.sidebar-header span {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #384a64;
-    letter-spacing: 1px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    color: #384a64;
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 5px;
-}
-
-.close-btn:hover {
-    color: #2B6CB0;
-}
-
-.sidebar-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.sidebar-link {
-    color: #384a64;
-    text-decoration: none;
-    font-size: 1.2rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    padding: 15px 20px;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.sidebar-link:hover,
-.sidebar-link.active {
-    color: #5c99ee;
-    background-color: rgba(185, 135, 40, 0.1);
-    transform: translateX(5px);
-}
-
-.sidebar-link i {
-    font-size: 1.3rem;
-    width: 25px;
-    text-align: center;
-}
-
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-}
-
-.overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.hero-section {
-    min-height: 100vh;
-    background-color: #f7fafe;
-    padding: 120px 20px 80px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-}
-
-.hero-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-    width: 100%;
-    position: relative;
-    z-index: 2;
-}
-
-.hero-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.hero-text {
-    opacity: 0;
-    transform: translateY(50px);
-    animation: fadeInUp 1.2s ease-out 0.3s forwards;
-}
-
-.hero-subtitle {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1.2rem;
-    color: #384a64;
-    letter-spacing: 2px;
-    margin-bottom: 10px;
-    opacity: 0.8;
-}
-
-.hero-title {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 4.5rem;
-    font-weight: 700;
-    color: #384a64;
-    line-height: 0.9;
-    margin-bottom: 20px;
-    letter-spacing: 3px;
-}
-
-.hero-slogan {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1.4rem;
-    color: #5c99ee;
-    margin-bottom: 30px;
-    line-height: 1.4;
-    opacity: 0.9;
-}
-
-.hero-line {
-    width: 80px;
-    height: 2px;
-    background-color: #384a64;
-    margin-bottom: 30px;
-    opacity: 0.6;
-}
-
-.hero-description {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1.1rem;
-    color: #384a64;
-    line-height: 1.6;
-    margin-bottom: 40px;
-    max-width: 500px;
-    opacity: 0.8;
-}
-
-.hero-btn {
-    background: transparent;
-    border: 2px solid #384a64;
-    color: #384a64;
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 1px;
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-    width: fit-content;
-    text-decoration: none; 
-}
-
-.hero-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background-color: #5c99ee;
-    transition: left 0.4s ease;
-    z-index: -1;
-}
-
-.hero-btn:hover::before {
-    left: 0;
-}
-
-.hero-btn:hover {
-    color: #ffffff;
-    border-color: #5c99ee;
-    transform: translateY(-2px);
-}
-
-.hero-btn i {
-    font-size: 1.2rem;
-    transition: transform 0.3s ease;
-}
-
-.hero-btn:hover i {
-    transform: translateX(5px);
-}
-
-.hero-image {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transform: scale(1.2);
-    animation: fadeInScale 1.5s ease-out 0.6s forwards;
-}
-
-.floating-image {
-    animation: floating 6s ease-in-out infinite;
-    position: relative;
-}
-
-.colorful-graphic {
-    width: 400px;
-    height: 400px;
-    position: relative;
-}
-
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(1.2);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes floating {
-    0%, 100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-15px);
-    }
-}
-
-@keyframes rotate {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes spiralRotate {
-    from {
-        transform: rotate(0deg) scale(1);
-    }
-    50% {
-        transform: rotate(180deg) scale(1.1);
-    }
-    to {
-        transform: rotate(360deg) scale(1);
-    }
-}
-
-@media (max-width: 968px) {
-    .hero-container {
-        grid-template-columns: 1fr;
-        gap: 50px;
-        text-align: center;
-    }
-    
-    .hero-title {
-        font-size: 3.5rem;
-    }
-    
-    .colorful-graphic {
-        width: 300px;
-        height: 300px;
-    }
-    
-    .circle-1 { width: 90px; height: 90px; }
-    .circle-2 { width: 60px; height: 60px; }
-    .circle-3 { width: 75px; height: 75px; }
-    .circle-4 { width: 45px; height: 45px; }
-    .circle-5 { width: 70px; height: 70px; }
-    .circle-6 { width: 55px; height: 55px; }
-}
-
-@media (max-width: 768px) {
-    .hero-section {
-        padding: 100px 15px 60px;
-    }
-    
-    .hero-title {
-        font-size: 3rem;
-    }
-    
-    .hero-slogan {
-        font-size: 1.2rem;
-    }
-    
-    .hero-description {
-        font-size: 1rem;
-    }
-    
-    .colorful-graphic {
-        width: 250px;
-        height: 250px;
-    }
-}
-
-@media (max-width: 480px) {
-    .navbar {
-        width: 95%;
-        padding: 10px 15px;
-    }
-    
-    .nav-logo span {
-        font-size: 1.3rem;
-    }
-    
-    .nav-right {
-        gap: 10px;
-    }
-    
-    .login-btn {
-        padding: 6px 12px;
-        font-size: 0.85rem;
-    }
-    
-    .sidebar {
-        width: 280px;
-        right: -280px;
-    }
-    
-    .sidebar-link {
-        font-size: 1.1rem;
-        padding: 12px 15px;
-    }
-}
-
-@media (max-width: 968px) {
-    .navbar {
-        width: 95%;
-        padding: 12px 16px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .nav-menu {
-        display: none;
-    }
-
-    .nav-toggle {
-        display: flex;
-    }
-
-    .nav-login {
-        display: flex;
-        align-items: center;
-        z-index: 1100;
-    }
-
-    .nav-right { gap: 8px; }
-
-    .login-btn {
-        padding: 6px 10px;
-        font-size: 0.85rem;
-        border-radius: 12px;
-        gap: 6px;
-        margin-left: 6px; 
-    }
-
-    .nav-logo span { font-size: 1.4rem; }
-}
-
-@media (max-width: 768px) {
-    .navbar { padding: 10px 12px; border-radius: 18px; }
-    .nav-logo span { font-size: 1.2rem; }
-    .nav-right { gap: 8px; }
-    .sidebar { width: 300px; }
-}
-
-@media (max-width: 480px) {
-    .sidebar { width: 100%; right: -100%; border-radius: 0; }
-    .sidebar.active { right: 0; }
-
-    /* ensure navbar elements fit */
-    .nav-logo span { font-size: 1.1rem; }
-    .nav-toggle .bar { width: 20px; }
-}
-
-/* Additional mobile comfort tweaks */
-@media (max-width: 480px) {
-    .navbar { padding: 8px 10px; border-radius: 12px; }
-    .login-btn { padding: 6px 8px; font-size: 0.8rem; }
-    .nav-toggle { margin-left: 4px; }
-
-    .hero-section { padding: 90px 12px 60px; }
-    .hero-title { font-size: 2.2rem; }
-    .hero-slogan { font-size: 1rem; }
-    .hero-description { font-size: 0.95rem; max-width: 100%; }
-
-    .content-wrapper { gap: 24px; padding: 0 12px; }
-    .feature-card { padding: 18px; }
-}
-
-.sidebar-menu .sidebar-link { padding-left: 18px; }
-.nav-toggle { align-items: center; justify-content: center; }
-
-html {
-    scroll-behavior: smooth;
-}
-
-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-body::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-body::-webkit-scrollbar-thumb {
-    background: #384a64;
-    border-radius: 4px;
-}
-
-body::-webkit-scrollbar-thumb:hover {
-    background: #2B6CB0;
-}
-
-.tentang-kami {
-  background-color: #fff;
-  color: #384a64;
-  padding: 80px 0;
-  font-family: 'Bebas Neue', sans-serif;
-  overflow: hidden;
-}
-
-.tentang-kami .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.section-title {
-  font-size: 3rem;
-  letter-spacing: 2px;
-  margin-bottom: 15px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-
-.underline {
-  height: 4px;
-  width: 80px;
-  background-color: #5c99ee;
-  margin: 0 auto;
-  opacity: 0;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: opacity 1s ease, transform 1.5s ease;
-}
-
-.content-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 40px;
-  align-items: center;
-}
-
-.text-content {
-  flex: 1;
-  min-width: 300px;
-}
-
-.tagline {
-  font-size: 2.2rem;
-  margin-bottom: 20px;
-  opacity: 0;
-  transform: translateX(50px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-
-.description {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  opacity: 0;
-  transform: translateX(50px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-
-.description:nth-of-type(2) {
-  transition-delay: 0.2s;
-}
-
-.features {
-  margin: 40px 0;
-}
-
-.feature-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-left: 3px solid #2B6CB0;
-  padding: 25px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 1s ease, transform 1s ease, box-shadow 0.3s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-}
-
-.feature-title {
-  font-size: 1.5rem;
-  color: #5c99ee;
-  margin-bottom: 10px;
-}
-
-.feature-desc {
-  font-size: 1.1rem;
-  line-height: 1.5;
-}
-
-.expertise {
-  text-align: center;
-  margin-top: 40px;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-
-.expertise-number {
-  font-size: 3.5rem;
-  color: #5c99ee;
-  font-weight: bold;
-}
-
-.expertise-text {
-  font-size: 1.2rem;
-  letter-spacing: 2px;
-}
-
-.image-content {
-  flex: 1;
-  min-width: 300px;
-  opacity: 0;
-  transform: translateY(50px);
-  transition: opacity 1s ease, transform 1s ease;
-}
-
-.about-image {
-  width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.section-title.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.underline.visible {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
-.tagline.visible,
-.description.visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.feature-card.visible {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.feature-card:nth-child(2) {
-  transition-delay: 0.2s;
-}
-
-.expertise.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.image-content.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@media (max-width: 768px) {
-  .content-wrapper {
-    flex-direction: column;
-  }
-  
-  .text-content, .image-content {
-    width: 100%;
-  }
-  
-  .section-title {
-    font-size: 2.5rem;
-  }
-  
-  .tagline {
-    font-size: 1.8rem;
-  }
-}
-
-  .cara-kerja-section {
-            background-color: #f7fafe;
-            padding: 80px 20px;
-            min-height: 100vh;
-            font-family: 'Bebas Neue', sans-serif;
-            color: #384a64;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--surface);
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 4rem;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: color 0.2s ease;
             position: relative;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--text-primary);
         }
 
-        .section-title {
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+        }
+
+        .nav-cta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .mobile-menu {
+            display: none;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 8rem 1.5rem 4rem;
             text-align: center;
-            margin-bottom: 80px;
-        }
-
-        .section-title h2 {
-            font-size: 4rem;
-            font-weight: 400;
-            letter-spacing: 3px;
-            margin: 0 0 20px 0;
-            color: #384a64;
-            opacity: 0;
-            transform: translateY(50px);
-            animation: fadeInUp 1s ease forwards;
-        }
-
-        .title-line {
-            width: 80px;
-            height: 4px;
-            background-color: #5c99ee;
+            max-width: 1280px;
             margin: 0 auto;
-            opacity: 0;
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: opacity 1s ease, transform 1s ease;
-        }
-
-        .title-line.visible {
-            opacity: 1;
-            transform: scaleX(1);
-        }
-
-        .timeline {
             position: relative;
-            max-width: 1000px;
-            margin: 0 auto;
+            overflow: hidden;
         }
 
-        .timeline::before {
+        .hero::before {
             content: '';
             position: absolute;
             top: 0;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background-color: #2B6CB0;
-            transform: translateX(-50%);
-            z-index: 1;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(92, 153, 238, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(125, 179, 240, 0.03) 0%, transparent 50%);
+            animation: subtleFloat 20s ease-in-out infinite;
+            z-index: -1;
         }
 
-        .timeline-item {
-            position: relative;
-            margin-bottom: 60px;
+        @keyframes subtleFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            33% {
+                transform: translateY(-10px) rotate(1deg);
+            }
+            66% {
+                transform: translateY(5px) rotate(-1deg);
+            }
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
             opacity: 0;
-            transition: all 0.8s ease;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease 0.2s forwards;
         }
 
-        .timeline-item:nth-child(odd) {
-            padding-right: 55%;
-            transform: translateX(-100px);
+        .hero-badge i {
+            color: var(--primary);
+            animation: pulse 2s ease-in-out infinite;
         }
 
-        .timeline-item:nth-child(even) {
-            padding-left: 55%;
-            transform: translateX(100px);
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
         }
 
-        .timeline-item.show {
-            opacity: 1;
-            transform: translateX(0);
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 1s ease 0.4s forwards;
         }
 
-        .timeline-card {
-            background-color:#f7fafe;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease 0.6s forwards;
         }
 
-        .timeline-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background-color: #2B6CB0;
-            border-radius: 50%;
-            border: 4px solid #5c99ee;
-            z-index: 3;
-        }
-
-        .timeline-item:nth-child(odd)::before {
-            right: calc(45% - 10px);
-        }
-
-        .timeline-item:nth-child(even)::before {
-            left: calc(45% - 10px);
-        }
-
-        .step-number {
-            font-size: 1rem;
-            color: #5c99ee;
-            font-weight: 400;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .step-title {
-            font-size: 1.8rem;
-            color: #384a64;
-            margin: 0;
-            font-weight: 400;
-            letter-spacing: 1px;
-            line-height: 1.3;
-        }
-
-        .step-icon {
-            position: absolute;
-            font-size: 1.5rem;
-            color: #2B6CB0;
-            background-color: #5c99ee;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        .hero-cta {
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #5c99ee;
-            z-index: 4;
+            gap: 1rem;
+            margin-bottom: 4rem;
+            flex-wrap: wrap;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease 0.8s forwards;
         }
 
-        .timeline-item:nth-child(odd) .step-icon {
-            right: calc(45% - 20px);
+        .btn-large {
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            border-radius: var(--radius);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .timeline-item:nth-child(even) .step-icon {
-            left: calc(45% - 20px);
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(92, 153, 238, 0.3);
+        }
+
+        .hero-preview {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeInUp 1.2s ease 1s forwards;
+        }
+
+        .hero-preview::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            50% {
+                left: 100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        .hero-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .hero-mockup {
+            aspect-ratio: 16/10; 
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--text-muted);
+            position: relative;
+        }
+
+        .hero-mockup i {
+            font-size: 3rem;
+            animation: gentleBounce 3s ease-in-out infinite;
+        }
+
+        @keyframes gentleBounce {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Floating elements */
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(92, 153, 238, 0.1), rgba(125, 179, 240, 0.05));
+        }
+
+        .shape-1 {
+            width: 60px;
+            height: 60px;
+            top: 20%;
+            left: 10%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape-2 {
+            width: 80px;
+            height: 80px;
+            top: 60%;
+            right: 15%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        .shape-3 {
+            width: 40px;
+            height: 40px;
+            top: 40%;
+            left: 80%;
+            animation: float 7s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px);
+            }
+            33% {
+                transform: translateY(-20px) translateX(10px);
+            }
+            66% {
+                transform: translateY(10px) translateX(-5px);
+            }
         }
 
         @keyframes fadeInUp {
@@ -993,894 +399,1078 @@ body::-webkit-scrollbar-thumb:hover {
             }
         }
 
-        @keyframes fadeInLine {
-            to {
-                opacity: 1;
-                transform: scaleX(1);
-            }
+        /* Problem Section */
+        .problem-section {
+            padding: 4rem 1.5rem;
+            background: var(--surface-elevated);
         }
 
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .problem-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .problem-icon {
+            width: 3rem;
+            height: 3rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 1.5rem;
+            color: var(--danger);
+        }
+
+        .problem-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .problem-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Solution Section */
+        .solution-section {
+            padding: 4rem 1.5rem;
+        }
+
+        .solution-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .solution-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            margin-top: 4rem;
+        }
+
+        .solution-text {
+            space-y: 2rem;
+        }
+
+        .solution-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .solution-point-icon {
+            width: 2rem;
+            height: 2rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            color: var(--success);
+            flex-shrink: 0;
+            margin-top: 0.25rem;
+        }
+
+        .solution-point-content h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .solution-point-content p {
+            color: var(--text-secondary);
+        }
+
+        .solution-visual {
+            position: relative;
+        }
+
+        .solution-mockup {
+            width: 100%;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 4rem 1.5rem;
+            background: var(--surface-elevated);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* How it Works */
+        .how-it-works {
+            padding: 4rem 1.5rem;
+        }
+
+        .steps-container {
+            max-width: 800px;
+            margin: 3rem auto 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 3.5rem;
+            width: 2px;
+            height: calc(100% + 1rem);
+            background: var(--border);
+        }
+
+        .step-number {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-content h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* FAQ */
+        .faq-section {
+            padding: 4rem 1.5rem;
+            background: var(--surface-elevated);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 3rem auto 0;
+        }
+
+        .faq-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+
+        .faq-question:hover {
+            background: var(--surface-hover);
+        }
+
+        .faq-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+            padding: 0 2rem 1.5rem;
+        }
+
+        .faq-answer p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 4rem 1.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+        }
+
+        .cta-section .section-title {
+            color: white;
+        }
+
+        .cta-section .section-description {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .cta-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-white:hover {
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 3rem 1.5rem 1.5rem;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            line-height: 1.6;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.5rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .cara-kerja-section {
-                padding: 60px 15px;
+            .nav-menu {
+                display: none;
             }
 
-            .section-title h2 {
-                font-size: 3rem;
-            }
-
-            .timeline::before {
-                left: 30px;
-            }
-
-            .timeline-item:nth-child(odd),
-            .timeline-item:nth-child(even) {
-                padding-left: 70px;
-                padding-right: 0;
-                transform: translateX(-50px);
-            }
-
-            .timeline-item.show {
-                transform: translateX(0);
-            }
-
-            .timeline-item::before {
-                left: 20px !important;
-                right: auto !important;
-            }
-
-            .timeline-item:nth-child(odd) .step-icon,
-            .timeline-item:nth-child(even) .step-icon {
-                left: 10px;
-                right: auto;
-            }
-
-            .step-title {
+            .mobile-menu {
+                display: block;
+                background: none;
+                border: none;
+                color: var(--text-primary);
                 font-size: 1.5rem;
+                cursor: pointer;
             }
 
-            .timeline-card {
-                padding: 25px;
+            .hero {
+                padding: 6rem 1rem 3rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .solution-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .solution-visual {
+                order: -1;
+            }
+
+            .step {
+                gap: 1rem;
+            }
+
+            .step-content {
+                flex: 1;
+            }
+
+            .faq-question {
+                padding: 1rem 1.5rem;
+            }
+
+            .faq-item.active .faq-answer {
+                padding: 0 1.5rem 1rem;
             }
         }
 
         @media (max-width: 480px) {
-            .section-title h2 {
-                font-size: 2.5rem;
-                letter-spacing: 2px;
+            .hero {
+                padding: 5rem 0.75rem 2rem;
             }
 
-            .title-line {
-                width: 60px;
+            .section-title {
+                font-size: 1.75rem;
             }
 
-            .step-title {
-                font-size: 1.3rem;
-            }
-
-            .timeline-card {
-                padding: 20px;
+            .problem-card,
+            .feature-card {
+                padding: 1.5rem;
             }
         }
 
-.fitur-section {
-  background-color: #f7fafe;
-  padding: 80px 20px;
-  text-align: center;
-}
-
-.fitur-title {
-  color: #384a64;
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  position: relative;
-}
-
-.fitur-underline {
-  width: 0;
-  height: 4px;
-  background-color: #5c99ee;
-  margin: 0 auto 50px;
-  animation: underlineExpand 1.5s ease forwards;
-}
-
-@keyframes underlineExpand {
-  from { width: 0; opacity: 0; }
-  to { width: 120px; opacity: 1; }
-}
-
-.fitur-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-/* Card */
-.fitur-card {
-  background-color: #f7fafe;
-  border: 1px solid #384a64;
-  padding: 30px 20px;
-  border-radius: 12px;
-  transition: all 0.4s ease;
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-.fitur-icon {
-  font-size: 2.8rem;
-  color: #5c99ee;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.fitur-card-title {
-  color: #384a64;
-  font-size: 1.3rem;
-  font-weight: bold;
-  margin-bottom: 15px;
-  transition: color 0.3s ease;
-}
-
-.fitur-card {
-  color: #384a64;
-}
-
-.fitur-card:hover {
-  background-color: #2B6CB0;
-  border-color: #1b262c;
-  transform: translateY(-12px) scale(1.03);
-  box-shadow: 0 12px 20px rgba(0,0,0,0.4);
-}
-
-.fitur-card:hover .fitur-card-title {
-  color: #5c99ee;
-}
-
-.site-footer {
-  background-color: #2B6CB0;
-  padding: 20px 0;
-  text-align: center;
-}
-
-.site-footer p {
-  color: #f7fafe;
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-.footer-brand {
-  color: #f7fafe;
-  font-weight: bold;
-}
-
-@media (max-width: 1024px) {
-    .navbar { top: 14px; width: 94%; padding: 12px 16px; }
-    .nav-container { gap: 8px; }
-    .nav-menu { display: none; }
-    .nav-toggle { display: flex; }
-    .nav-right { gap: 8px; }
-
-    .hero-section { padding: 100px 18px 60px; }
-    .hero-container { grid-template-columns: 1fr; gap: 36px; align-items: center; }
-    .hero-content { text-align: center; }
-    .hero-description { max-width: 100%; margin: 0 auto 24px; }
-    .hero-image { order: 2; margin: 0 auto; }
-    .hero-text { order: 1; }
-
-    .content-wrapper { flex-direction: column; gap: 28px; }
-    .text-content { width: 100%; }
-    .image-content { width: 100%; }
-
-    .fitur-container { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 22px; }
-}
-
-@media (max-width: 768px) {
-    .navbar { top: 12px; border-radius: 14px; }
-    .nav-logo span { font-size: 1.3rem; }
-
-    .hero-section { padding: 90px 16px 50px; }
-    .hero-title { font-size: 2.8rem; letter-spacing: 2px; }
-    .hero-slogan { font-size: 1.15rem; }
-    .hero-description { font-size: 1rem; padding: 0 6px; }
-    .hero-btn { padding: 12px 20px; }
-
-    .content-wrapper { gap: 20px; padding: 0 6px; }
-    .feature-card { padding: 18px; border-radius: 8px; }
-    .feature-title { font-size: 1.25rem; }
-    .timeline::before { left: 24px; }
-    .timeline-item { padding-left: 70px !important; padding-right: 0 !important; transform: translateX(-20px); }
-    .timeline-item::before { left: 12px !important; right: auto !important; }
-    .timeline-item .step-icon { left: 18px !important; right: auto !important; }
-}
-
-@media (max-width: 480px) {
-    .navbar { width: 98%; top: 8px; padding: 8px 12px; border-radius: 10px; }
-    .nav-toggle .bar { width: 20px; }
-    .nav-logo span { font-size: 1.05rem; }
-    .login-btn { padding: 6px 10px; font-size: 0.85rem; }
-
-    .hero-section { padding: 84px 12px 40px; }
-    .hero-title { font-size: 2.2rem; }
-    .hero-slogan { font-size: 1rem; }
-    .hero-description { font-size: 0.95rem; }
-    .hero-btn { width: 100%; justify-content: center; }
-
-    .content-wrapper { flex-direction: column; gap: 18px; padding: 0 12px; }
-    .text-content, .image-content { width: 100%; }
-
-    .feature-card { width: 100%; padding: 14px; margin-bottom: 12px; }
-    .feature-title { font-size: 1.15rem; }
-
-    .timeline { padding: 0 12px; }
-    .timeline-item { padding-left: 72px !important; }
-    .timeline-item::before { left: 18px !important; }
-    .timeline-item .step-icon { left: 12px !important; }
-    .site-footer { padding: 18px 10px; }
-    .site-footer p { font-size: 0.9rem; }
-}
-
-.hero-image img, .about-image, .floating-image img { max-width: 100%; height: auto; display: block; }
-
-   .faq-container {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .faq-card {
-        background-color: #ffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .faq-question {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 20px;
-        cursor: pointer;
-        font-size: 18px;
-        font-weight: 500;
-        color: #384a64;
-        transition: color 0.3s;
-    }
-
-    .faq-question:hover {
-        color: #5c99ee;
-    }
-
-    .faq-question:hover .arrow {
-        color: #5c99ee;
-    }
-
-    .arrow {
-        transition: transform 0.3s, color 0.3s;
-        font-weight: bold;
-    }
-
-    .faq-answer {
-        max-height: 0;
-        overflow: hidden;
-        padding: 0 20px;
-        transition: max-height 0.3s ease, padding 0.3s ease;
-        font-size: 16px;
-        line-height: 1.6;
-        color: #333;
-    }
-
-    .faq-card.active .faq-answer {
-        padding: 15px 20px;
-        max-height: 500px; /* cukup untuk menampung jawaban */
-    }
-
-    .faq-card.active .arrow {
-        transform: rotate(90deg);
-    }
-
-    /* Responsif */
-    @media (max-width: 600px) {
-        .faq-question {
-            font-size: 16px;
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
         }
 
-        .faq-answer {
-            font-size: 14px;
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
-    }
 
-.footer {
-  background: #5c99ee;
-  color: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding-top: 40px;
+        /* Smooth scrolling offset for fixed navbar */
+        section {
+            scroll-margin-top: 5rem;
+        }
+
+        .solution-mockup {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden; /* keeps image inside rounded corners */
 }
 
-.footer-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
-  margin: auto;
-  padding: 0 20px 40px;
-}
-
-.footer-title {
-  color: #384a64;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.footer-desc {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #fff;
-}
-
-.footer-links,
-.footer-creators {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-links li,
-.footer-creators li {
-  margin-bottom: 10px;
-}
-
-.footer-links a,
-.footer-creators a {
-  color: #fff;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s;
-}
-
-.footer-links a:hover,
-.footer-creators a:hover {
-  color: #2b6cb0;
-}
-
-.footer-creators a i {
-  margin-right: 8px;
-  font-size: 16px;
-  vertical-align: middle;
-}
-
-/* copyright */
-.footer-bottom {
-  border-top: 1px solid #000;
-  text-align: center;
-  padding: 15px 20px;
-}
-
-.footer-bottom p {
-  margin: 0;
-  font-size: 13px;
-  color: #fff;
+.solution-mockup img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* makes it fill nicely */
+    display: block;
 }
 
     </style>
 </head>
 <body>
-    <nav class="navbar" id="navbar">
+    <!-- Navigation -->
+    <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-logo">
-                <span>Go Safe!</span>
+            <a href="" class="nav-logo">Go Safe!</a>
+            
+            <div class="nav-menu">
+                <a href="#beranda" class="nav-link active">Beranda</a>
+                <a href="#masalah" class="nav-link">Masalah</a>
+                <a href="#solusi" class="nav-link">Solusi</a>
+                <a href="#fitur" class="nav-link">Fitur</a>
+                <a href="#cara-kerja" class="nav-link">Cara Kerja</a>
             </div>
-
-            <div class="nav-menu" id="nav-menu">
-                <a href="#beranda" class="nav-link active" data-section="beranda">Beranda</a>
-                <a href="#tentang-kami" class="nav-link" data-section="tentang-kami">Tentang Kami</a>
-                <a href="#fitur" class="nav-link" data-section="fitur">Fitur</a>
-                <a href="#cara-kerja" class="nav-link" data-section="cara-kerja">Cara Kerja</a>
-            </div>
-
-            <div class="nav-right">
-                <div class="nav-login">
-                    <a href="auth/login.php" class="login-btn" id="login-btn">
-                        <i class="bi bi-person-circle"></i>
-                        <span>Masuk</span>
-                    </a>
-                </div>
-                 <div class="nav-toggle" id="nav-toggle">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
+            
+            <div class="nav-cta">
+                <a href="main" class="btn btn-primary">Lihat Peta</a>
+                <button class="mobile-menu">
+                    <i class="bi bi-list"></i>
+                </button>
             </div>
         </div>
     </nav>
-     <div class="sidebar" id="sidebar">
-        <div class="sidebar-content">
-            <div class="sidebar-header">
-                <span>Menu</span>
-                <button class="close-btn" id="close-btn">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-             <div class="sidebar-menu">
-                <a href="#beranda" class="sidebar-link active" data-section="beranda">
-                    <i class="bi bi-house"></i>
-                    <span>Beranda</span>
-                </a>
-                <a href="#Tentang-Kami" class="sidebar-link" data-section="tentang-kami">
-                    <i class="bi bi-info-circle"></i>
-                    <span>Tentang Kami</span>
-                </a>
-                <a href="#fitur" class="sidebar-link" data-section="fitur">
-                    <i class="bi bi-star"></i>
-                    <span>Fitur</span>
-                </a>
-                <a href="#cara-kerja" class="sidebar-link" data-section="cara-kerja">
-                    <i class="bi bi-gear"></i>
-                    <span>Cara Kerja</span>
-                </a>
-            </div>
+
+    <!-- Hero Section -->
+    <section id="beranda" class="hero">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
         </div>
-    </div>
-
-<div class="overlay" id="overlay"></div>
-
-<section id="beranda" class="hero-section">
-    <div class="hero-container">
-        <div class="hero-content">
-            <div class="hero-text">
-                <div class="hero-subtitle">Perkenalkan</div>
-                <h1 class="hero-title">GO SAFE!</h1>
-                <p class="hero-slogan">Laporkan Dan Temukan Rute Aman Dikotamu.</p>
-                <div class="hero-line"></div>
-                <p class="hero-description">
-                    GO SAFE adalah platform komunitas untuk menandai rute aman dan area berbahaya
-                    membantu orang lain memilih jalur terbaik dan lebih aman.
-                </p>
-                <!-- <button class="hero-btn">
-                    <span>Lihat Peta!</span>
-                    <i class="bi bi-arrow-right"></i>
-                </button> -->
-                <a href="main" class="hero-btn">Lihat Peta!</a>
-            </div>
-             </div>
         
-        <div class="hero-image">
-           <img src="assets/img/logo.png" alt="">
+        <div class="hero-badge">
+            <i class="bi bi-shield-check"></i>
+            Platform Keamanan Jalan Pertama di Indonesia
         </div>
-    </div>
-</section>
+        
+        <h1 class="hero-title">
+            Temukan Rute Aman<br>
+            Untuk Perjalanan Anda
+        </h1>
+        
+        <p class="hero-subtitle">
+            Peta interaktif berisi laporan warga tentang lokasi rawan kejahatan dan kecelakaan. 
+            Bantu warga lain dengan berbagi informasi keamanan jalan di sekitar Anda.
+        </p>
+        
+        <div class="hero-cta">
+            <a href="main" class="btn btn-primary btn-large">
+                <i class="bi bi-map"></i>
+                Lihat Peta Sekarang
+            </a>
+            <a href="#solusi" class="btn btn-ghost btn-large">
+                Pelajari Lebih Lanjut
+            </a>
+        </div>
+        
+        <div class="hero-preview">
+            <div class="hero-mockup">
+                <i class="bi bi-map"></i>
+                <img src="assets/img/interface.PNG" alt="" style="width: fit-content;">
+            </div>
+        </div>
+    </section>
 
-<section class="tentang-kami" id="tentang-kami">
-  <div class="container">
-        <div class="section-title">
-            <h2>Tentang Kami</h2>
-            <div class="title-line"></div>
-        </div>
-        <div class="content-wrapper">
-            <div class="text-content">
-                <h3 class="tagline">Go Safe!</h3>
-                <p class="description">GO SAFE adalah platform berbasis komunitas yang hadir untuk membantu masyarakat melaporkan kondisi jalan, menandai area berbahaya, serta membagikan rute perjalanan yang lebih aman.</p>
-                <p class="description">Kami percaya bahwa keamanan di jalan bukan hanya tanggung jawab individu, melainkan hasil dari kolaborasi seluruh warga kota.</p>
-                <div class="features">
-                <div class="feature-card">
-                    <h4 class="feature-title">Membangun Mobilitas Yang Berkelanjutan</h4>
-                    <p class="feature-desc">Dengan memudahkan warga menemukan rute yang lebih aman, GO SAFE tidak hanya menjaga keselamatan, tetapi juga mendorong orang untuk berjalan kaki, bersepeda, atau menggunakan transportasi umum. Hal ini turut berkontribusi pada terciptanya lingkungan perkotaan yang lebih sehat dan ramah lingkungan.</p>
+    <!-- Problem Section -->
+    <section id="masalah" class="problem-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-badge">Masalah</div>
+                <h2 class="section-title">Tantangan Keamanan Jalan di Indonesia</h2>
+                <p class="section-description">
+                    Data keamanan jalan tersebar dan tidak terpusat, membuat warga kesulitan memilih rute yang aman
+                </p>
+            </div>
+            
+            <div class="problem-grid">
+                <div class="problem-card fade-in">
+                    <div class="problem-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="problem-title">Data Tidak Terpusat</h3>
+                    <p class="problem-text">
+                        Informasi tentang lokasi rawan kejahatan tersebar di berbagai platform dan sulit diakses masyarakat umum
+                    </p>
                 </div>
                 
-                <div class="feature-card">
-                    <h4 class="feature-title">Komunitas Peduli Keselamatan</h4>
-                    <p class="feature-desc">GO SAFE dibangun dari semangat kolaborasi. Setiap laporan yang masuk berasal dari pengguna di lapangan yang benar-benar melihat kondisi jalan. Dengan begitu, data yang ditampilkan selalu relevan, akurat, dan lahir dari kepedulian bersama terhadap keselamatan di kota.</p>
+                <div class="problem-card fade-in">
+                    <div class="problem-icon">
+                        <i class="bi bi-question-circle"></i>
+                    </div>
+                    <h3 class="problem-title">Kebingungan Pemilihan Rute</h3>
+                    <p class="problem-text">
+                        Warga bingung memilih jalur aman untuk aktivitas seperti jogging, pulang malam, atau bepergian bersama keluarga
+                    </p>
                 </div>
-        
-                <div class="expertise">
-                    <div class="expertise-number">#1</div>
-                    <div class="expertise-text">Pertama Di Indonesia</div>
+                
+                <div class="problem-card fade-in">
+                    <div class="problem-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <h3 class="problem-title">Informasi Tidak Real-time</h3>
+                    <p class="problem-text">
+                        Kondisi keamanan jalan berubah dinamis, namun informasi yang tersedia seringkali sudah tidak relevan
+                    </p>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section id="fitur" class="fitur-section">
-    <div class="section-title">
-        <h2>Fitur Kami</h2>
-        <div class="title-line"></div>
-    </div>
-
-  <div class="fitur-container">
-    <div class="fitur-card">
-      <div class="fitur-icon">
-        <i class="bi bi-file-earmark-bar-graph"></i>
-      </div>
-      <h3 class="fitur-card-title">Laporan</h3>
-      <p>Laporkan jika melihat informasi palsu atau tidak jelas</p>
-    </div>
-    <div class="fitur-card">
-      <div class="fitur-icon">
-        <i class="bi bi-hand-thumbs-up"></i>
-        <i class="bi bi-hand-thumbs-down"></i>
-      </div>
-      <h3 class="fitur-card-title">Like & Dislike</h3>
-      <p>Like jika merasa informasi benar, Dislike jika tidak benar untuk tahu informasi mana yang akurat</p>
-    </div>
-    <div class="fitur-card">
-      <div class="fitur-icon">
-        <i class="bi bi-geo-alt-fill"></i>
-      </div>
-      <h3 class="fitur-card-title">Real-time Map</h3>
-      <p>Peta interaktif untuk memantau lokasi secara langsung.</p>
-    </div>
-  </div>
-</section>
-
-<section id="cara-kerja" class="cara-kerja-section">
+    <!-- Solution Section -->
+    <section id="solusi" class="solution-section">
         <div class="container">
-            <div class="section-title">
-                <h2>Cara Kerja</h2>
-                <div class="title-line"></div>
+            <div class="section-header fade-in">
+                <div class="section-badge solution-badge">Solusi</div>
+                <h2 class="section-title">Go Safe! Hadir Sebagai Solusi</h2>
+                <p class="section-description">
+                    Platform berbasis komunitas untuk melaporkan, memverifikasi, dan berbagi informasi keamanan jalan
+                </p>
             </div>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-card">
-                        <span class="step-number">STEP 01</span>
-                        <h3 class="step-title">Silahkan masuk atau daftar akun terlebih dahulu</h3>
+            
+            <div class="solution-content">
+                <div class="solution-text">
+                    <div class="solution-point fade-in">
+                        <div class="solution-point-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="solution-point-content">
+                            <h4>Berbasis Komunitas</h4>
+                            <p>Setiap laporan berasal dari warga yang benar-benar mengalami atau melihat kondisi di lapangan, menciptakan data yang akurat dan terpercaya.</p>
+                        </div>
                     </div>
-                    <div class="step-icon">
-                        <i class="bi bi-person-plus"></i>
+                    
+                    <div class="solution-point fade-in">
+                        <div class="solution-point-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="solution-point-content">
+                            <h4>Sistem Verifikasi</h4>
+                            <p>Fitur like/dislike membantu memverifikasi keakuratan laporan, sementara sistem moderasi menjaga kualitas informasi.</p>
+                        </div>
                     </div>
-                </div>
-                 <div class="timeline-item">
-                    <div class="timeline-card">
-                        <span class="step-number">STEP 02</span>
-                        <h3 class="step-title">Klik tombol lihat peta diatas</h3>
-                    </div>
-                    <div class="step-icon">
-                        <i class="bi bi-map"></i>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-card">
-                        <span class="step-number">STEP 03</span>
-                        <h3 class="step-title">Klik tombol di bawah kanan layar untuk menambahkan laporan</h3>
-                    </div>
-                    <div class="step-icon">
-                        <i class="bi bi-plus-circle"></i>
-                    </div>
-                </div>
-
-                <div class="timeline-item">
-                    <div class="timeline-card">
-                        <span class="step-number">STEP 04</span>
-                        <h3 class="step-title">Silahkan tentukan titik awal dan titik akhir yang ingin dikasih tanda</h3>
-                    </div>
-                    <div class="step-icon">
-                        <i class="bi bi-geo-alt"></i>
+                    
+                    <div class="solution-point fade-in">
+                        <div class="solution-point-icon">
+                            <i class="bi bi-lightning"></i>
+                        </div>
+                        <div class="solution-point-content">
+                            <h4>Real-time & Mudah Diakses</h4>
+                            <p>Peta interaktif yang dapat diakses kapan saja dengan informasi terkini tentang kondisi keamanan jalan di seluruh kota.</p>
+                        </div>
                     </div>
                 </div>
-                 <div class="timeline-item">
-                    <div class="timeline-card">
-                        <span class="step-number">STEP 05</span>
-                        <h3 class="step-title">Isi form yang tersedia seperti kategori, deskripsi dll</h3>
-                    </div>
-                    <div class="step-icon">
-                        <i class="bi bi-file-text"></i>
-                    </div>
-                </div>
-                 <div class="timeline-item">
-                    <div class="timeline-card">
-                        <span class="step-number">STEP 06</span>
-                        <h3 class="step-title">Klik kirim dan selesai</h3>
-                    </div>
-                    <div class="step-icon">
-                        <i class="bi bi-check-circle"></i>
+                
+                <div class="solution-visual fade-in">
+                    <div class="solution-mockup" style="aspect-ratio: 4/5; background: linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface-hover) 100%); display: flex; align-items: center; justify-content: center;">
+                        <!-- <i class="bi bi-phone" style="font-size: 3rem; color: var(--primary);"></i> -->
+                        <img src="assets/img/43188a93-d4e7-45f0-82ab-bbf5a1344db5.jpeg" alt="" >
                     </div>
                 </div>
             </div>
         </div>
+    </section>
 
+    <!-- Features Section -->
+    <section id="fitur" class="features-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <h2 class="section-title">Fitur Utama</h2>
+                <p class="section-description">
+                    Fitur lengkap untuk membantu Anda menemukan dan berbagi informasi keamanan jalan
+                </p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <h3 class="feature-title">Peta Interaktif</h3>
+                    </div>
+                    <p class="feature-description">
+                        Peta real-time yang menampilkan laporan keamanan jalan dari seluruh komunitas dengan visualisasi yang mudah dipahami.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-plus-circle"></i>
+                        </div>
+                        <h3 class="feature-title">Tambah Laporan</h3>
+                    </div>
+                    <p class="feature-description">
+                        Laporkan kondisi jalan yang berbahaya dengan mudah. Tambahkan foto, deskripsi, dan lokasi secara otomatis atau manual.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-hand-thumbs-up"></i>
+                        </div>
+                        <h3 class="feature-title">Sistem Validasi</h3>
+                    </div>
+                    <p class="feature-description">
+                        Fitur like/dislike membantu komunitas memverifikasi keakuratan laporan dan mengidentifikasi informasi yang dapat dipercaya.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-funnel"></i>
+                        </div>
+                        <h3 class="feature-title">Filter Canggih</h3>
+                    </div>
+                    <p class="feature-description">
+                        Saring laporan berdasarkan jenis bahaya (kejahatan, kecelakaan, dll), waktu kejadian, dan tingkat kepercayaan laporan.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-flag"></i>
+                        </div>
+                        <h3 class="feature-title">Sistem Pelaporan</h3>
+                    </div>
+                    <p class="feature-description">
+                        Laporkan informasi palsu atau tidak akurat untuk menjaga kualitas data dan kredibilitas platform.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <h3 class="feature-title">Halaman Profil</h3>
+                    </div>
+                    <p class="feature-description">
+                        Kelola semua kontribusi Anda dalam satu tempat. Lihat riwayat rute, laporan, dan komentar yang telah dibuat, serta pantau interaksi komunitas.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h3 class="feature-title">Pencarian Lokasi</h3>
+                    </div>
+                    <p class="feature-description">
+                        Cari lokasi atau tempat tujuan dengan mudah. Sistem juga dapat mendeteksi lokasi Anda saat ini untuk kemudahan navigasi dan pembuatan rute.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3 class="feature-title">Moderasi Komunitas</h3>
+                    </div>
+                    <p class="feature-description">
+                        Sistem moderasi terintegrasi untuk memastikan semua laporan relevan dan membantu menjaga keamanan komunitas.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section id="cara-kerja" class="how-it-works">
+        <div class="container">
+            <div class="section-header fade-in">
+                <h2 class="section-title">Cara Menggunakan Go Safe!</h2>
+                <p class="section-description">
+                    Ikuti langkah sederhana ini untuk mulai berkontribusi pada keamanan jalan di kota Anda
+                </p>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step fade-in">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Daftar & Masuk</h3>
+                        <p>Buat akun Go Safe! atau masuk dengan akun yang sudah ada untuk mulai menggunakan semua fitur platform.</p>
+                    </div>
+                </div>
+                
+                <div class="step fade-in">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Cari Lokasi & Tambah Rute</h3>
+                        <p>Gunakan fitur pencarian untuk menemukan tempat yang ingin Anda tuju, atau biarkan sistem mendeteksi lokasi Anda saat ini. Klik "Tambah Rute Baru" untuk membuat rute perjalanan.</p>
+                    </div>
+                </div>
+                
+                <div class="step fade-in">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Jelajahi Rute & Laporan</h3>
+                        <p>Klik pada garis rute di peta untuk melihat detail rute dan membaca laporan keamanan yang sudah ada dari pengguna lain.</p>
+                    </div>
+                </div>
+                
+                <div class="step fade-in">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Tambah Laporan Keamanan</h3>
+                        <p>Di bagian bawah detail rute, klik "Tambah Laporan Baru" untuk melaporkan kondisi keamanan. Sertakan deskripsi, kategori bahaya, dan foto jika diperlukan.</p>
+                    </div>
+                </div>
+                
+                <div class="step fade-in">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Kelola Kontribusi Anda</h3>
+                        <p>Kunjungi halaman profil untuk melihat semua rute, laporan, dan komentar yang telah Anda buat. Pantau feedback dari komunitas dan tetap aktif berkontribusi.</p>
+                    </div>
+                </div>
+                
+                <div class="step fade-in">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h3>Verifikasi & Berinteraksi</h3>
+                        <p>Bantu komunitas dengan memberikan like/dislike pada laporan dan laporkan informasi yang tidak akurat untuk menjaga kualitas data platform.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <h2 class="section-title">Pertanyaan Umum</h2>
+                <p class="section-description">
+                    Temukan jawaban atas pertanyaan yang sering diajukan tentang Go Safe!
+                </p>
+            </div>
+            
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Apa itu Go Safe dan bagaimana cara kerjanya?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Go Safe adalah platform berbasis komunitas yang memungkinkan warga melaporkan kondisi keamanan jalan secara real-time. Platform ini bekerja dengan mengumpulkan laporan dari pengguna, memverifikasinya melalui sistem voting, dan menampilkannya dalam peta interaktif untuk membantu orang lain memilih rute yang lebih aman.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Bagaimana cara menambahkan laporan keamanan jalan?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Pertama, buat rute baru dengan menggunakan fitur pencarian atau deteksi lokasi otomatis. Kemudian klik pada garis rute di peta untuk melihat detail rute. Di bagian bawah halaman detail, Anda akan menemukan tombol "Tambah Laporan Baru". Klik tombol tersebut, isi form dengan kategori bahaya, deskripsi detail, dan tambahkan foto jika diperlukan.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Bagaimana cara mengetahui laporan mana yang dapat dipercaya?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Setiap laporan memiliki sistem voting like/dislike dari komunitas. Laporan dengan banyak like umumnya lebih dapat dipercaya. Anda juga dapat melihat profil pelapor dan riwayat kontribusinya. Sistem moderasi kami juga secara aktif memverifikasi dan menghapus laporan yang tidak akurat.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Apa yang harus dilakukan jika menemukan laporan palsu?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Jika menemukan laporan yang mencurigakan atau tidak akurat, Anda dapat memberikan dislike dan melaporkan konten tersebut melalui tombol "Laporkan" pada detail laporan. Tim moderasi akan meninjau dan mengambil tindakan yang diperlukan untuk menjaga kualitas informasi di platform.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Bisakah saya melihat kontribusi yang telah saya buat?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Ya, melalui halaman profil Anda dapat melihat semua rute yang telah dibuat, laporan keamanan yang telah dikirim, dan komentar yang telah Anda berikan. Halaman ini juga menampilkan statistik kontribusi dan feedback dari komunitas terhadap laporan Anda.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Apakah Go Safe gratis untuk digunakan?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Ya, Go Safe sepenuhnya gratis untuk digunakan. Anda dapat mengakses peta, menambahkan laporan, dan menggunakan semua fitur tanpa biaya. Misi kami adalah membantu menciptakan komunitas yang lebih aman melalui berbagi informasi tanpa hambatan finansial.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <h2 class="section-title">Mulai Berkontribusi Hari Ini</h2>
+                <p class="section-description">
+                    Bergabunglah dengan ribuan warga yang telah membantu menciptakan jalan yang lebih aman untuk semua
+                </p>
+            </div>
+            
+            <div class="cta-buttons">
+                <a href="map" class="btn btn-white btn-large">
+                    <i class="bi bi-map"></i>
+                    Lihat Peta Sekarang
+                </a>
+                <a href="auth/register.php" class="btn btn-outline btn-large">
+                    <i class="bi bi-person-plus"></i>
+                    Daftar Gratis
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Go Safe!</h3>
+                <p>Platform berbasis komunitas untuk melaporkan dan berbagi informasi keamanan jalan, menciptakan lingkungan yang lebih aman untuk semua warga.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Navigasi</h3>
+                <ul class="footer-links">
+                    <li><a href="#beranda">Beranda</a></li>
+                    <li><a href="#masalah">Masalah</a></li>
+                    <li><a href="#solusi">Solusi</a></li>
+                    <li><a href="#fitur">Fitur</a></li>
+                    <li><a href="#cara-kerja">Cara Kerja</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Tim Pengembang</h3>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/rayymhra" target="_blank">@rayymhra</a></li>
+                    <li><a href="https://github.com/Attrynn" target="_blank">@Attrynn</a></li>
+                </ul>
+            </div>
+        </div>
         
-<div class="faq-section">
-    <br>
-    <div class="section-title">
-    <h1>Kotak Pertanyaan</h1>
-    </div>
-
-    <div class="faq-container">
-        <div class="faq-card">
-            <div class="faq-question">
-                Apa itu Go Safe?
-                <span class="arrow">&gt;</span>
-            </div>
-            <div class="faq-answer">
-               Go Safe adalah platform komunitas yang memungkinkan pengguna melaporkan kondisi jalan, menandai area berbahaya, dan berbagi rute aman untuk membantu orang lain dalam perjalanan mereka.
-            </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Go Safe! Semua hak dilindungi undang-undang.</p>
         </div>
+    </footer>
 
-        <div class="faq-card">
-            <div class="faq-question">
-                Bagaimana cara menambah/membuat laporan?
-                <span class="arrow">&gt;</span>
-            </div>
-            <div class="faq-answer">
-                pastikan kamu sudah mendaftar akun kamu terlebih dahulu, lalu klik tombol "Lihat Peta" di halaman utama. Setelah itu, gunakan tombol tambah laporan di pojok kanan bawah layar untuk menandai titik awal dan akhir, isi form yang tersedia, dan kirim laporan kamu.
-            </div>
-        </div>
-
-        <div class="faq-card">
-            <div class="faq-question">
-                bagaimana cara melihat mana laporan palsu?
-                <span class="arrow">&gt;</span>
-            </div>
-            <div class="faq-answer">
-                Kamu bisa melihat jumlah like dan dislike pada setiap laporan. Laporan dengan banyak like biasanya lebih dapat dipercaya, sedangkan laporan dengan banyak dislike mungkin perlu diwaspadai atau kamu bisa laporkan sebagai informasi palsu.
-            </div>
-        </div>
-
-        <div class="faq-card">
-            <div class="faq-question">
-                apa yang bisa saya lakukan saat melihat ada laporan yang mencurigakan?
-                <span class="arrow">&gt;</span>
-            </div>
-            <div class="faq-answer">
-            jika kamu menemukan laporan yang mencurigakan atau tidak akurat, kamu bisa menggunakan fitur dislike pada laporan tersebut. Jika merasa perlu, kamu juga bisa langsung laporkan itu.
-        </div>
-</div>
-</section>
-<script>
-
-const navToggle = document.getElementById('nav-toggle');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-const closeBtn = document.getElementById('close-btn');
-const navLinks = document.querySelectorAll('.nav-link');
-const sidebarLinks = document.querySelectorAll('.sidebar-link');
-const allLinks = [...navLinks, ...sidebarLinks];
-
-function closeSidebar() {
-    navToggle?.classList.remove('active');
-    sidebar?.classList.remove('active');
-    overlay?.classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-navToggle?.addEventListener('click', () => {
-    navToggle.classList.toggle('active');
-    sidebar?.classList.toggle('active');
-    overlay?.classList.toggle('active');
-    document.body.style.overflow = sidebar?.classList.contains('active') ? 'hidden' : 'auto';
-});
-
-closeBtn?.addEventListener('click', closeSidebar);
-overlay?.addEventListener('click', closeSidebar);
-
-allLinks.forEach(link => {
-    link.addEventListener('click', e => {
-        e.preventDefault();
-        const targetSection = link.getAttribute('data-section');
-        const targetElement = document.getElementById(targetSection);
-
-        if (targetElement) {
-            allLinks.forEach(l => l.classList.remove('active'));
-            document.querySelector(`.nav-link[data-section="${targetSection}"]`)?.classList.add('active');
-            document.querySelector(`.sidebar-link[data-section="${targetSection}"]`)?.classList.add('active');
-
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            if (sidebar?.classList.contains('active')) closeSidebar();
-        }
-    });
-});
-
-const sections = document.querySelectorAll('section[id]');
-const navbar = document.getElementById('navbar');
-const navbarHeight = navbar?.offsetHeight || 0;
-
-const sectionObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const sectionId = entry.target.id;
-            allLinks.forEach(link => link.classList.remove('active'));
-            document.querySelector(`.nav-link[data-section="${sectionId}"]`)?.classList.add('active');
-            document.querySelector(`.sidebar-link[data-section="${sectionId}"]`)?.classList.add('active');
-        }
-    });
-}, { root: null, rootMargin: `-${navbarHeight + 50}px 0px -50% 0px`, threshold: 0 });
-
-sections.forEach(section => sectionObserver.observe(section));
-
-window.addEventListener('scroll', () => {
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    if (!navbar) return;
-    navbar.style.backdropFilter = 'blur(10px)';
-    navbar.style.backgroundColor = '#ffffff';
-});
-
-window.addEventListener('resize', () => {
-    if (window.innerWidth > 768 && sidebar?.classList.contains('active')) {
-        closeSidebar();
-    }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('.nav-link[data-section="beranda"]')?.classList.add('active');
-    document.querySelector('.sidebar-link[data-section="beranda"]')?.classList.add('active');
-
-    const heroBtn = document.querySelector('.hero-btn');
-    heroBtn?.addEventListener('click', () => console.log('Navigating to map...'));
-    const heroObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) entry.target.classList.add('animate-in');
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
         });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
-    document.querySelectorAll('.hero-text, .hero-image').forEach(el => heroObserver.observe(el));
+        // Active navigation link
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
 
-    window.addEventListener('scroll', () => {
-        const scrolled = window.scrollY;
-        document.querySelector('.hero-text')?.style.setProperty('transform', `translateY(${scrolled * 0.5}px)`);
-        document.querySelector('.hero-image')?.style.setProperty('transform', `translateY(${scrolled * 0.15}px)`);
-    });
+        const observerOptions = {
+            root: null,
+            rootMargin: '-20% 0px -80% 0px',
+            threshold: 0
+        };
 
-    if (heroBtn) {
-        heroBtn.style.position = 'relative';
-        heroBtn.style.overflow = 'hidden';
-        heroBtn.addEventListener('click', e => {
-            const ripple = document.createElement('span');
-            const rect = heroBtn.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.getAttribute('id');
+                    
+                    // Remove active class from all nav links
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    
+                    // Add active class to current section's nav link
+                    const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+                    if (activeLink) {
+                        activeLink.classList.add('active');
+                    }
+                }
+            });
+        }, observerOptions);
 
-            ripple.style.cssText = `
-                position: absolute;
-                width: ${size}px;
-                height: ${size}px;
-                left: ${x}px;
-                top: ${y}px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 50%;
-                transform: scale(0);
-                animation: ripple 0.6s linear;
-                pointer-events: none;
-                z-index: 0;
-            `;
-            heroBtn.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 600);
+        sections.forEach(section => {
+            observer.observe(section);
         });
-    }
 
-    const timelineObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry, index) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => entry.target.classList.add('show'), index * 200);
+        // Fade in animation
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        fadeElements.forEach(element => {
+            fadeObserver.observe(element);
+        });
+
+        // FAQ toggle
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const faqItem = question.parentElement;
+                const isActive = faqItem.classList.contains('active');
+                
+                // Close all FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Open clicked item if it wasn't active
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+            } else {
+                navbar.style.background = 'rgba(255, 255, 255, 0.8)';
             }
         });
-    }, { threshold: 0.3, rootMargin: '0px 0px -100px 0px' });
-
-    document.querySelectorAll('.timeline-item').forEach(item => timelineObserver.observe(item));
-    const visibleObserver = new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                obs.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
-
-    document.querySelectorAll(
-        '.section-title, .section-title h2, .title-line, .underline, .tagline, .description, .feature-card, .expertise, .image-content'
-    ).forEach(el => visibleObserver.observe(el));
-
-    const titlePlayObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) entry.target.style.animationPlayState = 'running';
-        });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.section-title h2, .title-line').forEach(el => titlePlayObserver.observe(el));
-
-    document.querySelectorAll('.timeline-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const stepNumber = card.querySelector('.step-number')?.textContent || '';
-            console.log(`${stepNumber} clicked`);
-            card.style.transform = 'scale(0.98) translateY(-10px)';
-            setTimeout(() => card.style.transform = '', 150);
-        });
-    });
-});
-
-window.addEventListener('load', () => {
-    document.querySelector('.hero-section')?.classList.add('loaded');
-});
-
-const style = document.createElement('style');
-style.textContent = `
-/* Particle animations removed */
-@keyframes ripple {
-    to { transform: scale(4); opacity: 0; }
-}
-`;
-document.head.appendChild(style);
-document.documentElement.style.scrollBehavior = 'smooth';
-
-const cards = document.querySelectorAll(".fitur-card");
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = "1";
-      entry.target.style.transform = "scale(1)";
-      entry.target.style.transition = "all 0.6s ease";
-      observer.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.2 });
-
-cards.forEach((card) => {
-  observer.observe(card);
-});
-
- const faqCards = document.querySelectorAll('.faq-card');
-
-    faqCards.forEach(card => {
-        card.querySelector('.faq-question').addEventListener('click', () => {
-            card.classList.toggle('active');
-        });
-    });
-
-</script>
+    </script>
 </body>
-<footer class="footer">
-  <div class="footer-container">
-    <!-- Tentang Kami -->
-    <div class="footer-col">
-      <h3 class="footer-title">Tentang Kami</h3>
-      <p class="footer-desc">
-        GO SAFE adalah platform berbasis komunitas yang hadir untuk membantu masyarakat melaporkan kondisi jalan, 
-        menandai area berbahaya, serta membagikan rute perjalanan yang lebih aman.
-      </p>
-    </div>
-
-    <!-- Navigasi -->
-    <div class="footer-col">
-      <h3 class="footer-title">Navigasi</h3>
-      <ul class="footer-links">
-        <li><a href="#">Beranda</a></li>
-        <li><a href="#">Tentang Kami</a></li>
-        <li><a href="#">Fitur</a></li>
-        <li><a href="#">Cara Kerja</a></li>
-      </ul>
-    </div>
-
-    <!-- Creator -->
-    <div class="footer-col">
-      <h3 class="footer-title">Creator</h3>
-      <ul class="footer-creators">
-        <li>
-          <a href="https://github.com/rayymhra" target="_blank">
-            <i class="bi bi-github"></i> @rayymhra
-          </a>
-        </li>
-        <li>
-          <a href="https://github.com/Attrynn" target="_blank">
-            <i class="bi bi-github"></i> @Attrynn
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Copyright -->
-  <div class="footer-bottom">
-    <p>© 2025 GO SAFE. All rights reserved.</p>
-  </div>
-</footer>
-<!-- ===== Footer End ===== -->
-</footer>
 </html>
