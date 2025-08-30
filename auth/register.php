@@ -1,9 +1,5 @@
 <?php
 include "../connection.php";
-require "../vendor/autoload.php"; // PHPMailer
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
 $success = $error = "";
 
@@ -16,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone = null;
     $bio = null;
     $login_provider = "manual";
-    $is_verified = 0;
+    $is_verified = 1; // Changed from 0 to 1
 
     // Buat username unik
     $baseUsername = strtolower(preg_replace('/\s+/', '', $name)); 
@@ -46,46 +42,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $checkEmail->close();
 
-        $token = bin2hex(random_bytes(32));
-        $expires_at = date("Y-m-d H:i:s", strtotime("+1 day"));
-
         $stmt = $conn->prepare("INSERT INTO users 
-            (name, username, email, password, role, avatar, phone_number, bio, login_provider, is_verified, verify_token, token_expires) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssssssss", 
+            (name, username, email, password, role, avatar, phone_number, bio, login_provider, is_verified) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssssss", 
             $name, $username, $email, $password, $role, $avatar, $phone, $bio, 
-            $login_provider, $is_verified, $token, $expires_at
+            $login_provider, $is_verified
         );
 
         if ($stmt->execute()) {
-            $verifyLink = "http://localhost/other/sahabat-jalan/auth/verify.php?token=" . $token;
-
-            $mail = new PHPMailer(true);
-            try {
-                $mail->isSMTP();
-                $mail->Host       = 'smtp.mailtrap.io';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'your_mailtrap_username'; 
-                $mail->Password   = 'your_mailtrap_password'; 
-                $mail->SMTPSecure = 'tls';
-                $mail->Port       = 587;
-
-                $mail->setFrom('noreply@sahabatjalan.com', 'Sahabat Jalan');
-                $mail->addAddress($email, $name);
-                $mail->isHTML(true);
-                $mail->Subject = "Verifikasi email Anda";
-                $mail->Body    = "Hai $name,<br><br>
-                                  Terima kasih sudah mendaftar! Silakan verifikasi email Anda dengan mengklik link di bawah ini:<br>
-                                  <a href='$verifyLink'>$verifyLink</a><br><br>
-                                  Link ini berlaku selama 24 jam.";
-
-                $mail->send();
-                $success = "🎉 Pendaftaran berhasil! Silakan cek email Anda (<strong>$email</strong>) untuk memverifikasi akun.";
-            } catch (Exception $e) {
-                $success = "🎉 Pendaftaran berhasil! (Mode Demo)<br>
-                            Karena email tidak dapat dikirim, silakan verifikasi langsung:<br>
-                            <a href='$verifyLink' style='color: #5c99ee; text-decoration: none;'>$verifyLink</a>";
-            }
+            $success = "🎉 Pendaftaran berhasil! Akun Anda sudah aktif dan siap digunakan.";
         } else {
             $error = "Error: " . $stmt->error;
         }

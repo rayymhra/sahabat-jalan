@@ -311,7 +311,6 @@ body {
                     <input type="password" name="password" class="form-input" placeholder="Masukan Password" required>
                 </div>
                 
-                <a href="forgot_password.php" class="forgot-link">Lupa Password?</a>
                 
                 <button type="submit" class="login-btn">Masuk</button>
             </form>
