@@ -8,3 +8,5 @@ Installing PHPMailer
 If using Composer (recommended):
 
 composer require phpmailer/phpmailer
+
+pastikan untuk menyalakan lokasi pada device anda untuk mengakses fitur lokasi terkini

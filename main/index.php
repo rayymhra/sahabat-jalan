@@ -104,12 +104,12 @@ if ($conn) {
             
             // Fetch reports for this route
             $reportQuery = "
-            SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
-            FROM reports rep 
-            LEFT JOIN users u ON rep.user_id = u.id 
-            WHERE rep.route_id = $routeId 
-            ORDER BY rep.created_at DESC
-            ";
+SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
+FROM reports rep 
+LEFT JOIN users u ON rep.user_id = u.id 
+WHERE rep.route_id = $routeId 
+ORDER BY rep.created_at DESC
+";
             $reportResult = $conn->query($reportQuery);
             
             $routeReports = [];
@@ -137,24 +137,24 @@ if ($conn) {
     // ================================
     // Modify your allReportsQuery to include like counts
     $allReportsQuery = "
-    SELECT rep.*, 
-    CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
-    u.name AS user_name, 
-    u.avatar AS user_avatar,
-    COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
-    COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
-    (SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
-    " . ($userLoggedIn ? 
-    "(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
-    : "0 as user_vote") . "
-    FROM reports rep 
-    LEFT JOIN routes r ON rep.route_id = r.id 
-    LEFT JOIN users u ON rep.user_id = u.id 
-    LEFT JOIN likes l ON rep.id = l.report_id
-    GROUP BY rep.id
-    ORDER BY rep.created_at DESC 
-    LIMIT 20
-    ";
+SELECT rep.*, 
+CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
+u.name AS user_name, 
+u.avatar AS user_avatar,
+COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
+COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
+(SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
+" . ($userLoggedIn ? 
+"(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
+: "0 as user_vote") . "
+FROM reports rep 
+LEFT JOIN routes r ON rep.route_id = r.id 
+LEFT JOIN users u ON rep.user_id = u.id 
+LEFT JOIN likes l ON rep.id = l.report_id
+GROUP BY rep.id
+ORDER BY rep.created_at DESC 
+LIMIT 20
+";
     $allReportsResult = $conn->query($allReportsQuery);
     
     if ($allReportsResult) {
@@ -210,6 +210,23 @@ GROUP BY rep.id
 ORDER BY rep.created_at DESC 
 LIMIT 20
 ";
+
+
+// Function to generate a route name based on coordinates
+function generateRouteName($startLat, $startLng, $endLat, $endLng) {
+    // Format coordinates to a readable format
+    $formatCoordinate = function($coord) {
+        return number_format(abs($coord), 6);
+    };
+    
+    $startDir = ($startLat >= 0 ? 'N' : 'S') . $formatCoordinate($startLat) . 
+                ($startLng >= 0 ? 'E' : 'W') . $formatCoordinate($startLng);
+    
+    $endDir = ($endLat >= 0 ? 'N' : 'S') . $formatCoordinate($endLat) . 
+              ($endLng >= 0 ? 'E' : 'W') . $formatCoordinate($endLng);
+    
+    return "Rute $startDir ke $endDir";
+}
 
 
 // Convert PHP data to JSON for JavaScript
@@ -2098,6 +2115,30 @@ $reportsJson = json_encode($reports);
     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
 }
 
+.report-attachment {
+    margin: 0.75rem 0;
+}
+
+.attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.attachment-link:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
 
 
         
@@ -2107,8 +2148,11 @@ $reportsJson = json_encode($reports);
 <body>
     <header>
         <div class="logo">
-            <i class="fas fa-map-marked-alt"></i>
+            <a href="index.php" style="display: flex;">
+                <i class="fas fa-map-marked-alt"></i>
             <h1>GoSafe</h1>
+            </a>
+            
         </div>
         <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
             <a href="../auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
@@ -2300,6 +2344,11 @@ $reportsJson = json_encode($reports);
                     <label for="reportDescription">Deskripsi</label>
                     <textarea id="reportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
                 </div>
+                <div class="form-group">
+    <label for="reportPhoto">Lampiran Foto (Opsional)</label>
+    <input type="file" id="reportPhoto" name="photo" accept="image/*" class="form-control">
+    <small class="text-muted">Maksimal ukuran: 2MB. Format: JPG, PNG, GIF</small>
+</div>
                 <button type="submit" class="submit-btn" id="reportSubmitBtn">Kirim Laporan</button>
             </form>
         </div>
@@ -2319,12 +2368,12 @@ $reportsJson = json_encode($reports);
                 </div>
                 <div class="form-group">
                     <label>Pilih titik awal dan akhir pada peta</label>
-                    <div class="alert alert-warning">
+                    <!-- <div class="alert alert-warning">
                         <small>
                             <i class="fas fa-exclamation-triangle"></i> 
                             <strong>Penting:</strong> Setelah membuat rute, Anda harus menambahkan laporan atau rute akan dihapus.
                         </small>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="form-group">
                     <input type="hidden" id="startLat" name="start_lat">
@@ -3841,6 +3890,20 @@ function selectSearchResult(index) {
             function saveRoute() {
                 const formData = new FormData(routeForm);
                 
+
+                // Generate a name if none provided
+    let routeName = formData.get('name');
+    if (!routeName || routeName.trim() === '') {
+        const startLat = formData.get('start_lat');
+        const startLng = formData.get('start_lng');
+        const endLat = formData.get('end_lat');
+        const endLng = formData.get('end_lng');
+        
+        // Generate name based on coordinates
+        routeName = generateRouteNameFromCoords(startLat, startLng, endLat, endLng);
+        formData.set('name', routeName);
+    }
+
                 fetch('save_route.php', {
                     method: 'POST',
                     body: formData
@@ -3874,6 +3937,27 @@ function selectSearchResult(index) {
                     alert('Terjadi kesalahan saat menyimpan rute');
                 });
             }
+
+            // Add this helper function to generate route names from coordinates
+function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
+    const formatCoord = (coord, isLat) => {
+        const absCoord = Math.abs(parseFloat(coord));
+        const degrees = Math.floor(absCoord);
+        const minutes = Math.floor((absCoord - degrees) * 60);
+        const direction = isLat ? 
+            (coord >= 0 ? 'N' : 'S') : 
+            (coord >= 0 ? 'E' : 'W');
+        
+        return `${degrees}°${minutes}'${direction}`;
+    };
+    
+    const startLatDir = formatCoord(startLat, true);
+    const startLngDir = formatCoord(startLng, false);
+    const endLatDir = formatCoord(endLat, true);
+    const endLngDir = formatCoord(endLng, false);
+    
+    return `Rute ${startLatDir}${startLngDir} ke ${endLatDir}${endLngDir}`;
+}
             
             // Fetch routes from server
             function fetchRoutesFromServer() {
@@ -3979,7 +4063,7 @@ function selectSearchResult(index) {
                 
                 // Update route info panel
                 routeReportsList.innerHTML = '';
-                routeNameTitle.textContent = route.name || 'Rute #' + route.id;
+                routeNameTitle.textContent = route.name; 
                 
                 // Show creator with avatar
                 const creatorAvatar = route.creator_avatar 
@@ -4036,6 +4120,7 @@ function selectSearchResult(index) {
                             </div>
                         </div>
                         <p class="report-description">${report.description}</p>
+                        
                         <div class="report-footer">
                             <div class="report-user" data-user-id="${report.user_id}">
                                 <small>Oleh: ${userAvatar} <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span></small>
@@ -4052,6 +4137,19 @@ function selectSearchResult(index) {
                             </div>
                         </div>
                         `;
+
+                        if (report.photo_url) {
+    const attachmentHtml = `
+    <div class="report-attachment">
+        <a href="view_photo.php?id=${report.id}" target="_blank" class="attachment-link">
+            <i class="fas fa-paperclip"></i> Lihat Lampiran
+        </a>
+    </div>
+    `;
+    // Tambahkan setelah deskripsi laporan
+    reportItem.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
+}
+                        
                         
                         // Like/dislike event listeners
                         const likeBtn = reportItem.querySelector('.like-btn');
@@ -4628,9 +4726,10 @@ function searchLocation(query = null) {
                 </div>
                 <p class="report-description">${report.description}</p>
                 ${editedText}
+                
                 <div class="report-footer">
                     <div class="report-user">
-                        <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name || 'Rute #' + report.route_id}</small>
+                        <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name}</small>
                     </div>
                     <div class="like-dislike-container">
                         <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">
@@ -4644,6 +4743,16 @@ function searchLocation(query = null) {
                     </div>
                 </div>
                 `;
+                if (report.photo_url) {
+    const attachmentHtml = `
+    <div class="report-attachment">
+        <a href="view_photo.php?id=${report.id}" target="_blank" class="attachment-link">
+            <i class="fas fa-paperclip"></i> Lihat Lampiran
+        </a>
+    </div>
+    `;
+    reportCard.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
+}
                 
                 // Add click event to focus on the route
                 reportCard.addEventListener('click', (e) => {
@@ -5056,6 +5165,43 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+});
+
+// Add this function to handle URL parameters on page load
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Handle report highlighting
+    const reportId = urlParams.get('highlight_report');
+    if (reportId) {
+        // Remove the parameter from URL without refreshing
+        const newUrl = window.location.pathname + window.location.search.replace(/highlight_report=[^&]*&?/, '').replace(/&$/, '');
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // Highlight the report after a short delay to ensure everything is loaded
+        setTimeout(() => {
+            highlightReport(reportId);
+        }, 1000);
+    }
+    
+    // Handle route highlighting
+    const routeId = urlParams.get('highlight_route');
+    if (routeId) {
+        // Remove the parameter from URL without refreshing
+        const newUrl = window.location.pathname + window.location.search.replace(/highlight_route=[^&]*&?/, '').replace(/&$/, '');
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // Show the route after a short delay to ensure everything is loaded
+        setTimeout(() => {
+            showRouteReports(routeId);
+        }, 1000);
+    }
+}
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+    handleUrlParameters(); // Add this line
 });
 
             
