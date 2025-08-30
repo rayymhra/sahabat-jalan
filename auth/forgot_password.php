@@ -1,129 +1,261 @@
 <?php
 session_start();
-include "../connection.php";
+require_once "../connection.php";
 
 $message = "";
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $email = trim($_POST['email']);
+    $email = filter_var(trim($_POST['email']), FILTER_VALIDATE_EMAIL);
 
-    $stmt = $conn->prepare("SELECT id, is_verified FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-
-        if ($user['is_verified'] == 0) {
-            $error = "⚠️ Please verify your email before resetting password.";
-        } else {
-            $token = bin2hex(random_bytes(32));
-            $expires = date("Y-m-d H:i:s", strtotime("+1 hour"));
-
-            $update = $conn->prepare("UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?");
-            $update->bind_param("sss", $token, $expires, $email);
-            if ($update->execute()) {
-                $reset_link = "http://localhost/other/sahabat-jalan/auth/reset_password.php?token=$token";
-                $message = "🎉 Password reset link (Demo Mode): <a href='$reset_link'>$reset_link</a>";
-            } else {
-                $error = "❌ Failed to generate reset link.";
-            }
-            $update->close();
-        }
+    if (!$email) {
+        $error = "❌ Email tidak valid.";
     } else {
-        $error = "❌ Email not found.";
-    }
+        $stmt = $conn->prepare("SELECT id, is_verified FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    $stmt->close();
+        if ($result && $result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+
+            if ((int)$user['is_verified'] === 0) {
+                $error = "⚠️ Silakan verifikasi email Anda sebelum reset password.";
+            } else {
+                $token = bin2hex(random_bytes(32));
+                $expires = date("Y-m-d H:i:s", strtotime("+1 hour"));
+
+                $update = $conn->prepare("UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?");
+                $update->bind_param("sss", $token, $expires, $email);
+
+                if ($update->execute()) {
+                    $reset_link = "http://localhost/other/sahabat-jalan/auth/reset_password.php?token=" . urlencode($token);
+                    $message = "🎉 Link reset password berhasil dibuat (Demo Mode): <a href='$reset_link'>$reset_link</a>";
+                } else {
+                    $error = "❌ Gagal membuat reset link.";
+                }
+                $update->close();
+            }
+        } else {
+            $error = "❌ Email tidak ditemukan.";
+        }
+        $stmt->close();
+    }
 }
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lupa Password - Go Safe!</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    body {
-        background-color: #f7fafe;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        color: #384a64;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lupa Password - Go Safe!</title>
+  <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #f7fafe;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    color: #384a64;
+    min-height: 100vh;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-decoration {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50%;
+    height: 100vh;
+    background: linear-gradient(135deg, #5c99ee 0%, #2b6cb0 100%);
+    clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+    opacity: 0.9;
+    z-index: 1;
+}
+.bg-decoration::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -20%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    clip-path: polygon(0% 0%, 70% 0%, 50% 100%, 0% 100%);
+}
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-left: 5%;
+    z-index: 2;
+    position: relative;
+}
+.login-form {
+    width: 100%;
+    max-width: 380px;
+}
+.login-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #5c99ee;
+    margin-bottom: 2.5rem;
+    letter-spacing: -0.02em;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+.input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #384a64;
+    z-index: 3;
+}
+.form-input {
+    width: 100%;
+    padding: 18px 50px;
+    border: 2px solid #384a64;
+    border-radius: 25px;
+    background: transparent;
+    font-size: 1rem;
+    color: #384a64;
+    outline: none;
+    transition: all 0.3s ease;
+}
+.form-input::placeholder { color: #9ca3af; font-weight: 400; }
+.form-input:focus {
+    border-color: #5c99ee;
+    box-shadow: 0 0 0 3px rgba(92, 153, 238, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 18px;
+    background: #5c99ee;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(92, 153, 238, 0.3);
+}
+.login-btn:hover {
+    background: #2b6cb0;
+    box-shadow: 0 6px 16px rgba(43, 108, 176, 0.4);
+    transform: translateY(-2px);
+}
+.login-btn:active { transform: translateY(0); }
+
+.alert-danger {
+    background: #ffe8e8;
+    color: #c53030;
+    border-left: 4px solid #dc3545;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.alert-success {
+    background: #e9f7ef;
+    color: #2f855a;
+    border-left: 4px solid #38a169;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    body { overflow-y: auto; }
+    .bg-decoration { display: none; }
+    .login-container {
+        margin-left: 0;
+        justify-content: center;
+        padding: 1.5rem;
     }
-    .card {
-        border: none;
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        animation: fadeIn 0.5s ease;
+    .login-title {
+        font-size: 2.5rem;
+        text-align: center;
     }
-    h3 {
-        color: #384a64;
-        font-weight: 600;
+}
+@media (max-width: 480px) {
+    .login-container { padding: 1rem; }
+    .login-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
     }
-    label {
-        color: #384a64;
+    .form-input {
+        padding: 16px 45px;
         font-size: 0.95rem;
     }
-    .form-control {
-        border-radius: 8px;
-        border: 1px solid #d1d9e6;
+    .input-icon {
+        width: 18px;
+        height: 18px;
+        left: 16px;
     }
-    .btn-primary {
-        background-color: #5c99ee;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: background 0.3s ease;
-    }
-    .btn-primary:hover {
-        background-color: #2b6cb0;
-    }
-    a {
-        color: #5c99ee;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-    a:hover {
-        color: #2b6cb0;
-    }
-    .alert {
-        font-size: 0.9rem;
-        border-radius: 8px;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
+}
+
+.register-text {
+    text-align: left;
+    font-size: 0.95rem;
+    color: #384a64;
+    margin-bottom: 0;
+}
+
+.register-link {
+    color: #5c99ee;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.register-link:hover {
+    color: #2b6cb0;
+}
+
+  </style>
 </head>
 <body>
-<div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="col-md-6 col-lg-4">
-        <div class="card p-4">
-            <h3 class="mb-4 text-center">Reset Password</h3>
+  <div class="bg-decoration"></div>
+  
+  <div class="login-container">
+    <div class="login-form">
+      <h1 class="login-title">Lupa Password</h1>
 
-            <?php if($error): ?>
-            <div class="alert alert-danger"><?= $error ?></div>
-            <?php endif; ?>
-            <?php if($message): ?>
-            <div class="alert alert-success"><?= $message ?></div>
-            <?php endif; ?>  
+      <?php if ($error): ?>
+          <div class="alert-danger"><?= htmlspecialchars($error) ?></div>
+      <?php endif; ?>
+      <?php if ($message): ?>
+          <div class="alert-success"><?= $message ?></div>
+      <?php endif; ?>
 
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">Kirim Link Reset</button>
-            </form>
-
-            <p class="text-center mt-3">Kembali Ke <a href="login.php">Login</a></p>
+      <form method="POST" novalidate>
+        <div class="input-group">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16v16H4z" stroke="none"></path>
+              <path d="M16 2H8a2 2 0 0 0-2 2v16l6-3 6 3V4a2 2 0 0 0-2-2z"></path>
+          </svg>
+          <input type="email" name="email" class="form-input" placeholder="Masukkan Email Anda" required>
         </div>
+
+        <button type="submit" class="login-btn">Kirim Link Reset</button>
+      </form>
+
+      <p class="register-text">Kembali ke <a href="login.php" class="register-link">Login</a></p>
     </div>
-</div>
+  </div>
 </body>
 </html>
