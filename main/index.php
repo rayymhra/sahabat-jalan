@@ -104,12 +104,12 @@ if ($conn) {
             
             // Fetch reports for this route
             $reportQuery = "
-SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
-FROM reports rep 
-LEFT JOIN users u ON rep.user_id = u.id 
-WHERE rep.route_id = $routeId 
-ORDER BY rep.created_at DESC
-";
+            SELECT rep.*, u.name AS user_name, u.avatar AS user_avatar 
+            FROM reports rep 
+            LEFT JOIN users u ON rep.user_id = u.id 
+            WHERE rep.route_id = $routeId 
+            ORDER BY rep.created_at DESC
+            ";
             $reportResult = $conn->query($reportQuery);
             
             $routeReports = [];
@@ -137,24 +137,24 @@ ORDER BY rep.created_at DESC
     // ================================
     // Modify your allReportsQuery to include like counts
     $allReportsQuery = "
-SELECT rep.*, 
-CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
-u.name AS user_name, 
-u.avatar AS user_avatar,
-COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
-COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
-(SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
-" . ($userLoggedIn ? 
-"(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
-: "0 as user_vote") . "
-FROM reports rep 
-LEFT JOIN routes r ON rep.route_id = r.id 
-LEFT JOIN users u ON rep.user_id = u.id 
-LEFT JOIN likes l ON rep.id = l.report_id
-GROUP BY rep.id
-ORDER BY rep.created_at DESC 
-LIMIT 20
-";
+    SELECT rep.*, 
+    CONCAT(r.start_latitude, ',', r.start_longitude, ' → ', r.end_latitude, ',', r.end_longitude) AS route_name,
+    u.name AS user_name, 
+    u.avatar AS user_avatar,
+    COALESCE(SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END), 0) as likes,
+    COALESCE(SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END), 0) as dislikes,
+    (SELECT COUNT(*) FROM comments WHERE report_id = rep.id) as comment_count,
+    " . ($userLoggedIn ? 
+    "(SELECT value FROM likes WHERE user_id = " . $userData['id'] . " AND report_id = rep.id) as user_vote" 
+    : "0 as user_vote") . "
+    FROM reports rep 
+    LEFT JOIN routes r ON rep.route_id = r.id 
+    LEFT JOIN users u ON rep.user_id = u.id 
+    LEFT JOIN likes l ON rep.id = l.report_id
+    GROUP BY rep.id
+    ORDER BY rep.created_at DESC 
+    LIMIT 20
+    ";
     $allReportsResult = $conn->query($allReportsQuery);
     
     if ($allReportsResult) {
@@ -220,10 +220,10 @@ function generateRouteName($startLat, $startLng, $endLat, $endLng) {
     };
     
     $startDir = ($startLat >= 0 ? 'N' : 'S') . $formatCoordinate($startLat) . 
-                ($startLng >= 0 ? 'E' : 'W') . $formatCoordinate($startLng);
+    ($startLng >= 0 ? 'E' : 'W') . $formatCoordinate($startLng);
     
     $endDir = ($endLat >= 0 ? 'N' : 'S') . $formatCoordinate($endLat) . 
-              ($endLng >= 0 ? 'E' : 'W') . $formatCoordinate($endLng);
+    ($endLng >= 0 ? 'E' : 'W') . $formatCoordinate($endLng);
     
     return "Rute $startDir ke $endDir";
 }
@@ -283,103 +283,108 @@ $reportsJson = json_encode($reports);
         
         /* Header with Notion-inspired clean design */
         .app-header {
-  background: #ffffff;
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #f0f0f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  position: relative;
-  z-index: 1000;
-}
+            background: #ffffff;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .logo-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        
+        .logo i {
+            font-size: 1.5rem;
+            color: var(--primary-color, #2563eb);
+        }
+        
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Shared button styles */
+        .btn-auth {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        /* Outline button */
+        .btn-outline {
+            border: 1px solid #d1d5db;
+            color: #374151;
+            background: transparent;
+        }
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+        
+        /* Filled button */
+        .btn-filled {
+            background: var(--primary-color, #2563eb);
+            color: #ffffff;
+            border: none;
+        }
+        .btn-filled:hover {
+            background: #1e40af;
+        }
+        
+        /* User info */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color, #2563eb), #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
 
-.logo-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
+        .user-avatar img {
+            object-fit: cover;
+        }
 
-.logo i {
-  font-size: 1.5rem;
-  color: var(--primary-color, #2563eb);
-}
-
-.logo-text {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-/* Shared button styles */
-.btn-auth {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-/* Outline button */
-.btn-outline {
-  border: 1px solid #d1d5db;
-  color: #374151;
-  background: transparent;
-}
-.btn-outline:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-/* Filled button */
-.btn-filled {
-  background: var(--primary-color, #2563eb);
-  color: #ffffff;
-  border: none;
-}
-.btn-filled:hover {
-  background: #1e40af;
-}
-
-/* User info */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-color, #2563eb), #3b82f6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-.user-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-#userName {
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: #111827;
-}
-
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        
+        #userName {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #111827;
+        }
+        
         
         .main-container {
             display: flex;
@@ -410,7 +415,7 @@ $reportsJson = json_encode($reports);
             display: flex;
             flex-direction: column;
             z-index: 2;
-
+            
             
         }
         
@@ -427,7 +432,7 @@ $reportsJson = json_encode($reports);
             
             margin: 0;
         }
-
+        
         /* start of search */
         .search-container {
             padding: 1rem 1.5rem;
@@ -814,52 +819,52 @@ $reportsJson = json_encode($reports);
         }
         
         .add-to-route-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-
-  background: #f0f6ff; /* soft pastel blue */
-  color: #2563eb; /* primary blue text */
-  
-  border: 1px solid #dbeafe; /* light border */
-  border-radius: 10px; /* smoother than sharp */
-  
-  padding: 0.75rem 1rem;
-  width: calc(100% - 3rem);
-  margin: 0 1.5rem 1.5rem;
-
-  font-size: 0.9rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  /* Softer shadow (Apple/Notion-like) */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.add-to-route-btn:hover {
-  background: #e0edff; /* slightly deeper pastel */
-  border-color: #bfdbfe;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-}
-
-.add-to-route-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.add-to-route-btn:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
-  border-color: #e5e7eb;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            
+            background: #f0f6ff; /* soft pastel blue */
+            color: #2563eb; /* primary blue text */
+            
+            border: 1px solid #dbeafe; /* light border */
+            border-radius: 10px; /* smoother than sharp */
+            
+            padding: 0.75rem 1rem;
+            width: calc(100% - 3rem);
+            margin: 0 1.5rem 1.5rem;
+            
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            
+            /* Softer shadow (Apple/Notion-like) */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .add-to-route-btn:hover {
+            background: #e0edff; /* slightly deeper pastel */
+            border-color: #bfdbfe;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+        }
+        
+        .add-to-route-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .add-to-route-btn:disabled {
+            background: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
         
         .route-creation-controls {
             position: absolute;
@@ -1050,7 +1055,7 @@ $reportsJson = json_encode($reports);
         }
         
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         
         .form-group label {
@@ -1089,31 +1094,37 @@ $reportsJson = json_encode($reports);
         }
         
         .submit-btn {
-            background-color: var(--primary-color);
-            color: white;
+            background: var(--primary-color, #2563eb);
+            color: #fff;
             border: none;
-            padding: 0.875rem 1.5rem;
-            border-radius: var(--radius-md);
+            padding: 0.85rem 1.4rem;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
             width: 100%;
             margin-top: 1rem;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
         }
         
         .submit-btn:hover:not(:disabled) {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            background: #1e40af;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
         
         .submit-btn:disabled {
-            background-color: var(--bg-tertiary);
-            color: var(--text-secondary);
+            background: #f3f4f6;
+            color: #9ca3af;
             cursor: not-allowed;
-            transform: none;
+            box-shadow: none;
         }
+        
         
         /* Enhanced route line styles */
         .route-line {
@@ -1486,119 +1497,119 @@ $reportsJson = json_encode($reports);
             border-color: #1d4ed8;
             transform: translateY(-1px);
         }
-/* Mobile - show button, sidebar hidden by default */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%; /* hidden */
-    width: 100%;
-    height: 100%;
-    background: var(--bg-primary);
-    z-index: 2000;
-    transition: right 0.3s ease-in-out;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-  }
-
-  .sidebar.open {
-    right: 0 !important; /* force slide in */
-    display: block !important;
-  }
-
-  .toggle-sidebar-btn {
-    display: flex;
-    position: fixed;
-    bottom: 20px; /* Changed from top to bottom */
-    left: 15px;   /* Changed from right to left */
-    z-index: 2100;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-lg);
-    cursor: pointer;
-  }
-  
-  .toggle-sidebar-btn:hover {
-    background: #1d4ed8;
-  }
-}
-
-/* Desktop - always show sidebar */
-@media (min-width: 769px) {
-  .sidebar {
-    display: flex !important;
-    position: relative;
-    right: 0;
-    width: 380px;
-    height: auto;
-  }
-  .toggle-sidebar-btn {
-    display: none !important; /* always hidden */
-  }
-}
-
-/* Base style (hidden by default) */
-.toggle-sidebar-btn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-lg);
-  cursor: pointer;
-  z-index: 2100;
-  display: none; /* start hidden */
-}
-.toggle-sidebar-btn:hover {
-  background: #1d4ed8;
-}
-
-/* Mobile - show button */
-@media (max-width: 768px) {
-  .toggle-sidebar-btn {
-    display: flex; /* only visible on mobile */
-    position: fixed;
-    bottom: 20px; /* adjust placement if needed */
-    right: 15px;
-  }
-  .sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 100%;
-    height: 100%;
-    background: var(--bg-primary);
-    z-index: 2000;
-    transition: right 0.3s ease-in-out;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
-  }
-  .sidebar.open {
-    right: 0;
-  }
-}
-
-/* Desktop - hide button, show sidebar */
-@media (min-width: 769px) {
-  .toggle-sidebar-btn {
-    display: none !important;
-  }
-  .sidebar {
-    display: flex !important;
-    position: relative;
-    right: 0;
-    width: 380px;
-    height: auto;
-  }
-}
-
+        /* Mobile - show button, sidebar hidden by default */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%; /* hidden */
+                width: 100%;
+                height: 100%;
+                background: var(--bg-primary);
+                z-index: 2000;
+                transition: right 0.3s ease-in-out;
+                box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+            }
+            
+            .sidebar.open {
+                right: 0 !important; /* force slide in */
+                display: block !important;
+            }
+            
+            .toggle-sidebar-btn {
+                display: flex;
+                position: fixed;
+                bottom: 20px; /* Changed from top to bottom */
+                left: 15px;   /* Changed from right to left */
+                z-index: 2100;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 48px;
+                height: 48px;
+                align-items: center;
+                justify-content: center;
+                box-shadow: var(--shadow-lg);
+                cursor: pointer;
+            }
+            
+            .toggle-sidebar-btn:hover {
+                background: #1d4ed8;
+            }
+        }
+        
+        /* Desktop - always show sidebar */
+        @media (min-width: 769px) {
+            .sidebar {
+                display: flex !important;
+                position: relative;
+                right: 0;
+                width: 380px;
+                height: auto;
+            }
+            .toggle-sidebar-btn {
+                display: none !important; /* always hidden */
+            }
+        }
+        
+        /* Base style (hidden by default) */
+        .toggle-sidebar-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            z-index: 2100;
+            display: none; /* start hidden */
+        }
+        .toggle-sidebar-btn:hover {
+            background: #1d4ed8;
+        }
+        
+        /* Mobile - show button */
+        @media (max-width: 768px) {
+            .toggle-sidebar-btn {
+                display: flex; /* only visible on mobile */
+                position: fixed;
+                bottom: 20px; /* adjust placement if needed */
+                right: 15px;
+            }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 100%;
+                height: 100%;
+                background: var(--bg-primary);
+                z-index: 2000;
+                transition: right 0.3s ease-in-out;
+                box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+            }
+            .sidebar.open {
+                right: 0;
+            }
+        }
+        
+        /* Desktop - hide button, show sidebar */
+        @media (min-width: 769px) {
+            .toggle-sidebar-btn {
+                display: none !important;
+            }
+            .sidebar {
+                display: flex !important;
+                position: relative;
+                right: 0;
+                width: 380px;
+                height: auto;
+            }
+        }
+        
         
         /* Responsive design */
         @media (max-width: 992px) {
@@ -2010,50 +2021,50 @@ $reportsJson = json_encode($reports);
         }
         
         .delete-route-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 20px;
-  margin-bottom: 10px;
-
-  background: #fef2f2; /* soft pastel red */
-  color: #dc2626; /* main danger red */
-  
-  border: 1px solid #fecaca; /* light red border */
-  border-radius: 10px;
-
-  padding: 0.75rem 1rem;
-  width: 100%;
-  font-size: 0.9rem;
-  font-weight: 500;
-
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.delete-route-btn:hover {
-  background: #fee2e2; /* slightly deeper pastel */
-  border-color: #fca5a5;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-}
-
-.delete-route-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.delete-route-btn:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
-  border-color: #e5e7eb;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            
+            background: #fef2f2; /* soft pastel red */
+            color: #dc2626; /* main danger red */
+            
+            border: 1px solid #fecaca; /* light red border */
+            border-radius: 10px;
+            
+            padding: 0.75rem 1rem;
+            width: 100%;
+            font-size: 0.9rem;
+            font-weight: 500;
+            
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .delete-route-btn:hover {
+            background: #fee2e2; /* slightly deeper pastel */
+            border-color: #fca5a5;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+        }
+        
+        .delete-route-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .delete-route-btn:disabled {
+            background: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
         
         /* Ensure routes are above the user location marker */
         .route-line {
@@ -2075,20 +2086,20 @@ $reportsJson = json_encode($reports);
         }
         
         .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: var(--bg-primary, #fff);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: var(--bg-primary, #fff);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
         
         .btn-secondary {
             background-color: var(--bg-tertiary);
@@ -2111,205 +2122,207 @@ $reportsJson = json_encode($reports);
         }
         
         .edit-route-name-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-
-  background: #f5f3ff; /* soft pastel purple */
-  color: #7c3aed; /* purple-600 */
-  
-  border: 1px solid #ddd6fe; /* subtle lavender border */
-  border-radius: 10px;
-
-  padding: 0.75rem 1rem;
-  width: 100%;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.edit-route-name-btn:hover {
-  background: #ede9fe; /* deeper pastel purple */
-  border-color: #c4b5fd;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-}
-
-.edit-route-name-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.edit-route-name-btn:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
-  border-color: #e5e7eb;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            
+            background: #f5f3ff; /* soft pastel purple */
+            color: #7c3aed; /* purple-600 */
+            
+            border: 1px solid #ddd6fe; /* subtle lavender border */
+            border-radius: 10px;
+            
+            padding: 0.75rem 1rem;
+            width: 100%;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .edit-route-name-btn:hover {
+            background: #ede9fe; /* deeper pastel purple */
+            border-color: #c4b5fd;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+        }
+        
+        .edit-route-name-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .edit-route-name-btn:disabled {
+            background: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        
         .map-search-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    z-index: 1000;
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.map-search-container .input-group {
-    box-shadow: var(--shadow-lg);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-.map-search-container .form-control {
-    border: none;
-    padding: 0.875rem 1rem;
-    font-size: 0.9rem;
-    background-color: var(--bg-primary);
-}
-
-.map-search-container .btn {
-    border: none;
-    padding: 0.875rem 1rem;
-    background-color: var(--primary-color);
-}
-
-.map-search-container .autocomplete-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 0.25rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .map-search-container {
-        left: 10px;
-        right: 10px;
-        max-width: none;
-    }
-    
-    .map-search-container .form-control {
-        padding: 0.75rem;
-    }
-    
-    .map-search-container .btn {
-        padding: 0.75rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .map-search-container {
-        top: 10px;
-        left: 5px;
-        right: 5px;
-    }
-}
-
-
-/* Highlight effect for reports */
-.report-highlighted {
-    animation: highlight-pulse 2s ease-in-out;
-    border: 2px solid #3B82F6 !important;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
-}
-
-@keyframes highlight-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-}
-
-.report-attachment {
-    margin: 0.75rem 0;
-}
-
-.attachment-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--primary-color);
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-}
-
-.attachment-link:hover {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-
-
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .map-search-container .input-group {
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        
+        .map-search-container .form-control {
+            border: none;
+            padding: 0.875rem 1rem;
+            font-size: 0.9rem;
+            background-color: var(--bg-primary);
+        }
+        
+        .map-search-container .btn {
+            border: none;
+            padding: 0.875rem 1rem;
+            background-color: var(--primary-color);
+        }
+        
+        .map-search-container .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 0.25rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .map-search-container {
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+            
+            .map-search-container .form-control {
+                padding: 0.75rem;
+            }
+            
+            .map-search-container .btn {
+                padding: 0.75rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .map-search-container {
+                top: 10px;
+                left: 5px;
+                right: 5px;
+            }
+        }
+        
+        
+        /* Highlight effect for reports */
+        .report-highlighted {
+            animation: highlight-pulse 2s ease-in-out;
+            border: 2px solid #3B82F6 !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+        }
+        
+        @keyframes highlight-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        
+        .report-attachment {
+            margin: 0.75rem 0;
+        }
+        
+        .attachment-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .attachment-link:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        
+        
+        
+        
         
         
     </style>
 </head>
 <body>
     <header class="app-header">
-  <div class="logo">
-    <a href="index.php" class="logo-link">
-      <i class="fas fa-map-marked-alt"></i>
-      <span class="logo-text">GoSafe</span>
-    </a>
-  </div>
-
-  <!-- Guest buttons -->
-  <div id="authButtons" class="auth-buttons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:flex;'; ?>">
-    <a href="../auth/login.php" class="btn-auth btn-outline">Masuk</a>
-    <a href="../auth/register.php" class="btn-auth btn-filled">Daftar</a>
-  </div>
-
-  <!-- Logged in user -->
-  <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
-    <a href="profile/index.php" class="user-avatar-link">
-      <div class="user-avatar" id="userAvatar">
-        <?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
-      </div>
-    </a>
-    <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
-    <a href="../auth/logout.php" class="btn-auth btn-outline btn-sm" id="logoutBtn">Keluar</a>
-  </div>
-</header>
-
+        <div class="logo">
+            <a href="index.php" class="logo-link">
+                <i class="fas fa-map-marked-alt"></i>
+                <span class="logo-text">GoSafe</span>
+            </a>
+        </div>
+        
+        <!-- Guest buttons -->
+        <div id="authButtons" class="auth-buttons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:flex;'; ?>">
+            <a href="../auth/login.php" class="btn-auth btn-outline">Masuk</a>
+            <a href="../auth/register.php" class="btn-auth btn-filled">Daftar</a>
+        </div>
+        
+        <!-- Logged in user -->
+        <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
+            <a href="profile/index.php" class="user-avatar-link">
+                <div class="user-avatar" id="userAvatar">
+                    <?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
+                </div>
+            </a>
+            <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
+            <a href="../auth/logout.php" class="btn-auth btn-outline btn-sm" id="logoutBtn">Keluar</a>
+        </div>
+    </header>
+    
     
     
     <div class="main-container">
         <div class="map-container">
             <div id="map"></div>
-
+            
             <button class="toggle-sidebar-btn" id="toggleSidebarBtn">
-  <i class="fas fa-list"></i>
-</button>
-
-
+                <i class="fas fa-list"></i>
+            </button>
+            
+            
             <div class="map-search-container">
-        <div class="search-wrapper">
-            <div class="input-group">
-                <input type="text" id="search" class="form-control" placeholder="Cari lokasi...">
-                <button class="btn btn-primary" id="searchBtn">
-                    <i class="fas fa-search"></i>
-                </button>
+                <div class="search-wrapper">
+                    <div class="input-group">
+                        <input type="text" id="search" class="form-control" placeholder="Cari lokasi...">
+                        <button class="btn btn-primary" id="searchBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="autocomplete-results" id="autocompleteResults"></div>
+                </div>
             </div>
-            <div class="autocomplete-results" id="autocompleteResults"></div>
-        </div>
-    </div>
             
             <div class="map-controls">
                 <button class="location-btn" id="locationBtn" title="Lokasi Saat Ini">
@@ -2465,10 +2478,10 @@ $reportsJson = json_encode($reports);
                     <textarea id="reportDescription" name="description" placeholder="Jelaskan secara detail kondisi di lokasi tersebut..." required></textarea>
                 </div>
                 <div class="form-group">
-    <label for="reportPhoto">Lampiran Foto (Opsional)</label>
-    <input type="file" id="reportPhoto" name="photo" accept="image/*" class="form-control">
-    <small class="text-muted">Maksimal ukuran: 2MB. Format: JPG, PNG, GIF</small>
-</div>
+                    <label for="reportPhoto">Lampiran Foto (Opsional)</label>
+                    <input type="file" id="reportPhoto" name="photo" accept="image/*" class="form-control">
+                    <small class="text-muted">Maksimal ukuran: 2MB. Format: JPG, PNG, GIF</small>
+                </div>
                 <button type="submit" class="submit-btn" id="reportSubmitBtn">Kirim Laporan</button>
             </form>
         </div>
@@ -3216,18 +3229,18 @@ $reportsJson = json_encode($reports);
                 
                 // Search functionality
                 if (searchBtn) {
-    searchBtn.addEventListener('click', () => {
-        searchLocation();
-    });
-}
-
-if (searchInput) {
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            searchLocation();
-        }
-    });
-}
+                    searchBtn.addEventListener('click', () => {
+                        searchLocation();
+                    });
+                }
+                
+                if (searchInput) {
+                    searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            searchLocation();
+                        }
+                    });
+                }
                 
                 // Add report to route
                 if (addToRouteBtn) {
@@ -3248,67 +3261,67 @@ if (searchInput) {
                     });
                 }
             } //END OF SETUP EVENT LISTENER
-
+            
             // Function to highlight and scroll to a specific report
-function highlightReport(reportId) {
-    if (!reportId) return;
-    
-    // Find the report card with matching data-report-id
-    const reportCards = document.querySelectorAll('.report-card');
-    let targetReport = null;
-    
-    reportCards.forEach(card => {
-        const cardReportId = card.getAttribute('data-report-id') || 
-                            card.querySelector('.like-btn')?.getAttribute('data-report-id');
-        
-        if (cardReportId == reportId) {
-            targetReport = card;
-            
-            // Add highlight class
-            card.classList.add('report-highlighted');
-            
-            // Scroll to the report
-            setTimeout(() => {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-            
-            // Remove highlight after some time
-            setTimeout(() => {
-                card.classList.remove('report-highlighted');
-            }, 5000);
-        }
-    });
-    
-    // If report is in a route panel, open that route
-    if (!targetReport) {
-        // Try to find which route contains this report
-        phpRoutes.forEach(route => {
-            if (route.reports && route.reports.some(report => report.id == reportId)) {
-                showRouteReports(route.id);
+            function highlightReport(reportId) {
+                if (!reportId) return;
                 
-                // After a delay, try to highlight the report again
-                setTimeout(() => {
-                    highlightReport(reportId);
-                }, 1000);
-                return;
+                // Find the report card with matching data-report-id
+                const reportCards = document.querySelectorAll('.report-card');
+                let targetReport = null;
+                
+                reportCards.forEach(card => {
+                    const cardReportId = card.getAttribute('data-report-id') || 
+                    card.querySelector('.like-btn')?.getAttribute('data-report-id');
+                    
+                    if (cardReportId == reportId) {
+                        targetReport = card;
+                        
+                        // Add highlight class
+                        card.classList.add('report-highlighted');
+                        
+                        // Scroll to the report
+                        setTimeout(() => {
+                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                        
+                        // Remove highlight after some time
+                        setTimeout(() => {
+                            card.classList.remove('report-highlighted');
+                        }, 5000);
+                    }
+                });
+                
+                // If report is in a route panel, open that route
+                if (!targetReport) {
+                    // Try to find which route contains this report
+                    phpRoutes.forEach(route => {
+                        if (route.reports && route.reports.some(report => report.id == reportId)) {
+                            showRouteReports(route.id);
+                            
+                            // After a delay, try to highlight the report again
+                            setTimeout(() => {
+                                highlightReport(reportId);
+                            }, 1000);
+                            return;
+                        }
+                    });
+                }
             }
-        });
-    }
-}
-
-// Call this function when the page loads if there's a report_id parameter
-document.addEventListener('DOMContentLoaded', function() {
-    // Get report_id from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const reportId = urlParams.get('report_id');
-    
-    if (reportId) {
-        // Wait for reports to load
-        setTimeout(() => {
-            highlightReport(reportId);
-        }, 1000);
-    }
-});
+            
+            // Call this function when the page loads if there's a report_id parameter
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get report_id from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const reportId = urlParams.get('report_id');
+                
+                if (reportId) {
+                    // Wait for reports to load
+                    setTimeout(() => {
+                        highlightReport(reportId);
+                    }, 1000);
+                }
+            });
             
             
             function initSearch() {
@@ -3367,32 +3380,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Function to search for locations with autocomplete
-function searchLocationAutocomplete(query) {
-    // Use Nominatim API for geocoding (OpenStreetMap)
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
-    
-    fetch(url)
-    .then(response => response.json())
-    .then(data => {
-        displayAutocompleteResults(data);
-    })
-    .catch(error => {
-        console.error('Error fetching autocomplete results:', error);
-    });
-}
-
-// Function to select a search result
-function selectSearchResult(index) {
-    const result = searchResults[index];
-    const searchInput = document.getElementById('search');
-    
-    // Update search input with selected result
-    searchInput.value = result.display_name.split(',')[0];
-    hideAutocomplete();
-    
-    // Perform the search with the selected result
-    searchLocation(result.display_name);
-}
+            function searchLocationAutocomplete(query) {
+                // Use Nominatim API for geocoding (OpenStreetMap)
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
+                
+                fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    displayAutocompleteResults(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching autocomplete results:', error);
+                });
+            }
+            
+            // Function to select a search result
+            function selectSearchResult(index) {
+                const result = searchResults[index];
+                const searchInput = document.getElementById('search');
+                
+                // Update search input with selected result
+                searchInput.value = result.display_name.split(',')[0];
+                hideAutocomplete();
+                
+                // Perform the search with the selected result
+                searchLocation(result.display_name);
+            }
             
             // Function to display autocomplete results
             function displayAutocompleteResults(results) {
@@ -4012,20 +4025,20 @@ function selectSearchResult(index) {
             function saveRoute() {
                 const formData = new FormData(routeForm);
                 
-
+                
                 // Generate a name if none provided
-    let routeName = formData.get('name');
-    if (!routeName || routeName.trim() === '') {
-        const startLat = formData.get('start_lat');
-        const startLng = formData.get('start_lng');
-        const endLat = formData.get('end_lat');
-        const endLng = formData.get('end_lng');
-        
-        // Generate name based on coordinates
-        routeName = generateRouteNameFromCoords(startLat, startLng, endLat, endLng);
-        formData.set('name', routeName);
-    }
-
+                let routeName = formData.get('name');
+                if (!routeName || routeName.trim() === '') {
+                    const startLat = formData.get('start_lat');
+                    const startLng = formData.get('start_lng');
+                    const endLat = formData.get('end_lat');
+                    const endLng = formData.get('end_lng');
+                    
+                    // Generate name based on coordinates
+                    routeName = generateRouteNameFromCoords(startLat, startLng, endLat, endLng);
+                    formData.set('name', routeName);
+                }
+                
                 fetch('save_route.php', {
                     method: 'POST',
                     body: formData
@@ -4059,27 +4072,27 @@ function selectSearchResult(index) {
                     alert('Terjadi kesalahan saat menyimpan rute');
                 });
             }
-
+            
             // Add this helper function to generate route names from coordinates
-function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
-    const formatCoord = (coord, isLat) => {
-        const absCoord = Math.abs(parseFloat(coord));
-        const degrees = Math.floor(absCoord);
-        const minutes = Math.floor((absCoord - degrees) * 60);
-        const direction = isLat ? 
-            (coord >= 0 ? 'N' : 'S') : 
-            (coord >= 0 ? 'E' : 'W');
-        
-        return `${degrees}°${minutes}'${direction}`;
-    };
-    
-    const startLatDir = formatCoord(startLat, true);
-    const startLngDir = formatCoord(startLng, false);
-    const endLatDir = formatCoord(endLat, true);
-    const endLngDir = formatCoord(endLng, false);
-    
-    return `Rute ${startLatDir}${startLngDir} ke ${endLatDir}${endLngDir}`;
-}
+            function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
+                const formatCoord = (coord, isLat) => {
+                    const absCoord = Math.abs(parseFloat(coord));
+                    const degrees = Math.floor(absCoord);
+                    const minutes = Math.floor((absCoord - degrees) * 60);
+                    const direction = isLat ? 
+                    (coord >= 0 ? 'N' : 'S') : 
+                    (coord >= 0 ? 'E' : 'W');
+                    
+                    return `${degrees}°${minutes}'${direction}`;
+                };
+                
+                const startLatDir = formatCoord(startLat, true);
+                const startLngDir = formatCoord(startLng, false);
+                const endLatDir = formatCoord(endLat, true);
+                const endLngDir = formatCoord(endLng, false);
+                
+                return `Rute ${startLatDir}${startLngDir} ke ${endLatDir}${endLngDir}`;
+            }
             
             // Fetch routes from server
             function fetchRoutesFromServer() {
@@ -4260,18 +4273,18 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
                             </div>
                         </div>
                         `;
-
+                        
                         if (report.photo_url) {
-    const attachmentHtml = `
+                            const attachmentHtml = `
     <div class="report-attachment">
         <a href="view_photo.php?id=${report.id}" target="_blank" class="attachment-link">
             <i class="fas fa-paperclip"></i> Lihat Lampiran
         </a>
     </div>
     `;
-    // Tambahkan setelah deskripsi laporan
-    reportItem.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
-}
+                            // Tambahkan setelah deskripsi laporan
+                            reportItem.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
+                        }
                         
                         
                         // Like/dislike event listeners
@@ -4740,56 +4753,56 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
             }
             
             // Search location
-// Function to search for a location directly with fly animation
-function searchLocation(query = null) {
-    const searchTerm = query || searchInput.value.trim();
-    if (!searchTerm) return;
-    
-    // Use Nominatim API for geocoding (OpenStreetMap)
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=1`;
-    
-    // Show loading state
-    searchBtn.disabled = true;
-    searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    
-    fetch(url)
-    .then(response => response.json())
-    .then(data => {
-        if (data.length > 0) {
-            const result = data[0];
-            
-            // First zoom out a bit to show context
-            if (map.getZoom() > 10) {
-                map.flyTo(map.getCenter(), 10, {
-                    duration: 1,
-                    easeLinearity: 0.25,
-                    animate: true
+            // Function to search for a location directly with fly animation
+            function searchLocation(query = null) {
+                const searchTerm = query || searchInput.value.trim();
+                if (!searchTerm) return;
+                
+                // Use Nominatim API for geocoding (OpenStreetMap)
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=1`;
+                
+                // Show loading state
+                searchBtn.disabled = true;
+                searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const result = data[0];
+                        
+                        // First zoom out a bit to show context
+                        if (map.getZoom() > 10) {
+                            map.flyTo(map.getCenter(), 10, {
+                                duration: 1,
+                                easeLinearity: 0.25,
+                                animate: true
+                            });
+                        }
+                        
+                        // Then fly to the location after a short delay
+                        setTimeout(() => {
+                            moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+                        }, 1000);
+                        
+                    } else {
+                        alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching location:', error);
+                    alert('Terjadi kesalahan saat mencari lokasi.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = '<i class="fas fa-search"></i>';
+                    
+                    // Clear search input
+                    searchInput.value = '';
+                    hideAutocomplete();
                 });
             }
-            
-            // Then fly to the location after a short delay
-            setTimeout(() => {
-                moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
-            }, 1000);
-            
-        } else {
-            alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching location:', error);
-        alert('Terjadi kesalahan saat mencari lokasi.');
-    })
-    .finally(() => {
-        // Reset button state
-        searchBtn.disabled = false;
-        searchBtn.innerHTML = '<i class="fas fa-search"></i>';
-        
-        // Clear search input
-        searchInput.value = '';
-        hideAutocomplete();
-    });
-}
             
             // Filter reports
             function filterReports(type) {
@@ -4883,15 +4896,15 @@ function searchLocation(query = null) {
                 </div>
                 `;
                 if (report.photo_url) {
-    const attachmentHtml = `
+                    const attachmentHtml = `
     <div class="report-attachment">
         <a href="view_photo.php?id=${report.id}" target="_blank" class="attachment-link">
             <i class="fas fa-paperclip"></i> Lihat Lampiran
         </a>
     </div>
     `;
-    reportCard.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
-}
+                    reportCard.querySelector('.report-description').insertAdjacentHTML('afterend', attachmentHtml);
+                }
                 
                 // Add click event to focus on the route
                 reportCard.addEventListener('click', (e) => {
@@ -5273,105 +5286,105 @@ function searchLocation(query = null) {
                     }
                 }
             }
-
+            
             // Function to move map to a specific location with fly animation
-function moveMapToLocation(lat, lng, name, zoomLevel = 15) {
-    // Remove previous search marker if exists
-    if (currentSearchMarker) {
-        map.removeLayer(currentSearchMarker);
-    }
-
-    // Create a new marker for the searched location
-    currentSearchMarker = L.marker([lat, lng], {
-        icon: L.divIcon({
-            className: 'search-marker',
-            html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 24px;"></i>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 24]
-        })
-    }).addTo(map);
-
-    // Bind popup with location name
-    currentSearchMarker.bindPopup(`<b>${name}</b>`).openPopup();
-
-    // Fly to the location with smooth animation
-    map.flyTo([lat, lng], zoomLevel, {
-        duration: 2, // Animation duration in seconds
-        easeLinearity: 0.25,
-        // Optional: Add some additional animation steps for better UX
-        animate: true
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const toggleButton = document.getElementById('toggleSidebarBtn');
-  const sidebar = document.querySelector('.sidebar');
-  
-  if (toggleButton && sidebar) {
-    toggleButton.addEventListener('click', function(e) {
-      e.stopPropagation(); // Prevent event from bubbling up
-      sidebar.classList.toggle('open');
-      
-      // Change icon based on state
-      const icon = this.querySelector('i');
-      if (sidebar.classList.contains('open')) {
-        icon.className = 'fas fa-times';
-      } else {
-        icon.className = 'fas fa-list';
-      }
-    });
-    
-    // Close sidebar when clicking outside of it
-    document.addEventListener('click', function(event) {
-      const isClickInsideSidebar = sidebar.contains(event.target);
-      const isClickOnToggleButton = toggleButton.contains(event.target);
-      
-      if (!isClickInsideSidebar && !isClickOnToggleButton && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        const icon = toggleButton.querySelector('i');
-        icon.className = 'fas fa-list';
-      }
-    });
-  }
-});
-
-// Add this function to handle URL parameters on page load
-function handleUrlParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Handle report highlighting
-    const reportId = urlParams.get('highlight_report');
-    if (reportId) {
-        // Remove the parameter from URL without refreshing
-        const newUrl = window.location.pathname + window.location.search.replace(/highlight_report=[^&]*&?/, '').replace(/&$/, '');
-        window.history.replaceState({}, document.title, newUrl);
-        
-        // Highlight the report after a short delay to ensure everything is loaded
-        setTimeout(() => {
-            highlightReport(reportId);
-        }, 1000);
-    }
-    
-    // Handle route highlighting
-    const routeId = urlParams.get('highlight_route');
-    if (routeId) {
-        // Remove the parameter from URL without refreshing
-        const newUrl = window.location.pathname + window.location.search.replace(/highlight_route=[^&]*&?/, '').replace(/&$/, '');
-        window.history.replaceState({}, document.title, newUrl);
-        
-        // Show the route after a short delay to ensure everything is loaded
-        setTimeout(() => {
-            showRouteReports(routeId);
-        }, 1000);
-    }
-}
-
-// Call this function when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    init();
-    handleUrlParameters(); // Add this line
-});
-
+            function moveMapToLocation(lat, lng, name, zoomLevel = 15) {
+                // Remove previous search marker if exists
+                if (currentSearchMarker) {
+                    map.removeLayer(currentSearchMarker);
+                }
+                
+                // Create a new marker for the searched location
+                currentSearchMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'search-marker',
+                        html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 24px;"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    })
+                }).addTo(map);
+                
+                // Bind popup with location name
+                currentSearchMarker.bindPopup(`<b>${name}</b>`).openPopup();
+                
+                // Fly to the location with smooth animation
+                map.flyTo([lat, lng], zoomLevel, {
+                    duration: 2, // Animation duration in seconds
+                    easeLinearity: 0.25,
+                    // Optional: Add some additional animation steps for better UX
+                    animate: true
+                });
+            }
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const toggleButton = document.getElementById('toggleSidebarBtn');
+                const sidebar = document.querySelector('.sidebar');
+                
+                if (toggleButton && sidebar) {
+                    toggleButton.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent event from bubbling up
+                        sidebar.classList.toggle('open');
+                        
+                        // Change icon based on state
+                        const icon = this.querySelector('i');
+                        if (sidebar.classList.contains('open')) {
+                            icon.className = 'fas fa-times';
+                        } else {
+                            icon.className = 'fas fa-list';
+                        }
+                    });
+                    
+                    // Close sidebar when clicking outside of it
+                    document.addEventListener('click', function(event) {
+                        const isClickInsideSidebar = sidebar.contains(event.target);
+                        const isClickOnToggleButton = toggleButton.contains(event.target);
+                        
+                        if (!isClickInsideSidebar && !isClickOnToggleButton && sidebar.classList.contains('open')) {
+                            sidebar.classList.remove('open');
+                            const icon = toggleButton.querySelector('i');
+                            icon.className = 'fas fa-list';
+                        }
+                    });
+                }
+            });
+            
+            // Add this function to handle URL parameters on page load
+            function handleUrlParameters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                // Handle report highlighting
+                const reportId = urlParams.get('highlight_report');
+                if (reportId) {
+                    // Remove the parameter from URL without refreshing
+                    const newUrl = window.location.pathname + window.location.search.replace(/highlight_report=[^&]*&?/, '').replace(/&$/, '');
+                    window.history.replaceState({}, document.title, newUrl);
+                    
+                    // Highlight the report after a short delay to ensure everything is loaded
+                    setTimeout(() => {
+                        highlightReport(reportId);
+                    }, 1000);
+                }
+                
+                // Handle route highlighting
+                const routeId = urlParams.get('highlight_route');
+                if (routeId) {
+                    // Remove the parameter from URL without refreshing
+                    const newUrl = window.location.pathname + window.location.search.replace(/highlight_route=[^&]*&?/, '').replace(/&$/, '');
+                    window.history.replaceState({}, document.title, newUrl);
+                    
+                    // Show the route after a short delay to ensure everything is loaded
+                    setTimeout(() => {
+                        showRouteReports(routeId);
+                    }, 1000);
+                }
+            }
+            
+            // Call this function when the page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                init();
+                handleUrlParameters(); // Add this line
+            });
+            
             
             
             
