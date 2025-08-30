@@ -4781,9 +4781,9 @@ $reportsJson = json_encode($reports);
                         }
                         
                         // Then fly to the location after a short delay
-                        setTimeout(() => {
-                            moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
-                        }, 1000);
+                        // setTimeout(() => {
+                        //     moveMapToLocation(parseFloat(result.lat), parseFloat(result.lon), result.display_name);
+                        // }, 1000);
                         
                     } else {
                         alert('Lokasi tidak ditemukan. Silakan coba dengan kata kunci yang berbeda.');
