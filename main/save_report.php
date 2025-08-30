@@ -3,11 +3,15 @@ session_start();
 include_once '../connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    die('Invalid request method');
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+    exit;
 }
 
 if (!isset($_SESSION['user_id'])) {
-    die('Please login to submit reports');
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Please login to submit reports']);
+    exit;
 }
 
 $userId = $_SESSION['user_id'];
@@ -26,7 +30,9 @@ $routeStmt->execute();
 $routeResult = $routeStmt->get_result();
 
 if ($routeResult->num_rows === 0) {
-    die('Route not found');
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Route not found']);
+    exit;
 }
 
 $route = $routeResult->fetch_assoc();
@@ -45,11 +51,15 @@ if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
     $fileType = $_FILES['photo']['type'];
     
     if (!in_array($fileType, $allowedTypes)) {
-        die('Invalid file type. Only JPG, PNG and GIF are allowed.');
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Invalid file type. Only JPG, PNG and GIF are allowed.']);
+        exit;
     }
     
     if ($_FILES['photo']['size'] > 2097152) { // 2MB
-        die('File too large. Maximum size is 2MB.');
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'File too large. Maximum size is 2MB.']);
+        exit;
     }
     
     // Generate unique filename
@@ -72,8 +82,49 @@ $stmt = $conn->prepare("
 $stmt->bind_param("iissddsss", $userId, $routeId, $type, $description, $latitude, $longitude, $photoUrl, $fileName, $mimeType);
 
 if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'Report submitted successfully']);
+    $newReportId = $stmt->insert_id;
+    
+    // Fetch the complete report data with user information
+    $reportQuery = $conn->prepare("
+        SELECT r.*, u.name AS user_name, u.avatar AS user_avatar 
+        FROM reports r 
+        LEFT JOIN users u ON r.user_id = u.id 
+        WHERE r.id = ?
+    ");
+    $reportQuery->bind_param("i", $newReportId);
+    $reportQuery->execute();
+    $reportResult = $reportQuery->get_result();
+    
+    if ($reportResult->num_rows > 0) {
+        $newReport = $reportResult->fetch_assoc();
+        
+        // Add like information (default values)
+        $newReport['likes'] = 0;
+        $newReport['dislikes'] = 0;
+        $newReport['user_vote'] = 0;
+        $newReport['comment_count'] = 0;
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'message' => 'Laporan berhasil ditambahkan',
+            'report' => $newReport
+        ]);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Laporan berhasil disimpan tetapi tidak dapat mengambil data'
+        ]);
+    }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Error submitting report: ' . $stmt->error]);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Gagal menambahkan laporan: ' . $conn->error
+    ]);
 }
+
+$stmt->close();
+$conn->close();
 ?>

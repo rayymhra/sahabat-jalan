@@ -245,7 +245,7 @@ $reportsJson = json_encode($reports);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #3B82F6;
+            --primary-color: #5c99ee;
             --secondary-color: #1f2937;
             --danger-color: #dc2626;
             --success-color: #059669;
@@ -2801,7 +2801,7 @@ $reportsJson = json_encode($reports);
                 bringRouteLinesToFront();
             });
             
-            // Setup event listeners SETUP EVENT LISTENER
+            // Setup event listeners start of SETUP EVENT LISTENER
             function setupEventListeners() {
                 
                 
@@ -3576,6 +3576,7 @@ function selectSearchResult(index) {
                         // Refresh the map and reports
                         fetchRoutesFromServer();
                         fetchReportsFromServer();
+                        location.reload();
                     } else {
                         alert('Gagal menghapus rute: ' + data.message);
                     }
@@ -3746,6 +3747,7 @@ function selectSearchResult(index) {
                         // Refresh the reports
                         fetchRoutesFromServer();
                         fetchReportsFromServer();
+                        location.reload();
                     } else {
                         alert('Gagal menghapus laporan: ' + data.message);
                     }
@@ -3997,6 +3999,7 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
                         // Reload routes and reports to show the new data
                         fetchRoutesFromServer();
                         fetchReportsFromServer();
+                        location.reload();
                     } else {
                         alert('Gagal menambahkan laporan: ' + data.message);
                     }
@@ -4324,6 +4327,7 @@ function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
                         // Refresh routes and reports
                         fetchRoutesFromServer();
                         fetchReportsFromServer();
+                        location.reload();
                     } else {
                         alert('Gagal memperbarui laporan: ' + data.message);
                     }
