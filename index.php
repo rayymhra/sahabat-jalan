@@ -1030,7 +1030,7 @@
                 <div class="section-badge solution-badge">Solusi</div>
                 <h2 class="section-title">Go Safe! Hadir Sebagai Solusi</h2>
                 <p class="section-description">
-                    Platform berbasis komunitas untuk melaporkan, memverifikasi, dan berbagi informasi keamanan jalan
+                    Platform berbasis masyarakat untuk melaporkan, memverifikasi, dan berbagi informasi keamanan jalan
                 </p>
             </div>
             
@@ -1041,7 +1041,7 @@
                             <i class="bi bi-people"></i>
                         </div>
                         <div class="solution-point-content">
-                            <h4>Berbasis Komunitas</h4>
+                            <h4>Berbasis Masyarakat</h4>
                             <p>Setiap laporan berasal dari warga yang benar-benar mengalami atau melihat kondisi di lapangan, menciptakan data yang akurat dan terpercaya.</p>
                         </div>
                     </div>
@@ -1096,7 +1096,7 @@
                         <h3 class="feature-title">Peta Interaktif</h3>
                     </div>
                     <p class="feature-description">
-                        Peta real-time yang menampilkan laporan keamanan jalan dari seluruh komunitas dengan visualisasi yang mudah dipahami.
+                        Peta real-time yang menampilkan laporan keamanan jalan dari seluruh masyarakat dengan visualisasi yang mudah dipahami.
                     </p>
                 </div>
                 
@@ -1120,7 +1120,7 @@
                         <h3 class="feature-title">Sistem Validasi</h3>
                     </div>
                     <p class="feature-description">
-                        Fitur like/dislike membantu komunitas memverifikasi keakuratan laporan dan mengidentifikasi informasi yang dapat dipercaya.
+                        Fitur like/dislike membantu masyarakat memverifikasi keakuratan laporan dan mengidentifikasi informasi yang dapat dipercaya.
                     </p>
                 </div>
                 
@@ -1156,7 +1156,7 @@
                         <h3 class="feature-title">Halaman Profil</h3>
                     </div>
                     <p class="feature-description">
-                        Kelola semua kontribusi Anda dalam satu tempat. Lihat riwayat rute, laporan, dan komentar yang telah dibuat, serta pantau interaksi komunitas.
+                        Kelola semua kontribusi Anda dalam satu tempat. Lihat riwayat rute, laporan, dan komentar yang telah dibuat, serta pantau interaksi masyarakat.
                     </p>
                 </div>
                 
@@ -1177,10 +1177,10 @@
                         <div class="feature-icon">
                             <i class="bi bi-shield-check"></i>
                         </div>
-                        <h3 class="feature-title">Moderasi Komunitas</h3>
+                        <h3 class="feature-title">Moderasi Masyarakat</h3>
                     </div>
                     <p class="feature-description">
-                        Sistem moderasi terintegrasi untuk memastikan semua laporan relevan dan membantu menjaga keamanan komunitas.
+                        Sistem moderasi terintegrasi untuk memastikan semua laporan relevan dan membantu menjaga keamanan masyarakat.
                     </p>
                 </div>
             </div>
@@ -1234,7 +1234,7 @@
                     <div class="step-number">5</div>
                     <div class="step-content">
                         <h3>Kelola Kontribusi Anda</h3>
-                        <p>Kunjungi halaman profil untuk melihat semua rute, laporan, dan komentar yang telah Anda buat. Pantau feedback dari komunitas dan tetap aktif berkontribusi.</p>
+                        <p>Kunjungi halaman profil untuk melihat semua rute, laporan, dan komentar yang telah Anda buat. Pantau feedback dari masyarakat dan tetap aktif berkontribusi.</p>
                     </div>
                 </div>
                 
@@ -1242,7 +1242,7 @@
                     <div class="step-number">6</div>
                     <div class="step-content">
                         <h3>Verifikasi & Berinteraksi</h3>
-                        <p>Bantu komunitas dengan memberikan like/dislike pada laporan dan laporkan informasi yang tidak akurat untuk menjaga kualitas data platform.</p>
+                        <p>Bantu masyarakat dengan memberikan like/dislike pada laporan dan laporkan informasi yang tidak akurat untuk menjaga kualitas data platform.</p>
                     </div>
                 </div>
             </div>
@@ -1266,7 +1266,7 @@
                         <i class="bi bi-chevron-down faq-icon"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Go Safe adalah platform berbasis komunitas yang memungkinkan warga melaporkan kondisi keamanan jalan secara real-time. Platform ini bekerja dengan mengumpulkan laporan dari pengguna, memverifikasinya melalui sistem voting, dan menampilkannya dalam peta interaktif untuk membantu orang lain memilih rute yang lebih aman.</p>
+                        <p>Go Safe adalah platform berbasis masyarakat yang memungkinkan warga melaporkan kondisi keamanan jalan secara real-time. Platform ini bekerja dengan mengumpulkan laporan dari pengguna, memverifikasinya melalui sistem voting, dan menampilkannya dalam peta interaktif untuk membantu orang lain memilih rute yang lebih aman.</p>
                     </div>
                 </div>
                 
@@ -1286,7 +1286,7 @@
                         <i class="bi bi-chevron-down faq-icon"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Setiap laporan memiliki sistem voting like/dislike dari komunitas. Laporan dengan banyak like umumnya lebih dapat dipercaya. Anda juga dapat melihat profil pelapor dan riwayat kontribusinya. Sistem moderasi kami juga secara aktif memverifikasi dan menghapus laporan yang tidak akurat.</p>
+                        <p>Setiap laporan memiliki sistem voting like/dislike dari masyarakat. Laporan dengan banyak like umumnya lebih dapat dipercaya. Anda juga dapat melihat profil pelapor dan riwayat kontribusinya. Sistem moderasi kami juga secara aktif memverifikasi dan menghapus laporan yang tidak akurat.</p>
                     </div>
                 </div>
                 
@@ -1306,7 +1306,7 @@
                         <i class="bi bi-chevron-down faq-icon"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Ya, melalui halaman profil Anda dapat melihat semua rute yang telah dibuat, laporan keamanan yang telah dikirim, dan komentar yang telah Anda berikan. Halaman ini juga menampilkan statistik kontribusi dan feedback dari komunitas terhadap laporan Anda.</p>
+                        <p>Ya, melalui halaman profil Anda dapat melihat semua rute yang telah dibuat, laporan keamanan yang telah dikirim, dan komentar yang telah Anda berikan. Halaman ini juga menampilkan statistik kontribusi dan feedback dari masyarakat terhadap laporan Anda.</p>
                     </div>
                 </div>
                 
@@ -1316,7 +1316,7 @@
                         <i class="bi bi-chevron-down faq-icon"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Ya, Go Safe sepenuhnya gratis untuk digunakan. Anda dapat mengakses peta, menambahkan laporan, dan menggunakan semua fitur tanpa biaya. Misi kami adalah membantu menciptakan komunitas yang lebih aman melalui berbagi informasi tanpa hambatan finansial.</p>
+                        <p>Ya, Go Safe sepenuhnya gratis untuk digunakan. Anda dapat mengakses peta, menambahkan laporan, dan menggunakan semua fitur tanpa biaya. Misi kami adalah membantu menciptakan masyarakat yang lebih aman melalui berbagi informasi tanpa hambatan finansial.</p>
                     </div>
                 </div>
             </div>
@@ -1351,7 +1351,7 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h3>Go Safe!</h3>
-                <p>Platform berbasis komunitas untuk melaporkan dan berbagi informasi keamanan jalan, menciptakan lingkungan yang lebih aman untuk semua warga.</p>
+                <p>Platform berbasis masyarakat untuk melaporkan dan berbagi informasi keamanan jalan, menciptakan lingkungan yang lebih aman untuk semua warga.</p>
             </div>
             
             <div class="footer-section">
