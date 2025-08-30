@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Modern Navbar - Go Safe!</title>
+     <title>Landingpage - Go Safe!</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
@@ -359,6 +359,7 @@ body {
     position: relative;
     overflow: hidden;
     width: fit-content;
+    text-decoration: none; 
 }
 
 .hero-btn::before {
@@ -1225,6 +1226,148 @@ body::-webkit-scrollbar-thumb:hover {
 
 .hero-image img, .about-image, .floating-image img { max-width: 100%; height: auto; display: block; }
 
+   .faq-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .faq-card {
+        background-color: #ffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: 500;
+        color: #384a64;
+        transition: color 0.3s;
+    }
+
+    .faq-question:hover {
+        color: #5c99ee;
+    }
+
+    .faq-question:hover .arrow {
+        color: #5c99ee;
+    }
+
+    .arrow {
+        transition: transform 0.3s, color 0.3s;
+        font-weight: bold;
+    }
+
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        padding: 0 20px;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+    .faq-card.active .faq-answer {
+        padding: 15px 20px;
+        max-height: 500px; /* cukup untuk menampung jawaban */
+    }
+
+    .faq-card.active .arrow {
+        transform: rotate(90deg);
+    }
+
+    /* Responsif */
+    @media (max-width: 600px) {
+        .faq-question {
+            font-size: 16px;
+        }
+
+        .faq-answer {
+            font-size: 14px;
+        }
+    }
+
+.footer {
+  background: #5c99ee;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-top: 40px;
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px 40px;
+}
+
+.footer-title {
+  color: #384a64;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.footer-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #fff;
+}
+
+.footer-links,
+.footer-creators {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li,
+.footer-creators li {
+  margin-bottom: 10px;
+}
+
+.footer-links a,
+.footer-creators a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.footer-links a:hover,
+.footer-creators a:hover {
+  color: #2b6cb0;
+}
+
+.footer-creators a i {
+  margin-right: 8px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+/* copyright */
+.footer-bottom {
+  border-top: 1px solid #000;
+  text-align: center;
+  padding: 15px 20px;
+}
+
+.footer-bottom p {
+  margin: 0;
+  font-size: 13px;
+  color: #fff;
+}
+
     </style>
 </head>
 <body>
@@ -1440,6 +1583,54 @@ body::-webkit-scrollbar-thumb:hover {
                 </div>
             </div>
         </div>
+
+        
+<div class="faq-section">
+    <br>
+    <div class="section-title">
+    <h1>Kotak Pertanyaan</h1>
+    </div>
+
+    <div class="faq-container">
+        <div class="faq-card">
+            <div class="faq-question">
+                Apa itu Go Safe?
+                <span class="arrow">&gt;</span>
+            </div>
+            <div class="faq-answer">
+               Go Safe adalah platform komunitas yang memungkinkan pengguna melaporkan kondisi jalan, menandai area berbahaya, dan berbagi rute aman untuk membantu orang lain dalam perjalanan mereka.
+            </div>
+        </div>
+
+        <div class="faq-card">
+            <div class="faq-question">
+                Bagaimana cara menambah/membuat laporan?
+                <span class="arrow">&gt;</span>
+            </div>
+            <div class="faq-answer">
+                pastikan kamu sudah mendaftar akun kamu terlebih dahulu, lalu klik tombol "Lihat Peta" di halaman utama. Setelah itu, gunakan tombol tambah laporan di pojok kanan bawah layar untuk menandai titik awal dan akhir, isi form yang tersedia, dan kirim laporan kamu.
+            </div>
+        </div>
+
+        <div class="faq-card">
+            <div class="faq-question">
+                bagaimana cara melihat mana laporan palsu?
+                <span class="arrow">&gt;</span>
+            </div>
+            <div class="faq-answer">
+                Kamu bisa melihat jumlah like dan dislike pada setiap laporan. Laporan dengan banyak like biasanya lebih dapat dipercaya, sedangkan laporan dengan banyak dislike mungkin perlu diwaspadai atau kamu bisa laporkan sebagai informasi palsu.
+            </div>
+        </div>
+
+        <div class="faq-card">
+            <div class="faq-question">
+                apa yang bisa saya lakukan saat melihat ada laporan yang mencurigakan?
+                <span class="arrow">&gt;</span>
+            </div>
+            <div class="faq-answer">
+            jika kamu menemukan laporan yang mencurigakan atau tidak akurat, kamu bisa menggunakan fitur dislike pada laporan tersebut. Jika merasa perlu, kamu juga bisa langsung laporkan itu.
+        </div>
+</div>
 </section>
 <script>
 
@@ -1635,11 +1826,61 @@ cards.forEach((card) => {
   observer.observe(card);
 });
 
+ const faqCards = document.querySelectorAll('.faq-card');
+
+    faqCards.forEach(card => {
+        card.querySelector('.faq-question').addEventListener('click', () => {
+            card.classList.toggle('active');
+        });
+    });
+
 </script>
 </body>
-<footer class="site-footer">
-  <p>
-    &copy; 2025 | <span class="footer-brand">Go Safe!</span>
-  </p>
+<footer class="footer">
+  <div class="footer-container">
+    <!-- Tentang Kami -->
+    <div class="footer-col">
+      <h3 class="footer-title">Tentang Kami</h3>
+      <p class="footer-desc">
+        GO SAFE adalah platform berbasis komunitas yang hadir untuk membantu masyarakat melaporkan kondisi jalan, 
+        menandai area berbahaya, serta membagikan rute perjalanan yang lebih aman.
+      </p>
+    </div>
+
+    <!-- Navigasi -->
+    <div class="footer-col">
+      <h3 class="footer-title">Navigasi</h3>
+      <ul class="footer-links">
+        <li><a href="#">Beranda</a></li>
+        <li><a href="#">Tentang Kami</a></li>
+        <li><a href="#">Fitur</a></li>
+        <li><a href="#">Cara Kerja</a></li>
+      </ul>
+    </div>
+
+    <!-- Creator -->
+    <div class="footer-col">
+      <h3 class="footer-title">Creator</h3>
+      <ul class="footer-creators">
+        <li>
+          <a href="https://github.com/rayymhra" target="_blank">
+            <i class="bi bi-github"></i> @rayymhra
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/Attrynn" target="_blank">
+            <i class="bi bi-github"></i> @Attrynn
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="footer-bottom">
+    <p>© 2025 GO SAFE. All rights reserved.</p>
+  </div>
+</footer>
+<!-- ===== Footer End ===== -->
 </footer>
 </html>
