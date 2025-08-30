@@ -212,6 +212,23 @@ LIMIT 20
 ";
 
 
+// Function to generate a route name based on coordinates
+function generateRouteName($startLat, $startLng, $endLat, $endLng) {
+    // Format coordinates to a readable format
+    $formatCoordinate = function($coord) {
+        return number_format(abs($coord), 6);
+    };
+    
+    $startDir = ($startLat >= 0 ? 'N' : 'S') . $formatCoordinate($startLat) . 
+                ($startLng >= 0 ? 'E' : 'W') . $formatCoordinate($startLng);
+    
+    $endDir = ($endLat >= 0 ? 'N' : 'S') . $formatCoordinate($endLat) . 
+              ($endLng >= 0 ? 'E' : 'W') . $formatCoordinate($endLng);
+    
+    return "Rute $startDir ke $endDir";
+}
+
+
 // Convert PHP data to JSON for JavaScript
 $routesJson = json_encode($routes);
 $reportsJson = json_encode($reports);
@@ -2319,12 +2336,12 @@ $reportsJson = json_encode($reports);
                 </div>
                 <div class="form-group">
                     <label>Pilih titik awal dan akhir pada peta</label>
-                    <div class="alert alert-warning">
+                    <!-- <div class="alert alert-warning">
                         <small>
                             <i class="fas fa-exclamation-triangle"></i> 
                             <strong>Penting:</strong> Setelah membuat rute, Anda harus menambahkan laporan atau rute akan dihapus.
                         </small>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="form-group">
                     <input type="hidden" id="startLat" name="start_lat">
@@ -3841,6 +3858,20 @@ function selectSearchResult(index) {
             function saveRoute() {
                 const formData = new FormData(routeForm);
                 
+
+                // Generate a name if none provided
+    let routeName = formData.get('name');
+    if (!routeName || routeName.trim() === '') {
+        const startLat = formData.get('start_lat');
+        const startLng = formData.get('start_lng');
+        const endLat = formData.get('end_lat');
+        const endLng = formData.get('end_lng');
+        
+        // Generate name based on coordinates
+        routeName = generateRouteNameFromCoords(startLat, startLng, endLat, endLng);
+        formData.set('name', routeName);
+    }
+
                 fetch('save_route.php', {
                     method: 'POST',
                     body: formData
@@ -3874,6 +3905,27 @@ function selectSearchResult(index) {
                     alert('Terjadi kesalahan saat menyimpan rute');
                 });
             }
+
+            // Add this helper function to generate route names from coordinates
+function generateRouteNameFromCoords(startLat, startLng, endLat, endLng) {
+    const formatCoord = (coord, isLat) => {
+        const absCoord = Math.abs(parseFloat(coord));
+        const degrees = Math.floor(absCoord);
+        const minutes = Math.floor((absCoord - degrees) * 60);
+        const direction = isLat ? 
+            (coord >= 0 ? 'N' : 'S') : 
+            (coord >= 0 ? 'E' : 'W');
+        
+        return `${degrees}°${minutes}'${direction}`;
+    };
+    
+    const startLatDir = formatCoord(startLat, true);
+    const startLngDir = formatCoord(startLng, false);
+    const endLatDir = formatCoord(endLat, true);
+    const endLngDir = formatCoord(endLng, false);
+    
+    return `Rute ${startLatDir}${startLngDir} ke ${endLatDir}${endLngDir}`;
+}
             
             // Fetch routes from server
             function fetchRoutesFromServer() {
@@ -3979,7 +4031,7 @@ function selectSearchResult(index) {
                 
                 // Update route info panel
                 routeReportsList.innerHTML = '';
-                routeNameTitle.textContent = route.name || 'Rute #' + route.id;
+                routeNameTitle.textContent = route.name; 
                 
                 // Show creator with avatar
                 const creatorAvatar = route.creator_avatar 
@@ -4630,7 +4682,7 @@ function searchLocation(query = null) {
                 ${editedText}
                 <div class="report-footer">
                     <div class="report-user">
-                        <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name || 'Rute #' + report.route_id}</small>
+                        <small>Oleh: <span class="reporter-name" data-user-id="${report.user_id}" style="cursor: pointer; color: var(--primary-color);">${report.user_name || 'Unknown'}</span> • ${report.route_name}</small>
                     </div>
                     <div class="like-dislike-container">
                         <button class="like-btn ${likeActiveClass}" data-report-id="${report.id}">

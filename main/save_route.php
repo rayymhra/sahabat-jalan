@@ -14,6 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $endLng = floatval($_POST['end_lng']);
     $name = isset($_POST['name']) ? trim($_POST['name']) : '';
 
+    if (empty(trim($name))) {
+    $startLat = $_POST['start_lat'];
+    $startLng = $_POST['start_lng'];
+    $endLat = $_POST['end_lat'];
+    $endLng = $_POST['end_lng'];
+    
+    $name = generateRouteName($startLat, $startLng, $endLat, $endLng);
+}
+
     // Get route polyline from OSRM
     $osrmUrl = "http://router.project-osrm.org/route/v1/driving/$startLng,$startLat;$endLng,$endLat?overview=full&geometries=geojson";
     $osrmResponse = file_get_contents($osrmUrl);
