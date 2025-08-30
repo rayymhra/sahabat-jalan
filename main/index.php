@@ -369,6 +369,11 @@ $reportsJson = json_encode($reports);
             transition: all 0.2s ease;
             cursor: pointer;
         }
+
+        .user-avatar img {
+            object-fit: cover;
+        }
+
         .user-avatar:hover {
             transform: scale(1.05);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);

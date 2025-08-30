@@ -2,113 +2,212 @@
 session_start();
 include "../connection.php";
 
-$message = "";
+$error = $success = "";
+$token = $_GET['token'] ?? '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = trim($_POST['email']);
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $token = $_POST['token'];
+    $newPassword = $_POST['new_password'];
+    $confirmPassword = $_POST['confirm_password'];
     
-    // Check if user exists
-    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-
-        // Generate token
-        $token = bin2hex(random_bytes(32));
-        $expires = date("Y-m-d H:i:s", strtotime("+1 hour"));
-
-        // Save token to DB
-        $update = $conn->prepare("UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?");
-        $update->bind_param("ssi", $token, $expires, $user['id']);
-        $update->execute();
-
-        // Demo mode: tampilkan link
-        $reset_link = "http://localhost/other/sahabat-jalan/auth/new_password.php?token=$token";
-        $message = "Password reset link (Demo Mode): <a href='$reset_link'>$reset_link</a>";
-
+    if ($newPassword !== $confirmPassword) {
+        $error = "❌ Passwords do not match.";
     } else {
-        $message = "❌ Email not found.";
+        $stmt = $conn->prepare("SELECT id, reset_expires FROM users WHERE reset_token = ?");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+            
+            $now = date("Y-m-d H:i:s");  // PHP current time
+            if ($user['reset_expires'] >= $now) {
+                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                
+                $update = $conn->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?");
+                $update->bind_param("si", $hashedPassword, $user['id']);
+                
+                if ($update->execute()) {
+                    $success = "✅ Password updated successfully! <a href='login.php'>Login</a>";
+                } else {
+                    $error = "❌ Failed to update password.";
+                }
+                $update->close();
+            } else {
+                $error = "❌ Invalid or expired token.";
+            }
+        } else {
+            $error = "❌ Invalid or expired token.";
+        }
+        $stmt->close();
+        
     }
-
-    $stmt->close();
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reset Password - Go Safe!</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f7fafe;
-      font-family: "Segoe UI", Arial, sans-serif;
-      color: #384a64;
-    }
-    .card {
-      border-radius: 12px;
-      border: none;
-      animation: fadeInUp 0.5s ease;
-    }
-    h3 {
-      font-weight: 600;
-      color: #384a64;
-    }
-    .btn-primary {
-      background-color: #5c99ee;
-      border: none;
-    }
-    .btn-primary:hover {
-      background-color: #2b6cb0;
-    }
-    a {
-      color: #5c99ee;
-      text-decoration: none;
-    }
-    a:hover {
-      color: #2b6cb0;
-    }
-    .alert {
-      border-radius: 10px;
-      background: #e9f3ff;
-      color: #384a64;
-      border: none;
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset Password</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-
+<body class="bg-light">
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
-  <div class="col-md-6 col-lg-4">
-    <div class="card shadow-sm p-4">
-      <h3 class="mb-4 text-center">Reset Password</h3>
+<div class="col-md-6 col-lg-4">
+<div class="card shadow-sm p-4">
+<h3 class="mb-4 text-center">Reset Password</h3>
 
-      <?php if($message): ?>
-        <div class="alert"><?php echo $message; ?></div>
-      <?php endif; ?>
+<?php if($error): ?>
+    <div class="alert alert-danger"><?= $error ?></div>
+    <?php endif; ?>
+    <?php if($success): ?>
+        <div class="alert alert-success"><?= $success ?></div>
+        <?php else: ?>
+            <form method="POST">
+            <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+            <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <input type="password" name="new_password" class="form-control" required>
+            </div>
+            <div class="mb-3">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" name="confirm_password" class="form-control" required>
+            </div>
+            <?php
+session_start();
+include "../connection.php";
 
-      <form method="POST">
-        <div class="mb-3">
-          <label class="form-label">Email</label>
-          <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Kirim Link Reset</button>
-      </form>
+$error = $success = "";
+$token = $_GET['token'] ?? '';
 
-      <p class="text-center mt-3">Kembali Ke <a href="login.php">Login</a></p>
-    </div>
-  </div>
-</div>
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $token = $_POST['token'];
+    $newPassword = $_POST['new_password'];
+    $confirmPassword = $_POST['confirm_password'];
+    
+    if ($newPassword !== $confirmPassword) {
+        $error = "❌ Passwords do not match.";
+    } else {
+        $stmt = $conn->prepare("SELECT id, reset_expires FROM users WHERE reset_token = ?");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+            
+            $now = date("Y-m-d H:i:s");  // PHP current time
+            if ($user['reset_expires'] >= $now) {
+                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                
+                $update = $conn->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?");
+                $update->bind_param("si", $hashedPassword, $user['id']);
+                
+                if ($update->execute()) {
+                    $success = "✅ Password updated successfully! <a href='login.php'>Login</a>";
+                } else {
+                    $error = "❌ Failed to update password.";
+                }
+                $update->close();
+            } else {
+                $error = "❌ Invalid or expired token.";
+            }
+        } else {
+            $error = "❌ Invalid or expired token.";
+        }
+        $stmt->close();
+        
+    }
+}
+?>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset Password</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  .btn-primary-custom {
+  background: #2563eb; /* Primary blue */
+  color: #fff;
+  border: none;
+  padding: 0.85rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+  cursor: pointer;
+}
+
+.btn-primary-custom:hover {
+  background: #1e40af; /* Darker blue */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary-custom:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+</style>
+</head>
+<body class="bg-light">
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+<div class="col-md-6 col-lg-4">
+<div class="card shadow-sm p-4">
+<h3 class="mb-4 text-center">Reset Password</h3>
+
+<?php if($error): ?>
+    <div class="alert alert-danger"><?= $error ?></div>
+    <?php endif; ?>
+    <?php if($success): ?>
+        <div class="alert alert-success"><?= $success ?></div>
+        <?php else: ?>
+            <form method="POST">
+            <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+            <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <input type="password" name="new_password" class="form-control" required>
+            </div>
+            <div class="mb-3">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" name="confirm_password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn-primary-custom w-100">
+  <i class="fas fa-key"></i> Update Password
+</button>
+
+            </form>
+            <?php endif; ?>
+            
+            </div>
+            </div>
+            </div>
+            </body>
+            </html>
+            
+            </form>
+            <?php endif; ?>
+            
+            </div>
+            </div>
+            </div>
+            </body>
+            </html>
+            
