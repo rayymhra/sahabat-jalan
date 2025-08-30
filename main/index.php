@@ -282,84 +282,104 @@ $reportsJson = json_encode($reports);
         }
         
         /* Header with Notion-inspired clean design */
-        header {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            position: relative;
-            z-index: 1000;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo i {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-        }
-        
-        .logo h1 {
-            font-size: 1.375rem;
-            font-weight: 600;
-            margin: 0;
-            color: var(--text-primary);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        
-        .user-avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-        }
-        
-        #userName {
-            font-weight: 500;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-        }
-        
-        #logoutBtn {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.375rem 0.75rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
-            transition: all 0.2s ease;
-        }
-        
-        #logoutBtn:hover {
-            background-color: var(--bg-tertiary);
-            color: var(--text-primary);
-            border-color: var(--text-secondary);
-        }
+        .app-header {
+  background: #ffffff;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  position: relative;
+  z-index: 1000;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo i {
+  font-size: 1.5rem;
+  color: var(--primary-color, #2563eb);
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Shared button styles */
+.btn-auth {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+/* Outline button */
+.btn-outline {
+  border: 1px solid #d1d5db;
+  color: #374151;
+  background: transparent;
+}
+.btn-outline:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Filled button */
+.btn-filled {
+  background: var(--primary-color, #2563eb);
+  color: #ffffff;
+  border: none;
+}
+.btn-filled:hover {
+  background: #1e40af;
+}
+
+/* User info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color, #2563eb), #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+#userName {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
         
         .main-container {
             display: flex;
@@ -407,7 +427,8 @@ $reportsJson = json_encode($reports);
             
             margin: 0;
         }
-        
+
+        /* start of search */
         .search-container {
             padding: 1rem 1.5rem;
             background-color: var(--bg-primary);
@@ -500,6 +521,7 @@ $reportsJson = json_encode($reports);
             font-size: 0.875rem;
             text-align: center;
         }
+        /* end of search */
         
         .filter-section {
             padding: 1rem 1.5rem;
@@ -627,7 +649,7 @@ $reportsJson = json_encode($reports);
         }
         
         .report-footer {
-            display: flex;
+            /* display: flex; */
             justify-content: space-between;
             align-items: center;
             padding-top: 0.75rem;
@@ -792,24 +814,52 @@ $reportsJson = json_encode($reports);
         }
         
         .add-to-route-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            padding: 0.75rem 1.25rem;
-            cursor: pointer;
-            width: calc(100% - 3rem);
-            margin: 0 1.5rem 1.5rem;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            font-size: 0.875rem;
-        }
-        
-        .add-to-route-btn:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  background: #f0f6ff; /* soft pastel blue */
+  color: #2563eb; /* primary blue text */
+  
+  border: 1px solid #dbeafe; /* light border */
+  border-radius: 10px; /* smoother than sharp */
+  
+  padding: 0.75rem 1rem;
+  width: calc(100% - 3rem);
+  margin: 0 1.5rem 1.5rem;
+
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  /* Softer shadow (Apple/Notion-like) */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.add-to-route-btn:hover {
+  background: #e0edff; /* slightly deeper pastel */
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.add-to-route-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.add-to-route-btn:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
         
         .route-creation-controls {
             position: absolute;
@@ -1170,6 +1220,8 @@ $reportsJson = json_encode($reports);
         /* Like/dislike system */
         .like-dislike-container {
             display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
             align-items: center;
             gap: 0.5rem;
         }
@@ -1958,21 +2010,50 @@ $reportsJson = json_encode($reports);
         }
         
         .delete-route-btn {
-            background-color: var(--danger-color);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 0.875rem;
-            width: 100%;
-            transition: all 0.2s ease;
-        }
-        
-        .delete-route-btn:hover {
-            background-color: #b91c1c;
-            transform: translateY(-1px);
-        }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 20px;
+  margin-bottom: 10px;
+
+  background: #fef2f2; /* soft pastel red */
+  color: #dc2626; /* main danger red */
+  
+  border: 1px solid #fecaca; /* light red border */
+  border-radius: 10px;
+
+  padding: 0.75rem 1rem;
+  width: 100%;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.delete-route-btn:hover {
+  background: #fee2e2; /* slightly deeper pastel */
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.delete-route-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.delete-route-btn:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
         
         /* Ensure routes are above the user location marker */
         .route-line {
@@ -1994,12 +2075,20 @@ $reportsJson = json_encode($reports);
         }
         
         .btn {
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--bg-primary, #fff);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
         
         .btn-secondary {
             background-color: var(--bg-tertiary);
@@ -2022,22 +2111,49 @@ $reportsJson = json_encode($reports);
         }
         
         .edit-route-name-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 0.875rem;
-            width: 100%;
-            transition: all 0.2s ease;
-            margin-bottom: 0.5rem;
-        }
-        
-        .edit-route-name-btn:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-        }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  background: #f5f3ff; /* soft pastel purple */
+  color: #7c3aed; /* purple-600 */
+  
+  border: 1px solid #ddd6fe; /* subtle lavender border */
+  border-radius: 10px;
+
+  padding: 0.75rem 1rem;
+  width: 100%;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.edit-route-name-btn:hover {
+  background: #ede9fe; /* deeper pastel purple */
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.edit-route-name-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.edit-route-name-btn:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 
         .map-search-container {
     position: absolute;
@@ -2146,28 +2262,32 @@ $reportsJson = json_encode($reports);
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <a href="index.php" style="display: flex;">
-                <i class="fas fa-map-marked-alt"></i>
-            <h1>GoSafe</h1>
-            </a>
-            
-        </div>
-        <div id="authButtons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:block;'; ?>">
-            <a href="../auth/login.php" class="btn btn-outline-light me-2">Masuk</a>
-            <a href="../auth/register.php" class="btn btn-light" id="registerBtn">Daftar</a>
-        </div>
-        <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
-            <a href="profile/index.php" class="user-avatar-link">
-                <div class="user-avatar" id="userAvatar">
-                    <?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
-                </div>
-            </a>
-            <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
-            <a href="../auth/logout.php" class="btn btn-outline-light btn-sm" id="logoutBtn">Keluar</a>
-        </div>
-    </header>
+    <header class="app-header">
+  <div class="logo">
+    <a href="index.php" class="logo-link">
+      <i class="fas fa-map-marked-alt"></i>
+      <span class="logo-text">GoSafe</span>
+    </a>
+  </div>
+
+  <!-- Guest buttons -->
+  <div id="authButtons" class="auth-buttons" style="<?php echo $userLoggedIn ? 'display:none;' : 'display:flex;'; ?>">
+    <a href="../auth/login.php" class="btn-auth btn-outline">Masuk</a>
+    <a href="../auth/register.php" class="btn-auth btn-filled">Daftar</a>
+  </div>
+
+  <!-- Logged in user -->
+  <div class="user-info" id="userInfo" style="<?php echo $userLoggedIn ? 'display:flex;' : 'display:none;'; ?>">
+    <a href="profile/index.php" class="user-avatar-link">
+      <div class="user-avatar" id="userAvatar">
+        <?php echo $userLoggedIn ? strtoupper(substr($userData['name'], 0, 1)) : ''; ?>
+      </div>
+    </a>
+    <span id="userName"><?php echo $userLoggedIn ? $userData['name'] : ''; ?></span>
+    <a href="../auth/logout.php" class="btn-auth btn-outline btn-sm" id="logoutBtn">Keluar</a>
+  </div>
+</header>
+
     
     
     <div class="main-container">

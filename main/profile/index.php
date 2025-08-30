@@ -141,6 +141,38 @@ if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
+
+// Get the viewed user's data
+$stmt = $conn->prepare("SELECT name, username, email, avatar, phone_number, bio, reputation_score, created_at 
+                        FROM users WHERE id = ?");
+$stmt->bind_param("i", $viewed_user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    // User not found, redirect to own profile
+    header("Location: index.php");
+    exit;
+}
+
+$user = $result->fetch_assoc();
+$stmt->close();
+
+// NEW: Get total likes and dislikes for this user's reports
+$stmt = $conn->prepare("SELECT 
+                        SUM(CASE WHEN l.value = 1 THEN 1 ELSE 0 END) as total_likes,
+                        SUM(CASE WHEN l.value = -1 THEN 1 ELSE 0 END) as total_dislikes
+                        FROM likes l
+                        JOIN reports r ON l.report_id = r.id
+                        WHERE r.user_id = ?");
+$stmt->bind_param("i", $viewed_user_id);
+$stmt->execute();
+$likes_result = $stmt->get_result();
+$likes_data = $likes_result->fetch_assoc();
+$stmt->close();
+
+$total_likes = $likes_data['total_likes'] ?? 0;
+$total_dislikes = $likes_data['total_dislikes'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -159,9 +191,9 @@ if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
       --notion-gray-300: #d0cdc7;
       --notion-gray-600: #787774;
       --notion-gray-800: #373530;
-      --notion-blue: #2383e2;
-      --notion-red: #e03e3e;
-      --notion-green: #0f7b0f;
+      --notion-blue: #5c99ee;
+      --notion-red: #EF5353;
+      --notion-green: #82CD47;
       --notion-orange: #d9730d;
       --notion-purple: #8b46ff;
       --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -481,19 +513,40 @@ if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .report-type-badge {
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+  padding: 4px 10px;
+  border-radius: 999px; /* fully rounded */
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
-    .report-type-badge.crime { background: var(--notion-red); color: white; }
-    .report-type-badge.accident { background: #ff4d4d; color: white; }
-    .report-type-badge.hazard { background: var(--notion-orange); color: white; }
-    .report-type-badge.safe_spot { background: var(--notion-green); color: white; }
-    .report-type-badge.other { background: var(--notion-gray-600); color: white; }
+.report-type-badge.crime { 
+  background: rgba(239, 83, 83, 0.15);
+  color: #d32f2f;
+  border: 1px solid rgba(239, 83, 83, 0.3);
+}
+.report-type-badge.accident { 
+  background: rgba(255, 77, 77, 0.15);
+  color: #c62828;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+}
+.report-type-badge.hazard { 
+  background: rgba(217, 115, 13, 0.15);
+  color: #d9730d;
+  border: 1px solid rgba(217, 115, 13, 0.3);
+}
+.report-type-badge.safe_spot { 
+  background: rgba(130, 205, 71, 0.15);
+  color: #2e7d32;
+  border: 1px solid rgba(130, 205, 71, 0.3);
+}
+.report-type-badge.other { 
+  background: rgba(120, 119, 116, 0.15);
+  color: #555;
+  border: 1px solid rgba(120, 119, 116, 0.3);
+}
 
     .route-badge {
       padding: 4px 12px;
@@ -733,13 +786,39 @@ if ($is_own_profile && $_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="info-value"><?php echo $user['bio'] ?: 'No bio yet'; ?></div>
         </div>
         
-        <div class="info-item">
+        <!-- <div class="info-item">
           <div class="info-icon"><i class="fas fa-star"></i></div>
           <div class="info-label">Reputasi</div>
           <div class="info-value">
             <span class="reputation-badge"><?php echo $user['reputation_score'] ?: 0; ?></span>
           </div>
-        </div>
+        </div> -->
+
+        <div class="info-item">
+    <div class="info-icon"><i class="fas fa-thumbs-up"></i></div>
+    <div class="info-label">Likes</div>
+    <div class="info-value">
+        <span class="reputation-badge" style="background: rgba(130, 205, 71, 0.15);
+  color: #2e7d32;
+  border: 1px solid rgba(130, 205, 71, 0.3);">
+            <?php echo $total_likes; ?>
+        </span>
+    </div>
+</div>
+
+<div class="info-item">
+    <div class="info-icon"><i class="fas fa-thumbs-down"></i></div>
+    <div class="info-label">Dislikes</div>
+    <div class="info-value">
+        <span class="reputation-badge" style="background: rgba(239, 83, 83, 0.15);
+  color: #d32f2f;
+  border: 1px solid rgba(239, 83, 83, 0.3);">
+            <?php echo $total_dislikes; ?>
+        </span>
+    </div>
+</div>
+
+
         
         <div class="info-item">
           <div class="info-icon"><i class="fas fa-calendar"></i></div>
