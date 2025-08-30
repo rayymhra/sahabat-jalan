@@ -1334,11 +1334,11 @@
             </div>
             
             <div class="cta-buttons">
-                <a href="#" class="btn btn-white btn-large">
+                <a href="map" class="btn btn-white btn-large">
                     <i class="bi bi-map"></i>
                     Lihat Peta Sekarang
                 </a>
-                <a href="#" class="btn btn-outline btn-large">
+                <a href="auth/register.php" class="btn btn-outline btn-large">
                     <i class="bi bi-person-plus"></i>
                     Daftar Gratis
                 </a>
