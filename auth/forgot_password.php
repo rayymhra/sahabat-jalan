@@ -45,13 +45,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forgot Password</title>
+<title>Lupa Password - Go Safe!</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
     body {
         background-color: #f7fafe;
-        font-family: 'Bebas Neue', sans-serif;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         color: #384a64;
     }
     .card {
@@ -59,6 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         border-radius: 12px;
         background: #fff;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        animation: fadeIn 0.5s ease;
     }
     h3 {
         color: #384a64;
@@ -94,13 +94,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         font-size: 0.9rem;
         border-radius: 8px;
     }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 </head>
 <body>
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
     <div class="col-md-6 col-lg-4">
         <div class="card p-4">
-            <h3 class="mb-4 text-center">Lupa Password</h3>
+            <h3 class="mb-4 text-center">Reset Password</h3>
 
             <?php if($error): ?>
             <div class="alert alert-danger"><?= $error ?></div>
@@ -111,13 +115,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             <form method="POST">
                 <div class="mb-3">
-                    <label class="form-label">Masukan email kamu</label>
+                    <label class="form-label">Email</label>
                     <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Kirim Link</button>
+                <button type="submit" class="btn btn-primary w-100">Kirim Link Reset</button>
             </form>
 
-            <p class="text-center mt-3">Ingat password? <a href="login.php">Masuk</a></p>
+            <p class="text-center mt-3">Kembali Ke <a href="login.php">Login</a></p>
         </div>
     </div>
 </div>
