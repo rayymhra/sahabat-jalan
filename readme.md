@@ -1,6 +1,6 @@
 # 🚦 GoSafe (Sahabat Jalan)
 
-**GoSafe** adalah platform berbasis komunitas yang memungkinkan pengguna untuk melaporkan dan berbagi informasi mengenai kondisi keselamatan jalan di Indonesia. Sistem ini menyediakan **peta interaktif** yang menampilkan laporan pengguna, seperti area rawan kejahatan, kecelakaan, bahaya, hingga titik aman.
+**GoSafe** adalah platform berbasis masyarakat yang memungkinkan pengguna untuk melaporkan dan berbagi informasi mengenai kondisi keselamatan jalan di Indonesia. Sistem ini menyediakan **peta interaktif** yang menampilkan laporan pengguna, seperti area rawan kejahatan, kecelakaan, bahaya, hingga titik aman.
 
 ---
 
@@ -11,7 +11,7 @@
 - ✅ **Titik Aman** - Lokasi-lokasi yang direkomendasikan
 - 👤 **Manajemen Akun** - Registrasi, login, dan edit profil
 - 🛣️ **Manajemen Rute** - Tambah rute dan laporan baru
-- 💬 **Interaksi Komunitas** - Komentar dan interaksi antar pengguna
+- 💬 **Interaksi masyarakat** - Komentar dan interaksi antar pengguna
 
 ---
 
@@ -19,7 +19,7 @@
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/username/sahabat-jalan.git
+git clone https://github.com/rayymhra/sahabat-jalan.git
 cd sahabat-jalan
 ```
 
